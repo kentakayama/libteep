@@ -10,7 +10,11 @@
 #include "teep/teep_cose.h"
 #include "teep_examples_common.h"
 
-#define MAX_FILE_BUFFER_SIZE                1024
+#define MAX_FILE_BUFFER_SIZE    16777216
+
+#if MAX_FILE_BUFFER_SIZE > (2 * 1024)
+#include <stdlib.h>
+#endif
 
 #if TEEP_ACTOR_AGENT == 1
 #include "teep_agent_es256_private_key.h"
@@ -43,7 +47,13 @@ int main(int argc, const char * argv[]) {
 
     // Read cbor file.
     printf("main : Read CBOR file.\n");
+#if MAX_FILE_BUFFER_SIZE > (2 * 1024)
+    UsefulBuf cbor_buf;
+    cbor_buf.ptr = malloc(MAX_FILE_BUFFER_SIZE);
+    cbor_buf.len = MAX_FILE_BUFFER_SIZE;
+#else
     UsefulBuf_MAKE_STACK_UB(cbor_buf, MAX_FILE_BUFFER_SIZE);
+#endif
     cbor_buf.len = read_from_file(argv[1], MAX_FILE_BUFFER_SIZE, cbor_buf.ptr);
     if (!cbor_buf.len) {
         printf("main : Failed to read CBOR file \"%s\".\n", argv[2]);
@@ -54,7 +64,13 @@ int main(int argc, const char * argv[]) {
 
     // Create cose signed file.
     printf("main : Create signed cose file.\n");
+#if MAX_FILE_BUFFER_SIZE > (2 * 1024)
+    UsefulBuf signed_cose;
+    signed_cose.ptr = malloc(MAX_FILE_BUFFER_SIZE);
+    signed_cose.len = MAX_FILE_BUFFER_SIZE;
+#else
     UsefulBuf_MAKE_STACK_UB(signed_cose, MAX_FILE_BUFFER_SIZE);
+#endif
     result = teep_sign_cose_sign1(UsefulBuf_Const(cbor_buf), &key_pair, &signed_cose);
     if (result != TEEP_SUCCESS) {
         printf("main : Failed to sign. %s(%d)\n", teep_err_to_str(result), result);
@@ -83,7 +99,13 @@ int main(int argc, const char * argv[]) {
         }
         printf("main : Succeed to write to \"%s\".\n", argv[2]);
     }
+
     teep_free_key(&key_pair);
+
+#if MAX_FILE_BUFFER_SIZE > (2 * 1024)
+    free(cbor_buf.ptr);
+    free(signed_cose.ptr);
+#endif
 
     return EXIT_SUCCESS;
 }
