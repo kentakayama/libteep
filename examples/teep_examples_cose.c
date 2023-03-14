@@ -213,57 +213,78 @@ err:
 #endif /* OPENSSL_VERSION_NUMBER */
 #endif /* LIBTEEP_PSA_CRYPTO_C */
 
-teep_err_t teep_key_init_es256_key_pair(const unsigned char *private_key, const unsigned char *public_key, teep_key_t *cose_key_pair) {
+teep_err_t teep_key_init_es256_key_pair(const unsigned char *private_key,
+                                        const unsigned char *public_key,
+                                        UsefulBufC kid,
+                                        teep_key_t *cose_key_pair) {
     cose_key_pair->private_key = private_key;
     cose_key_pair->private_key_len = PRIME256V1_PRIVATE_KEY_LENGTH;
     cose_key_pair->public_key = public_key;
     cose_key_pair->public_key_len = PRIME256V1_PUBLIC_KEY_LENGTH;
     cose_key_pair->cose_algorithm_id = T_COSE_ALGORITHM_ES256;
+    cose_key_pair->kid = kid;
     return teep_create_es_key(cose_key_pair);
 }
 
-teep_err_t teep_key_init_es384_key_pair(const unsigned char *private_key, const unsigned char *public_key, teep_key_t *cose_key_pair) {
+teep_err_t teep_key_init_es384_key_pair(const unsigned char *private_key,
+                                        const unsigned char *public_key,
+                                        UsefulBufC kid,
+                                        teep_key_t *cose_key_pair) {
     cose_key_pair->private_key = private_key;
     cose_key_pair->private_key_len = SECP384R1_PRIVATE_KEY_LENGTH;
     cose_key_pair->public_key = public_key;
     cose_key_pair->public_key_len = SECP384R1_PUBLIC_KEY_LENGTH;
     cose_key_pair->cose_algorithm_id = T_COSE_ALGORITHM_ES384;
+    cose_key_pair->kid = kid;
     return teep_create_es_key(cose_key_pair);
 }
 
-teep_err_t teep_key_init_es521_key_pair(const unsigned char *private_key, const unsigned char *public_key, teep_key_t *cose_key_pair) {
+teep_err_t teep_key_init_es521_key_pair(const unsigned char *private_key,
+                                        const unsigned char *public_key,
+                                        UsefulBufC kid,
+                                        teep_key_t *cose_key_pair) {
     cose_key_pair->private_key = private_key;
     cose_key_pair->private_key_len = SECP521R1_PRIVATE_KEY_LENGTH;
     cose_key_pair->public_key = public_key;
     cose_key_pair->public_key_len = SECP521R1_PUBLIC_KEY_LENGTH;
     cose_key_pair->cose_algorithm_id = T_COSE_ALGORITHM_ES512;
+    cose_key_pair->kid = kid;
     return teep_create_es_key(cose_key_pair);
 }
 
-teep_err_t teep_key_init_es256_public_key(const unsigned char *public_key, teep_key_t *cose_public_key) {
+teep_err_t teep_key_init_es256_public_key(const unsigned char *public_key,
+                                          UsefulBufC kid,
+                                          teep_key_t *cose_public_key) {
     cose_public_key->private_key = NULL;
     cose_public_key->private_key_len = 0;
     cose_public_key->public_key = public_key;
     cose_public_key->public_key_len = PRIME256V1_PUBLIC_KEY_LENGTH;
     cose_public_key->cose_algorithm_id = T_COSE_ALGORITHM_ES256;
+    cose_public_key->kid = kid;
     return teep_create_es_key(cose_public_key);
 }
 
-teep_err_t teep_key_init_es384_public_key(const unsigned char *public_key, teep_key_t *cose_public_key) {
+teep_err_t teep_key_init_es384_public_key(const unsigned char *public_key,
+                                          UsefulBufC kid,
+                                          teep_key_t *cose_public_key) {
     cose_public_key->private_key = NULL;
     cose_public_key->private_key_len = 0;
     cose_public_key->public_key = public_key;
     cose_public_key->public_key_len = SECP384R1_PUBLIC_KEY_LENGTH;
     cose_public_key->cose_algorithm_id = T_COSE_ALGORITHM_ES384;
+    cose_public_key->kid = kid;
     return teep_create_es_key(cose_public_key);
 }
 
-teep_err_t teep_key_init_es521_public_key(const unsigned char *public_key, teep_key_t *cose_public_key) {
+teep_err_t teep_key_init_es521_public_key(const unsigned char *public_key,
+                                          UsefulBufC kid,
+                                          teep_key_t *cose_public_key) {
     cose_public_key->private_key = NULL;
     cose_public_key->private_key_len = 0;
     cose_public_key->public_key = public_key;
     cose_public_key->public_key_len = SECP521R1_PUBLIC_KEY_LENGTH;
     cose_public_key->cose_algorithm_id = T_COSE_ALGORITHM_ES512;
+    cose_public_key->kid = kid;
     return teep_create_es_key(cose_public_key);
 }
 

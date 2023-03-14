@@ -47,6 +47,7 @@ typedef struct teep_key {
     size_t public_key_len;
     int cose_algorithm_id;
     struct t_cose_key cose_key;
+    UsefulBufC kid;
 } teep_key_t;
 
 typedef struct teep_mechanism {

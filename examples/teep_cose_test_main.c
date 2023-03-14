@@ -21,11 +21,19 @@
 #include "teep_agent_es256_public_key.h"
 const unsigned char *teep_private_key = teep_agent_es256_private_key;
 const unsigned char *teep_public_key = teep_agent_es256_public_key;
+UsefulBufC kid = (UsefulBufC){
+    .ptr = "101",
+    .len = 3,
+};
 #else /* TEEP_ACTOR_TAM as default */
 #include "tam_es256_private_key.h"
 #include "tam_es256_public_key.h"
 const unsigned char *teep_private_key = tam_es256_private_key;
 const unsigned char *teep_public_key = tam_es256_public_key;
+UsefulBufC kid = (UsefulBufC){
+    .ptr = "201",
+    .len = 3,
+};
 #endif
 
 int main(int argc, const char * argv[]) {
@@ -38,7 +46,7 @@ int main(int argc, const char * argv[]) {
     }
 
     teep_key_t key_pair;
-    result = teep_key_init_es256_key_pair(teep_private_key, teep_public_key, &key_pair);
+    result = teep_key_init_es256_key_pair(teep_private_key, teep_public_key, kid, &key_pair);
     if (result != TEEP_SUCCESS) {
         printf("main : Failed to create key pair. %s(%d)\n", teep_err_to_str(result), result);
         return EXIT_FAILURE;
