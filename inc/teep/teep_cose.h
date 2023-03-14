@@ -55,15 +55,6 @@ typedef struct teep_mechanism {
     bool use;
 } teep_mechanism_t;
 
-teep_err_t teep_create_ec_key(teep_key_t *key);
-teep_err_t teep_key_free(const teep_key_t *key);
-teep_err_t teep_key_init_es256_key_pair(const unsigned char *private_key, const unsigned char *public_key, teep_key_t *cose_key_pair);
-teep_err_t teep_key_init_es384_key_pair(const unsigned char *private_key, const unsigned char *public_key, teep_key_t *cose_key_pair);
-teep_err_t teep_key_init_es512_key_pair(const unsigned char *private_key, const unsigned char *public_key, teep_key_t *cose_key_pair);
-teep_err_t teep_key_init_es256_public_key(const unsigned char *public_key, teep_key_t *cose_public_key);
-teep_err_t teep_key_init_es384_public_key(const unsigned char *public_key, teep_key_t *cose_public_key);
-teep_err_t teep_key_init_es512_public_key(const unsigned char *public_key, teep_key_t *cose_public_key);
-
 teep_err_t teep_sign_cose_sign1(const UsefulBufC raw_cbor, const teep_key_t *key_pair, UsefulBuf *returned_payload);
 teep_err_t teep_verify_cose_sign1(const UsefulBufC signed_cose, const teep_key_t *public_key, UsefulBufC *returned_payload);
 
