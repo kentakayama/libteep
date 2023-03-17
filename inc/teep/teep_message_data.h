@@ -51,50 +51,41 @@ typedef enum teep_type {
  * key of options
  */
 typedef enum teep_options_key {
-    TEEP_OPTIONS_KEY_INVALID                        = 0,
-    TEEP_OPTIONS_KEY_SUPPORTED_CIPHER_SUITES        = 1,
-    TEEP_OPTIONS_KEY_CHALLENGE                      = 2,
-    TEEP_OPTIONS_KEY_VERSION                        = 3,
-    TEEP_OPTIONS_KEY_SELECTED_CIPHER_SUITE          = 5,
-    TEEP_OPTIONS_KEY_SELECTED_VERSION               = 6,
-    TEEP_OPTIONS_KEY_ATTESTATION_PAYLOAD            = 7,
-    TEEP_OPTIONS_KEY_TC_LIST                        = 8,
-    TEEP_OPTIONS_KEY_EXT_LIST                       = 9,
-    TEEP_OPTIONS_KEY_MANIFEST_LIST                  = 10,
-    TEEP_OPTIONS_KEY_MSG                            = 11,
-    TEEP_OPTIONS_KEY_ERR_MSG                        = 12,
-    TEEP_OPTIONS_KEY_ATTESTATION_PAYLOAD_FORMAT     = 13,
-    TEEP_OPTIONS_KEY_REQUESTED_TC_LIST              = 14,
-    TEEP_OPTIONS_KEY_UNNEEDED_TC_LIST               = 15,
-    TEEP_OPTIONS_KEY_COMPONENT_ID                   = 16,
-    TEEP_OPTIONS_KEY_TC_MANIFEST_SEQUENCE_NUMBER    = 17,
-    TEEP_OPTIONS_KEY_HAVE_BINARY                    = 18,
-    TEEP_OPTIONS_KEY_SUIT_REPORTS                   = 19,
-    TEEP_OPTIONS_KEY_TOKEN                          = 20,
-    TEEP_OPTIONS_KEY_SUPPORTED_FRESHNESS_MECHANISMS = 21,
+    TEEP_OPTIONS_KEY_INVALID                            = 0,
+    TEEP_OPTIONS_KEY_SUPPORTED_TEEP_CIPHER_SUITES       = 1,
+    TEEP_OPTIONS_KEY_CHALLENGE                          = 2,
+    TEEP_OPTIONS_KEY_VERSIONS                           = 3,
+    TEEP_OPTIONS_KEY_SUPPORTED_EAT_SUIT_CIPHER_SUITED   = 4,
+    TEEP_OPTIONS_KEY_SELECTED_TEEP_CIPHER_SUITE         = 5,
+    TEEP_OPTIONS_KEY_SELECTED_VERSION                   = 6,
+    TEEP_OPTIONS_KEY_ATTESTATION_PAYLOAD                = 7,
+    TEEP_OPTIONS_KEY_TC_LIST                            = 8,
+    TEEP_OPTIONS_KEY_EXT_LIST                           = 9,
+    TEEP_OPTIONS_KEY_MANIFEST_LIST                      = 10,
+    TEEP_OPTIONS_KEY_MSG                                = 11,
+    TEEP_OPTIONS_KEY_ERR_MSG                            = 12,
+    TEEP_OPTIONS_KEY_ATTESTATION_PAYLOAD_FORMAT         = 13,
+    TEEP_OPTIONS_KEY_REQUESTED_TC_LIST                  = 14,
+    TEEP_OPTIONS_KEY_UNNEEDED_TC_LIST                   = 15,
+    TEEP_OPTIONS_KEY_COMPONENT_ID                       = 16,
+    TEEP_OPTIONS_KEY_TC_MANIFEST_SEQUENCE_NUMBER        = 17,
+    TEEP_OPTIONS_KEY_HAVE_BINARY                        = 18,
+    TEEP_OPTIONS_KEY_SUIT_REPORTS                       = 19,
+    TEEP_OPTIONS_KEY_TOKEN                              = 20,
+    TEEP_OPTIONS_KEY_SUPPORTED_FRESHNESS_MECHANISMS     = 21,
 } teep_options_key_t;
 
-/*
- * data-item-requested
- */
-typedef enum teep_data_item_requested {
-    TEEP_DATA_ITEM_INVALID                  = 0,
-    TEEP_DATA_ITEM_ATTESTATION              = 1,
-    TEEP_DATA_ITEM_TRUSTED_COMPONENTS       = 2,
-    TEEP_DATA_ITEM_EXTENTIONS               = 4
-} teep_data_item_requested_t;
-
 typedef enum teep_cose_algs {
-    TEEP_COSE_NONE             = 0,
+    TEEP_COSE_NONE                      = 0,
 
-    TEEP_COSE_SIGN_ES256            = -7, // cose-alg-es256
-    TEEP_COSE_SIGN_EDDSA            = -8, // cose-alg-eddsa
-    TEEP_COSE_SIGN_HSS_LMS          = -46, // cose-alg-hss-lms
+    TEEP_COSE_SIGN_ES256                = -7,   // cose-alg-es256
+    TEEP_COSE_SIGN_EDDSA                = -8,   // cose-alg-eddsa
+    TEEP_COSE_SIGN_HSS_LMS              = -46,  // cose-alg-hss-lms
 
-    TEEP_COSE_ENCRYPT_A256_GCM          = 3, // cose-alg-aes-gcm-256
-    TEEP_COSE_ENCRYPT_ACCM_16_64_128    = 10, // cose-alg-aes-ccm-16-64-128
+    TEEP_COSE_ENCRYPT_A256_GCM          = 3,    // cose-alg-aes-gcm-256
+    TEEP_COSE_ENCRYPT_ACCM_16_64_128    = 10,   // cose-alg-aes-ccm-16-64-128
 
-    TEEP_COSE_MAC_HMAC256   = 5,  // cose-alg-hmac-256-256
+    TEEP_COSE_MAC_HMAC256               = 5,    // cose-alg-hmac-256-256
 } teep_cose_algs_t;
 
 /*
@@ -191,6 +182,10 @@ typedef struct teep_tc_info_array {
 } teep_tc_info_array_t;
 
 /*
+ * [ + system-property-claims ]
+ */
+
+/*
  * requested-tc-info
  */
 typedef struct teep_requested_tc_info {
@@ -215,10 +210,10 @@ typedef struct teep_requested_tc_info_array {
  */
 #define BIT(nr) (1UL << (nr))
 #define TEEP_MESSAGE_CONTAINS_TYPE BIT(0)
-#define TEEP_MESSAGE_CONTAINS_SUPPORTED_CIPHER_SUITES BIT(TEEP_OPTIONS_KEY_SUPPORTED_CIPHER_SUITES)
+#define TEEP_MESSAGE_CONTAINS_SUPPORTED_TEEP_CIPHER_SUITES BIT(TEEP_OPTIONS_KEY_SUPPORTED_TEEP_CIPHER_SUITES)
 #define TEEP_MESSAGE_CONTAINS_CHALLENGE BIT(TEEP_OPTIONS_KEY_CHALLENGE)
-#define TEEP_MESSAGE_CONTAINS_VERSION BIT(TEEP_OPTIONS_KEY_VERSION)
-#define TEEP_MESSAGE_CONTAINS_SELECTED_CIPHER_SUITE BIT(TEEP_OPTIONS_KEY_SELECTED_CIPHER_SUITE)
+#define TEEP_MESSAGE_CONTAINS_VERSIONS BIT(TEEP_OPTIONS_KEY_VERSIONS)
+#define TEEP_MESSAGE_CONTAINS_SELECTED_TEEP_CIPHER_SUITE BIT(TEEP_OPTIONS_KEY_SELECTED_TEEP_CIPHER_SUITE)
 #define TEEP_MESSAGE_CONTAINS_SELECTED_VERSION BIT(TEEP_OPTIONS_KEY_SELECTED_VERSION)
 #define TEEP_MESSAGE_CONTAINS_ATTESTATION_PAYLOAD BIT(TEEP_OPTIONS_KEY_ATTESTATION_PAYLOAD)
 #define TEEP_MESSAGE_CONTAINS_TC_LIST BIT(TEEP_OPTIONS_KEY_TC_LIST)
@@ -248,6 +243,14 @@ struct teep_message {
     uint64_t                    contains;
 };
 
+typedef union {
+    uint8_t  val;
+    struct {
+        uint8_t  attestation : 1;
+        uint8_t  trusted_components : 1;
+        uint8_t  extensions : 1;
+    };
+} teep_data_item_requested_t;
 /*
  * query-request
  */
@@ -268,17 +271,17 @@ typedef struct teep_query_request {
  * query-response
  */
 typedef struct teep_query_response {
-    teep_type_t                     type;
-    uint64_t                        contains;
-    teep_buf_t                      token;
-    teep_cipher_suite_t             selected_cipher_suite;
-    uint32_t                        selected_version;
-    teep_buf_t                      attestation_payload_format;
-    teep_buf_t                      attestation_payload;
-    teep_tc_info_array_t            tc_list;
-    teep_requested_tc_info_array_t  requested_tc_list;
-    teep_buf_array_t                unneeded_tc_list;
-    teep_uint64_array_t             ext_list;
+    teep_type_t                             type;
+    uint64_t                                contains;
+    teep_buf_t                              token;
+    teep_cipher_suite_t                     selected_cipher_suite;
+    uint32_t                                selected_version;
+    teep_buf_t                              attestation_payload_format;
+    teep_buf_t                              attestation_payload;
+    teep_buf_array_t                        tc_list;
+    teep_requested_tc_info_array_t          requested_tc_list;
+    teep_buf_array_t                        unneeded_tc_list;
+    teep_uint64_array_t                     ext_list;
     // TODO :                       query-response-extensions
     // TODO :                       teep-option-extensions
 } teep_query_response_t;

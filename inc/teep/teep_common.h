@@ -39,7 +39,8 @@ typedef struct teep_buf {
 
 teep_err_t teep_print_hex_within_max(const uint8_t *array, const size_t size, const size_t size_max);
 teep_err_t teep_print_hex(const uint8_t *array, size_t size);
-teep_err_t teep_print_text(const uint8_t *text, size_t size);
+teep_err_t teep_print_text(const char *text, size_t size);
+teep_err_t teep_print_string(const teep_buf_t *string);
 void teep_print_error_string(const char *message);
 void teep_print_debug_string(const char *message);
 void teep_print_debug_string_uint32(const char *message, uint32_t value);

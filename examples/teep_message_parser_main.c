@@ -38,7 +38,7 @@ int main(int argc, const char * argv[]) {
     cbor_file_name = argv[1];
 
     teep_key_t public_key;
-    result = teep_key_init_es256_public_key(teep_public_key, &public_key);
+    result = teep_key_init_es256_public_key(teep_public_key, NULLUsefulBufC, &public_key);
     if (result != TEEP_SUCCESS) {
         printf("main : Failed to parse t_cose_key. (%d)\n", result);
     }
@@ -86,7 +86,7 @@ int main(int argc, const char * argv[]) {
     }
 
     // Print teep message.
-    result = teep_print_message(&msg, 2, NULL);
+    result = teep_print_message(&msg, 0, 2, NULL);
     if (result != TEEP_SUCCESS) {
         printf("main : Failed to print CBOR as teep-message. %s(%d)\n", teep_err_to_str(result), result);
         return EXIT_FAILURE;
