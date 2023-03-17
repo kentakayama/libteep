@@ -268,14 +268,14 @@ int main(int argc, const char * argv[]) {
     UsefulBuf_MAKE_STACK_UB(cose_send_buf, MAX_SEND_BUFFER_SIZE);
 
     teep_key_t signing_key;
-    result = teep_key_init_es256_key_pair(teep_agent_es256_private_key, teep_agent_es256_public_key, &signing_key);
+    result = teep_key_init_es256_key_pair(teep_agent_es256_private_key, teep_agent_es256_public_key, NULLUsefulBufC, &signing_key);
     if (result != TEEP_SUCCESS) {
         printf("main : Failed to create t_cose key pair. %s(%d)\n", teep_err_to_str(result), result);
         return EXIT_FAILURE;
     }
 
     teep_key_t verifying_key;
-    result = teep_key_init_es256_public_key(tam_es256_public_key, &verifying_key);
+    result = teep_key_init_es256_public_key(tam_es256_public_key, NULLUsefulBufC, &verifying_key);
     if (result != TEEP_SUCCESS) {
         printf("main : Failed to parse t_cose public key. %s(%d)\n", teep_err_to_str(result), result);
         return EXIT_FAILURE;
@@ -310,7 +310,7 @@ int main(int argc, const char * argv[]) {
             printf("main : Failed to parse received message. %s(%d)\n", teep_err_to_str(result), result);
             return EXIT_FAILURE;
         }
-        teep_print_message(&recv_message, 2, NULL);
+        teep_print_message(&recv_message, 4, 2, NULL);
 
         cose_send_buf.len = MAX_SEND_BUFFER_SIZE;
         switch (recv_message.teep_message.type) {
@@ -337,7 +337,7 @@ int main(int argc, const char * argv[]) {
         }
 
         printf("main : Sending...\n");
-        teep_print_message(&send_message, 2, NULL);
+        teep_print_message(&send_message, 4, 2, NULL);
         if (status == WAITING_QUERY_REQUEST &&
             send_message.teep_message.type == TEEP_TYPE_QUERY_RESPONSE) {
             status = WAITING_UPDATE_OR_QUERY_REQUEST;
