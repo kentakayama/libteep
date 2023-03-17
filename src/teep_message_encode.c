@@ -41,15 +41,15 @@ teep_err_t teep_encode_error(const teep_error_t *teep_error, QCBOREncodeContext 
     if (teep_error->contains & TEEP_MESSAGE_CONTAINS_ERR_MSG) {
         QCBOREncode_AddTextToMapN(context, TEEP_OPTIONS_KEY_ERR_MSG, (UsefulBufC){teep_error->err_msg.ptr, teep_error->err_msg.len});
     }
-    if (teep_error->contains & TEEP_MESSAGE_CONTAINS_SUPPORTED_CIPHER_SUITES) {
-        QCBOREncode_OpenArrayInMapN(context, TEEP_OPTIONS_KEY_SUPPORTED_CIPHER_SUITES);
+    if (teep_error->contains & TEEP_MESSAGE_CONTAINS_SUPPORTED_TEEP_CIPHER_SUITES) {
+        QCBOREncode_OpenArrayInMapN(context, TEEP_OPTIONS_KEY_SUPPORTED_TEEP_CIPHER_SUITES);
         for (size_t i = 0; i < teep_error->supported_cipher_suites.len; i++) {
             teep_encode_add_cipher_suite(context, teep_error->supported_cipher_suites.items[i]);
         }
         QCBOREncode_CloseArray(context);
     }
-    if (teep_error->contains & TEEP_MESSAGE_CONTAINS_VERSION) {
-        QCBOREncode_OpenArrayInMapN(context, TEEP_OPTIONS_KEY_VERSION);
+    if (teep_error->contains & TEEP_MESSAGE_CONTAINS_VERSIONS) {
+        QCBOREncode_OpenArrayInMapN(context, TEEP_OPTIONS_KEY_VERSIONS);
         for (size_t i = 0; i < teep_error->versions.len; i++) {
             QCBOREncode_AddUInt64(context, teep_error->versions.items[i]);
         }
@@ -115,8 +115,8 @@ teep_err_t teep_encode_query_response(const teep_query_response_t *query_respons
     if (query_response->contains & TEEP_MESSAGE_CONTAINS_TOKEN) {
         QCBOREncode_AddBytesToMapN(context, TEEP_OPTIONS_KEY_TOKEN, (UsefulBufC){.ptr = query_response->token.ptr, .len = query_response->token.len});
     }
-    if (query_response->contains & TEEP_MESSAGE_CONTAINS_SELECTED_CIPHER_SUITE) {
-        QCBOREncode_AddInt64(context, TEEP_OPTIONS_KEY_SELECTED_CIPHER_SUITE);
+    if (query_response->contains & TEEP_MESSAGE_CONTAINS_SELECTED_TEEP_CIPHER_SUITE) {
+        QCBOREncode_AddInt64(context, TEEP_OPTIONS_KEY_SELECTED_TEEP_CIPHER_SUITE);
         teep_encode_add_cipher_suite(context, query_response->selected_cipher_suite);
     }
     if (query_response->contains & TEEP_MESSAGE_CONTAINS_SELECTED_VERSION) {
@@ -131,13 +131,7 @@ teep_err_t teep_encode_query_response(const teep_query_response_t *query_respons
     if (query_response->contains & TEEP_MESSAGE_CONTAINS_TC_LIST) {
         QCBOREncode_OpenArrayInMapN(context, TEEP_OPTIONS_KEY_TC_LIST);
         for (size_t i = 0; i < query_response->tc_list.len; i++) {
-            QCBOREncode_OpenMap(context);
-            teep_QCBOREncode_AddUsefulBufCToMapN(context, TEEP_OPTIONS_KEY_COMPONENT_ID, (UsefulBufC){query_response->tc_list.items[i].component_id.ptr, query_response->tc_list.items[i].component_id.len});
-
-            if (query_response->tc_list.items[i].contains & TEEP_MESSAGE_CONTAINS_TC_MANIFEST_SEQUENCE_NUMBER) {
-                QCBOREncode_AddUInt64ToMapN(context, TEEP_OPTIONS_KEY_TC_MANIFEST_SEQUENCE_NUMBER, query_response->tc_list.items[i].tc_manifest_sequence_number);
-            }
-            QCBOREncode_CloseMap(context);
+            teep_QCBOREncode_AddUsefulBufC(context, (UsefulBufC){query_response->tc_list.items[i].ptr, query_response->tc_list.items[i].len});
         }
         QCBOREncode_CloseArray(context);
     }
@@ -173,8 +167,8 @@ teep_err_t teep_encode_query_request(const teep_query_request_t *query_request, 
     if (query_request->contains & TEEP_MESSAGE_CONTAINS_TOKEN) {
         QCBOREncode_AddBytesToMapN(context, TEEP_OPTIONS_KEY_TOKEN, (UsefulBufC){.ptr = query_request->token.ptr, .len = query_request->token.len});
     }
-    if (query_request->contains & TEEP_MESSAGE_CONTAINS_SUPPORTED_CIPHER_SUITES) {
-        QCBOREncode_OpenArrayInMapN(context, TEEP_OPTIONS_KEY_SUPPORTED_CIPHER_SUITES);
+    if (query_request->contains & TEEP_MESSAGE_CONTAINS_SUPPORTED_TEEP_CIPHER_SUITES) {
+        QCBOREncode_OpenArrayInMapN(context, TEEP_OPTIONS_KEY_SUPPORTED_TEEP_CIPHER_SUITES);
         for (size_t i = 0; i < query_request->supported_cipher_suites.len; i++) {
             teep_encode_add_cipher_suite(context, query_request->supported_cipher_suites.items[i]);
         }
@@ -191,8 +185,8 @@ teep_err_t teep_encode_query_request(const teep_query_request_t *query_request, 
     if (query_request->contains & TEEP_MESSAGE_CONTAINS_CHALLENGE) {
         QCBOREncode_AddBytesToMapN(context, TEEP_OPTIONS_KEY_CHALLENGE, (UsefulBufC){query_request->challenge.ptr, query_request->challenge.len});
     }
-    if (query_request->contains & TEEP_MESSAGE_CONTAINS_VERSION) {
-        QCBOREncode_OpenArrayInMapN(context, TEEP_OPTIONS_KEY_VERSION);
+    if (query_request->contains & TEEP_MESSAGE_CONTAINS_VERSIONS) {
+        QCBOREncode_OpenArrayInMapN(context, TEEP_OPTIONS_KEY_VERSIONS);
         for (size_t i = 0; i < query_request->versions.len; i++) {
             QCBOREncode_AddUInt64(context, query_request->versions.items[i]);
         }
@@ -203,7 +197,7 @@ teep_err_t teep_encode_query_request(const teep_query_request_t *query_request, 
     if (query_request->contains & TEEP_MESSAGE_CONTAINS_DATA_ITEM_REQUESTED) {
         return TEEP_ERR_INVALID_VALUE;
     }
-    QCBOREncode_AddUInt64(context, query_request->data_item_requested);
+    QCBOREncode_AddUInt64(context, query_request->data_item_requested.val);
     return TEEP_SUCCESS;
 }
 

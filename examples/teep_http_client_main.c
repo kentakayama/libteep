@@ -81,7 +81,7 @@ teep_err_t create_error(teep_buf_t token,
     else if (err_code == TEEP_ERR_CODE_UNSUPPORTED_MSG_VERSION) {
         error->versions.len = 1;
         error->versions.items[0] = SUPPORTED_VERSION;
-        error->contains = TEEP_MESSAGE_CONTAINS_VERSION;
+        error->contains = TEEP_MESSAGE_CONTAINS_VERSIONS;
         error->err_code = TEEP_ERR_CODE_UNSUPPORTED_MSG_VERSION;
     }
     else if (err_code == TEEP_ERR_CODE_UNSUPPORTED_CIPHER_SUITES) {
@@ -89,7 +89,7 @@ teep_err_t create_error(teep_buf_t token,
         for (size_t i = 0; i < SUPPORTED_CIPHER_SUITES_LEN; i++) {
             error->supported_cipher_suites.items[i] = supported_cipher_suites[i];
         }
-        error->contains |= TEEP_MESSAGE_CONTAINS_SUPPORTED_CIPHER_SUITES;
+        error->contains |= TEEP_MESSAGE_CONTAINS_SUPPORTED_TEEP_CIPHER_SUITES;
         error->err_code = TEEP_ERR_CODE_UNSUPPORTED_CIPHER_SUITES;
     }
     return TEEP_SUCCESS;
@@ -142,7 +142,7 @@ teep_err_t create_query_response_or_error(const teep_query_request_t *query_requ
     int32_t version = -1;
     teep_cipher_suite_t cipher_suite = TEEP_CIPHER_SUITE_INVALID;
 
-    if (query_request->contains & TEEP_MESSAGE_CONTAINS_VERSION) {
+    if (query_request->contains & TEEP_MESSAGE_CONTAINS_VERSIONS) {
         for (i = 0; i < query_request->versions.len; i++) {
             if (query_request->versions.items[i] == SUPPORTED_VERSION) {
                 /* supported version is found */
@@ -160,7 +160,7 @@ teep_err_t create_query_response_or_error(const teep_query_request_t *query_requ
         goto error;
     }
 
-    if (!(query_request->contains & TEEP_MESSAGE_CONTAINS_SUPPORTED_CIPHER_SUITES)) {
+    if (!(query_request->contains & TEEP_MESSAGE_CONTAINS_SUPPORTED_TEEP_CIPHER_SUITES)) {
         /* TODO */
         cipher_suite = supported_cipher_suites[0];
     }
@@ -180,7 +180,7 @@ out:
         goto error;
     }
 
-    if (query_request->data_item_requested & TEEP_DATA_ITEM_ATTESTATION) {
+    if (query_request->data_item_requested.attestation) {
         // TODO
         err_code_contains |= TEEP_ERR_CODE_PERMANENT_ERROR;
         useful_buf_strncpy("ATTESTATION IS NOT SUPPORTED", ERR_MSG_BUF_LEN, &err_msg_buf);
@@ -195,8 +195,8 @@ error: /* would be unneeded if the err-code becomes bit field */
     teep_query_response_t *query_response = (teep_query_response_t *)message;
     memset(query_response, 0, sizeof(teep_query_response_t));
     query_response->type = TEEP_TYPE_QUERY_RESPONSE;
-    query_response->contains = TEEP_MESSAGE_CONTAINS_VERSION |
-                               TEEP_MESSAGE_CONTAINS_SELECTED_CIPHER_SUITE;
+    query_response->contains = TEEP_MESSAGE_CONTAINS_VERSIONS |
+                               TEEP_MESSAGE_CONTAINS_SELECTED_TEEP_CIPHER_SUITE;
     if (query_request->contains & TEEP_MESSAGE_CONTAINS_TOKEN) {
         query_response->token = query_request->token;
         query_response->contains |= TEEP_MESSAGE_CONTAINS_TOKEN;
@@ -204,7 +204,7 @@ error: /* would be unneeded if the err-code becomes bit field */
     query_response->selected_version = version;
     query_response->selected_cipher_suite = cipher_suite;
 
-    if (query_request->data_item_requested & TEEP_DATA_ITEM_TRUSTED_COMPONENTS) {
+    if (query_request->data_item_requested.trusted_components) {
         query_response->contains |= TEEP_MESSAGE_CONTAINS_TC_LIST;
         // TODO encode SUIT_Component_Identifier
         // Currently no tc-list

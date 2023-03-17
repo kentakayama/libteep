@@ -182,8 +182,20 @@ typedef struct teep_tc_info_array {
 } teep_tc_info_array_t;
 
 /*
+ * system-property-claims
+ */
+typedef struct system_property_claims_info {
+    teep_buf_t  component_id;
+    teep_buf_array_t parameters;
+} system_property_claims_t;
+
+/*
  * [ + system-property-claims ]
  */
+typedef struct system_property_claims_info_array {
+    size_t                      len;
+    system_property_claims_t    items[TEEP_MAX_ARRAY_LENGTH];
+} system_property_claims_array_t;
 
 /*
  * requested-tc-info
@@ -278,6 +290,7 @@ typedef struct teep_query_response {
     uint32_t                                selected_version;
     teep_buf_t                              attestation_payload_format;
     teep_buf_t                              attestation_payload;
+    //system_property_claims_array_t          tc_list;
     teep_buf_array_t                        tc_list;
     teep_requested_tc_info_array_t          requested_tc_list;
     teep_buf_array_t                        unneeded_tc_list;
