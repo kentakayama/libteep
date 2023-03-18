@@ -5,7 +5,7 @@
 -->
 
 # Error Message
-    https://tools.ietf.org/html/draft-ietf-teep-protocol-10#appendix-D.6
+    https://datatracker.ietf.org/doc/html/draft-ietf-teep-protocol-12#name-d6-error-message
 
 ## CBOR Diagnostic Notation
 ~~~~cbor-diag

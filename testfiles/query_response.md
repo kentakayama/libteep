@@ -5,7 +5,7 @@
 -->
 
 # QueryRequest Message
-    https://tools.ietf.org/html/draft-ietf-teep-protocol-10#appendix-D.3
+    https://datatracker.ietf.org/doc/html/draft-ietf-teep-protocol-12#name-d3-queryresponse-message
 
 ## CBOR Diagnostic Notation
 ~~~~cbor-diag
@@ -15,20 +15,20 @@
   / options: /
   {
     / token / 20 : h'A0A1A2A3A4A5A6A7A8A9AAABACADAEAF',
-    / selected-cipher-suite / 5 : [ [ 18, -7 ] ] / Sign1 using ES256 /,
+    / selected-teep-cipher-suite / 5 : [ [ 18, -7 ] ] / Sign1 using ES256 /,
     / selected-version / 6 : 0,
     / tc-list / 8 : [
       {
-        / component-id / 16 : [ h'0102030405060708090A0B0C0D0E0F' ],
-        / suit-parameter-image-digest / 3: << [
+        / system-component-id / 0 : [ h'0102030405060708090A0B0C0D0E0F' ],
+        / suit-parameter-image-digest / 3 : << [
           / suit-digest-algorithm-id / -16 / SHA256 /,
-          / suit-digest-bytes / h'a7fd6593eac32eb4be578278e6540c5c09cfd7d4d234973054833b2b93030609'
+          / suit-digest-bytes / h'A7FD6593EAC32EB4BE578278E6540C5C09CFD7D4D234973054833B2B93030609'
             / SHA256 digest of tc binary /
         ] >>
       },
       {
-        / component-id / 16 : [ h'1102030405060708090A0B0C0D0E0F' ],
-        / suit-parameter-version / 28 : [1, 0, 0] / ver 1.0.0 /
+        / system-component-id / 0 : [ h'1102030405060708090A0B0C0D0E0F' ],
+        / suit-parameter-version / 28 : [ 1, 0, 0 ] / ver 1.0.0 /
       }
     ]
   }
@@ -54,7 +54,7 @@
       08                # unsigned(8) / tc-list: /
       82                # array(2)
          A2             # map(2)
-            10          # unsigned(16) / component-id: /
+            00          # unsigned(0) / system-component-id: /
             81          # array(1)
                4F       # bytes(15)
                   0102030405060708090A0B0C0D0E0F
@@ -65,7 +65,7 @@
                   58 20 # bytes(32)
                      A7FD6593EAC32EB4BE578278E6540C5C09CFD7D4D234973054833B2B93030609
          A1             # map(1)
-            10          # unsigned(16) / component-id: /
+            00          # unsigned(0) / system-component-id: /
             81          # array(1)
                4F       # bytes(15)
                   1102030405060708090A0B0C0D0E0F

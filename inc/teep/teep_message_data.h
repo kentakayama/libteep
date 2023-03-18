@@ -182,8 +182,20 @@ typedef struct teep_tc_info_array {
 } teep_tc_info_array_t;
 
 /*
+ * system-property-claims
+ */
+typedef struct system_property_claims_info {
+    teep_buf_t  component_id;
+    teep_buf_array_t parameters;
+} system_property_claims_t;
+
+/*
  * [ + system-property-claims ]
  */
+typedef struct system_property_claims_info_array {
+    size_t                      len;
+    system_property_claims_t    items[TEEP_MAX_ARRAY_LENGTH];
+} system_property_claims_array_t;
 
 /*
  * requested-tc-info
@@ -256,14 +268,17 @@ typedef union {
  */
 typedef struct teep_query_request {
     teep_type_t                 type;
+
     uint64_t                    contains;
     teep_buf_t                  token;
-    teep_cipher_suite_array_t   supported_cipher_suites;
     teep_uint32_array_t         supported_freshness_mechanisms;
     teep_buf_t                  challenge;
     teep_uint32_array_t         versions;
     // TODO :                   query-request-extensions
     // TODO :                   teep-option-extensions
+
+    teep_cipher_suite_array_t   supported_teep_cipher_suites;
+    teep_cipher_suite_array_t   supported_eat_suit_cipher_suites;
     teep_data_item_requested_t  data_item_requested;
 } teep_query_request_t;
 
@@ -272,12 +287,15 @@ typedef struct teep_query_request {
  */
 typedef struct teep_query_response {
     teep_type_t                             type;
+
     uint64_t                                contains;
     teep_buf_t                              token;
-    teep_cipher_suite_t                     selected_cipher_suite;
+    teep_cipher_suite_t                     selected_teep_cipher_suite;
     uint32_t                                selected_version;
     teep_buf_t                              attestation_payload_format;
     teep_buf_t                              attestation_payload;
+    teep_buf_array_t                        suit_reports;
+    //system_property_claims_array_t          tc_list;
     teep_buf_array_t                        tc_list;
     teep_requested_tc_info_array_t          requested_tc_list;
     teep_buf_array_t                        unneeded_tc_list;
@@ -291,10 +309,13 @@ typedef struct teep_query_response {
  */
 typedef struct teep_update {
     teep_type_t             type;
+
     uint64_t                contains;
     teep_buf_t              token;
     teep_buf_array_t        unneeded_tc_list; // [ + SUIT_Component_Identifier ]
     teep_buf_array_t        manifest_list;
+    teep_buf_t              attestation_payload_format;
+    teep_buf_t              attestation_payload;
     // TODO :               update-extensions
     // TODO :               teep-option-extensions
 } teep_update_t;
@@ -304,6 +325,7 @@ typedef struct teep_update {
  */
 typedef struct teep_success {
     teep_type_t         type;
+
     uint64_t            contains;
     teep_buf_t          token;
     teep_buf_t          msg;
@@ -317,14 +339,17 @@ typedef struct teep_success {
  */
 typedef struct teep_error {
     teep_type_t                 type;
+
     uint64_t                    contains;
     teep_buf_t                  token;
     teep_buf_t                  err_msg;
-    teep_cipher_suite_array_t   supported_cipher_suites;
+    teep_cipher_suite_array_t   supported_teep_cipher_suites;
+    teep_uint32_array_t         supported_freshness_mechanisms;
     teep_uint32_array_t         versions;
     teep_buf_array_t            suit_reports;
     // TODO :                   $$teep-error--extensions
     // TODO :                   $$teep-option-extensions
+
     teep_err_code_t             err_code;
 } teep_error_t;
 

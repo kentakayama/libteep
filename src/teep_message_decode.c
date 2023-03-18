@@ -8,8 +8,9 @@
 #include "teep/teep_message_data.h"
 
 teep_err_t teep_qcbor_get_next(QCBORDecodeContext *message,
-                         QCBORItem *item,
-                         uint8_t data_type) {
+                               QCBORItem *item,
+                               uint8_t data_type)
+{
     QCBORError error = QCBORDecode_GetNext(message, item);
     switch (error) {
         case QCBOR_SUCCESS:
@@ -25,7 +26,8 @@ teep_err_t teep_qcbor_get_next(QCBORDecodeContext *message,
 }
 
 bool teep_qcbor_get_next_uint(QCBORDecodeContext *message,
-                              QCBORItem *item) {
+                              QCBORItem *item)
+{
     if (teep_qcbor_get_next(message, item, QCBOR_TYPE_ANY) == TEEP_SUCCESS) {
         return false;
     }
@@ -42,7 +44,8 @@ bool teep_qcbor_get_next_uint(QCBORDecodeContext *message,
 
 bool teep_qcbor_skip_any(QCBORDecodeContext *message, QCBORItem *item);
 
-bool teep_qcbor_skip_array_and_map(QCBORDecodeContext *message, QCBORItem *item) {
+bool teep_qcbor_skip_array_and_map(QCBORDecodeContext *message, QCBORItem *item)
+{
     if (item->uDataType != QCBOR_TYPE_ARRAY && item->uDataType != QCBOR_TYPE_MAP) {
         return false;
     }
@@ -58,7 +61,8 @@ bool teep_qcbor_skip_array_and_map(QCBORDecodeContext *message, QCBORItem *item)
     return true;
 }
 
-bool teep_qcbor_skip_any(QCBORDecodeContext *message, QCBORItem *item) {
+bool teep_qcbor_skip_any(QCBORDecodeContext *message, QCBORItem *item)
+{
     switch (item->uDataType) {
         case QCBOR_TYPE_ARRAY:
         case QCBOR_TYPE_MAP:
@@ -77,7 +81,8 @@ bool teep_qcbor_skip_any(QCBORDecodeContext *message, QCBORItem *item) {
     return true;
 }
 
-bool teep_qcbor_value_is_uint64(QCBORItem *item) {
+bool teep_qcbor_value_is_uint64(QCBORItem *item)
+{
     if (item->uDataType == QCBOR_TYPE_INT64) {
         if (item->val.int64 < 0) {
             return false;
@@ -90,7 +95,8 @@ bool teep_qcbor_value_is_uint64(QCBORItem *item) {
     return true;
 }
 
-bool teep_qcbor_value_is_uint32(QCBORItem *item) {
+bool teep_qcbor_value_is_uint32(QCBORItem *item)
+{
     switch (item->uDataType) {
         case QCBOR_TYPE_INT64:
             if (item->val.int64 < 0 || item->val.int64 > UINT32_MAX) {
@@ -111,7 +117,8 @@ bool teep_qcbor_value_is_uint32(QCBORItem *item) {
 /* As QCBOR parse [0, INT32_MAX] values as QCBOR_TYPE_INT64,
  * we need to distinguish the number is in [0, INT64_MAX].
  */
-teep_err_t teep_qcbor_get_next_uint64(QCBORDecodeContext *message, QCBORItem *item) {
+teep_err_t teep_qcbor_get_next_uint64(QCBORDecodeContext *message, QCBORItem *item)
+{
     teep_err_t result = teep_qcbor_get_next(message, item, QCBOR_TYPE_ANY);
     if (result != TEEP_SUCCESS) {
         return result;
@@ -150,7 +157,8 @@ uint64_t teep_get_message_type(QCBORDecodeContext *message) {
  * A1 01 82 02 02   # Map(1) { unsigned(1) : Array(2) [ unsigned(2), unsigned(2) ] }
  * O  ^
  */
-size_t teep_qcbor_calc_rollback(QCBORItem *item) {
+size_t teep_qcbor_calc_rollback(QCBORItem *item)
+{
     uint8_t type = item->uDataType;
     if (item->uDataType == QCBOR_TYPE_INT64 && teep_qcbor_value_is_uint64(item)) {
         type = QCBOR_TYPE_UINT64;
@@ -223,8 +231,9 @@ size_t teep_qcbor_calc_rollback(QCBORItem *item) {
  * set ptr and skip out of teep message cbor part such as suit-report
  */
 teep_err_t teep_set_out_of_teep_buf(QCBORDecodeContext *message,
-                                 QCBORItem *item,
-                                 teep_buf_t *teep_buf) {
+                                    QCBORItem *item,
+                                    teep_buf_t *teep_buf)
+{
     /* roll back the cursor locally,
      * because QCBORDecode_GetNext() set the cursor after depends on the context.
      */
@@ -308,8 +317,9 @@ teep_err_t teep_set_any_array(QCBORDecodeContext *message,
 }
 
 teep_err_t teep_set_byte_string(uint8_t data_type,
-                             QCBORItem *item,
-                             teep_buf_t *buf) {
+                               QCBORItem *item,
+                               teep_buf_t *buf)
+{
     if (item->uDataType != data_type) {
         return TEEP_ERR_INVALID_TYPE_OF_ARGUMENT;
     }
@@ -319,8 +329,9 @@ teep_err_t teep_set_byte_string(uint8_t data_type,
 }
 
 teep_err_t teep_set_cipher_suite(QCBORDecodeContext *message,
-                             QCBORItem *item,
-                             teep_cipher_suite_t *cipher_suite) {
+                                 QCBORItem *item,
+                                 teep_cipher_suite_t *cipher_suite)
+{
     if (item->uDataType != QCBOR_TYPE_ARRAY) {
         return TEEP_ERR_INVALID_TYPE_OF_ARGUMENT;
     }
@@ -371,8 +382,9 @@ teep_err_t teep_set_cipher_suite(QCBORDecodeContext *message,
 }
 
 teep_err_t teep_set_cipher_suite_array(QCBORDecodeContext *message,
-                                   QCBORItem *item,
-                                   teep_cipher_suite_array_t *cipher_suites) {
+                                       QCBORItem *item,
+                                       teep_cipher_suite_array_t *cipher_suites)
+{
     teep_err_t result;
     result = teep_qcbor_get_next(message, item, QCBOR_TYPE_ARRAY);
     if (result != TEEP_SUCCESS) {
@@ -399,8 +411,9 @@ teep_err_t teep_set_cipher_suite_array(QCBORDecodeContext *message,
 }
 
 teep_err_t teep_set_tc_info_array(QCBORDecodeContext *message,
-                               QCBORItem *item,
-                               teep_tc_info_array_t *tc_info_arr) {
+                                 QCBORItem *item,
+                                 teep_tc_info_array_t *tc_info_arr)
+{
     teep_err_t result = TEEP_SUCCESS;
 
     INITIALIZE_TEEP_ARRAY_PTR(tc_info_arr);
@@ -460,8 +473,9 @@ teep_err_t teep_set_tc_info_array(QCBORDecodeContext *message,
 }
 
 teep_err_t teep_set_requested_tc_info_array(QCBORDecodeContext *message,
-                                         QCBORItem *item,
-                                         teep_requested_tc_info_array_t *tc_info_arr) {
+                                           QCBORItem *item,
+                                           teep_requested_tc_info_array_t *tc_info_arr)
+{
     teep_err_t result = TEEP_SUCCESS;
 
     INITIALIZE_TEEP_ARRAY_PTR(tc_info_arr);
@@ -525,16 +539,17 @@ teep_err_t teep_set_requested_tc_info_array(QCBORDecodeContext *message,
 }
 
 teep_err_t teep_set_query_request(QCBORDecodeContext *message,
-                               QCBORItem *item,
-                               teep_query_request_t *query_request) {
+                                 QCBORItem *item,
+                                 teep_query_request_t *query_request)
+{
     teep_err_t result = TEEP_SUCCESS;
 
-    query_request->token.ptr = NULL;
-    query_request->token.len = 0;
-    INITIALIZE_TEEP_ARRAY(query_request->supported_cipher_suites);
+    INITIALIZE_TEEP_BUF(query_request->token);
     INITIALIZE_TEEP_ARRAY(query_request->supported_freshness_mechanisms);
     INITIALIZE_TEEP_BUF(query_request->challenge);
     INITIALIZE_TEEP_ARRAY(query_request->versions);
+    INITIALIZE_TEEP_ARRAY(query_request->supported_teep_cipher_suites);
+    INITIALIZE_TEEP_ARRAY(query_request->supported_eat_suit_cipher_suites);
     query_request->data_item_requested.val = 0;
 
     result = teep_qcbor_get_next(message, item, QCBOR_TYPE_MAP);
@@ -581,7 +596,12 @@ teep_err_t teep_set_query_request(QCBORDecodeContext *message,
         }
     }
 
-    result = teep_set_cipher_suite_array(message, item, &query_request->supported_cipher_suites);
+    result = teep_set_cipher_suite_array(message, item, &query_request->supported_teep_cipher_suites);
+    if (result != TEEP_SUCCESS) {
+        return result;
+    }
+
+    result = teep_set_cipher_suite_array(message, item, &query_request->supported_eat_suit_cipher_suites);
     if (result != TEEP_SUCCESS) {
         return result;
     }
@@ -595,13 +615,13 @@ teep_err_t teep_set_query_request(QCBORDecodeContext *message,
 }
 
 teep_err_t teep_set_query_response(QCBORDecodeContext *message,
-                                QCBORItem *item,
-                                teep_query_response_t *query_response) {
+                                  QCBORItem *item,
+                                  teep_query_response_t *query_response)
+{
     teep_err_t result = TEEP_SUCCESS;
 
-    query_response->token.ptr = NULL;
-    query_response->token.len = 0;
-    query_response->selected_cipher_suite = TEEP_CIPHER_SUITE_INVALID;
+    INITIALIZE_TEEP_BUF(query_response->token);
+    query_response->selected_teep_cipher_suite = TEEP_CIPHER_SUITE_INVALID;
     query_response->selected_version = 0U;
     INITIALIZE_TEEP_BUF(query_response->attestation_payload_format);
     INITIALIZE_TEEP_BUF(query_response->attestation_payload);
@@ -629,7 +649,7 @@ teep_err_t teep_set_query_response(QCBORDecodeContext *message,
                 query_response->contains |= TEEP_MESSAGE_CONTAINS_TOKEN;
                 break;
             case TEEP_OPTIONS_KEY_SELECTED_TEEP_CIPHER_SUITE:
-                result = teep_set_cipher_suite(message, item, &query_response->selected_cipher_suite);
+                result = teep_set_cipher_suite(message, item, &query_response->selected_teep_cipher_suite);
                 if (result != TEEP_SUCCESS) {
                     return result;
                 }
@@ -694,12 +714,14 @@ teep_err_t teep_set_query_response(QCBORDecodeContext *message,
 }
 
 teep_err_t teep_set_update(QCBORDecodeContext *message,
-                        QCBORItem *item,
-                        teep_update_t *teep_update) {
+                           QCBORItem *item,
+                           teep_update_t *teep_update)
+{
     teep_err_t result = TEEP_SUCCESS;
 
-    teep_update->token.ptr = NULL;
-    teep_update->token.len = 0;
+    INITIALIZE_TEEP_BUF(teep_update->token);
+    INITIALIZE_TEEP_BUF(teep_update->attestation_payload_format);
+    INITIALIZE_TEEP_BUF(teep_update->attestation_payload);
     INITIALIZE_TEEP_ARRAY(teep_update->unneeded_tc_list);
     INITIALIZE_TEEP_ARRAY(teep_update->manifest_list);
 
@@ -735,6 +757,20 @@ teep_err_t teep_set_update(QCBORDecodeContext *message,
                 }
                 teep_update->contains |= TEEP_MESSAGE_CONTAINS_MANIFEST_LIST;
                 break;
+            case TEEP_OPTIONS_KEY_ATTESTATION_PAYLOAD_FORMAT:
+                result = teep_set_byte_string(QCBOR_TYPE_TEXT_STRING, item, &teep_update->attestation_payload_format);
+                if (result != TEEP_SUCCESS) {
+                    return result;
+                }
+                teep_update->contains |= TEEP_MESSAGE_CONTAINS_ATTESTATION_PAYLOAD_FORMAT;
+                break;
+            case TEEP_OPTIONS_KEY_ATTESTATION_PAYLOAD:
+                result = teep_set_byte_string(QCBOR_TYPE_BYTE_STRING, item, &teep_update->attestation_payload);
+                if (result != TEEP_SUCCESS) {
+                    return result;
+                }
+                teep_update->contains |= TEEP_MESSAGE_CONTAINS_ATTESTATION_PAYLOAD;
+                break;
             default:
                 return TEEP_ERR_UNEXPECTED_ERROR;
         }
@@ -743,10 +779,12 @@ teep_err_t teep_set_update(QCBORDecodeContext *message,
 }
 
 teep_err_t teep_set_success(QCBORDecodeContext *message,
-                         QCBORItem *item,
-                         teep_success_t *teep_success) {
+                            QCBORItem *item,
+                            teep_success_t *teep_success)
+{
     teep_err_t result = TEEP_SUCCESS;
 
+    INITIALIZE_TEEP_BUF(teep_success->token);
     INITIALIZE_TEEP_BUF(teep_success->msg);
     INITIALIZE_TEEP_ARRAY(teep_success->suit_reports);
 
@@ -790,11 +828,14 @@ teep_err_t teep_set_success(QCBORDecodeContext *message,
 }
 
 teep_err_t teep_set_error(QCBORDecodeContext *message,
-                       QCBORItem *item,
-                       teep_error_t *teep_error) {
+                          QCBORItem *item,
+                          teep_error_t *teep_error)
+{
     teep_err_t result = TEEP_SUCCESS;
+    INITIALIZE_TEEP_BUF(teep_error->token);
     INITIALIZE_TEEP_BUF(teep_error->err_msg);
-    INITIALIZE_TEEP_ARRAY(teep_error->supported_cipher_suites);
+    INITIALIZE_TEEP_ARRAY(teep_error->supported_teep_cipher_suites);
+    INITIALIZE_TEEP_ARRAY(teep_error->supported_freshness_mechanisms);
     INITIALIZE_TEEP_ARRAY(teep_error->versions);
     INITIALIZE_TEEP_ARRAY(teep_error->suit_reports);
     teep_error->err_code = TEEP_ERR_CODE_INVALID;
@@ -825,11 +866,18 @@ teep_err_t teep_set_error(QCBORDecodeContext *message,
                 teep_error->contains |= TEEP_MESSAGE_CONTAINS_ERR_MSG;
                 break;
             case TEEP_OPTIONS_KEY_SUPPORTED_TEEP_CIPHER_SUITES:
-                result = teep_set_cipher_suite_array(message, item, &teep_error->supported_cipher_suites);
+                result = teep_set_cipher_suite_array(message, item, &teep_error->supported_teep_cipher_suites);
                 if (result != TEEP_SUCCESS) {
                     return result;
                 }
                 teep_error->contains |= TEEP_MESSAGE_CONTAINS_SUPPORTED_TEEP_CIPHER_SUITES;
+                break;
+            case TEEP_OPTIONS_KEY_SUPPORTED_FRESHNESS_MECHANISMS:
+                result = teep_set_any_array(message, item, QCBOR_TYPE_UINT32, &teep_error->supported_freshness_mechanisms);
+                if (result != TEEP_SUCCESS) {
+                    return result;
+                }
+                teep_error->contains |= TEEP_MESSAGE_CONTAINS_SUPPORTED_FRESHNESS_MECHANISMS;
                 break;
             case TEEP_OPTIONS_KEY_VERSIONS:
                 result = teep_set_any_array(message, item, QCBOR_TYPE_UINT32, &teep_error->versions);
@@ -858,7 +906,10 @@ teep_err_t teep_set_error(QCBORDecodeContext *message,
     return TEEP_SUCCESS;
 }
 
-teep_err_t teep_set_message_from_bytes(const uint8_t *buf, const size_t len, teep_message_t *msg) {
+teep_err_t teep_set_message_from_bytes(const uint8_t *buf,
+                                       const size_t len,
+                                       teep_message_t *msg)
+{
     teep_err_t result = TEEP_SUCCESS;
     QCBORDecodeContext decode_context;
     QCBORItem item;
