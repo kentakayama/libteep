@@ -593,6 +593,10 @@ teep_err_t teep_print_update(const teep_update_t *teep_update,
                 return result;
             }
 #endif /* PARSE_SUIT */
+            if (i + 1 < teep_update->manifest_list.len) {
+                printf(",");
+            }
+            printf("\n");
         }
         printf("%*s]", indent_space + 2 * indent_delta, "");
     }
