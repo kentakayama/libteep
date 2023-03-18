@@ -601,6 +601,11 @@ teep_err_t teep_set_query_request(QCBORDecodeContext *message,
         return result;
     }
 
+    result = teep_set_cipher_suite_array(message, item, &query_request->supported_eat_suit_cipher_suites);
+    if (result != TEEP_SUCCESS) {
+        return result;
+    }
+
     result = teep_qcbor_get_next_uint64(message, item);
     if (result != TEEP_SUCCESS) {
         return result;
