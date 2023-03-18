@@ -5,7 +5,7 @@
 -->
 
 # Success Message
-    https://tools.ietf.org/html/draft-ietf-teep-protocol-10#appendix-D.5
+    https://datatracker.ietf.org/doc/html/draft-ietf-teep-protocol-12#name-d5-success-message
 
 ## CBOR Diagnostic Notation
 ~~~~cbor-diag
