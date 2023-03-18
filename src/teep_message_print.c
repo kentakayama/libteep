@@ -319,13 +319,26 @@ teep_err_t teep_print_query_request(const teep_query_request_t *query_request,
     printf("\n%*s},\n", indent_space + indent_delta, "");
 
     printf("%*s/ supported-teep-cipher-suites : / [\n", indent_space + indent_delta, "");
-    for (size_t i = 0; i < query_request->supported_cipher_suites.len; i++) {
+    for (size_t i = 0; i < query_request->supported_teep_cipher_suites.len; i++) {
         printf("%*s", indent_space + 2 * indent_delta, "");
-        result = teep_print_cipher_suite(&query_request->supported_cipher_suites.items[i]);
+        result = teep_print_cipher_suite(&query_request->supported_teep_cipher_suites.items[i]);
         if (result != TEEP_SUCCESS) {
             return result;
         }
-        if (i + 1 < query_request->supported_cipher_suites.len) {
+        if (i + 1 < query_request->supported_teep_cipher_suites.len) {
+            printf(",");
+        }
+        printf("\n");
+    }
+    printf("%*s],\n", indent_space + indent_delta, "");
+    printf("%*s/ supported-eat-suit-cipher-suites : / [\n", indent_space + indent_delta, "");
+    for (size_t i = 0; i < query_request->supported_eat_suit_cipher_suites.len; i++) {
+        printf("%*s", indent_space + 2 * indent_delta, "");
+        result = teep_print_cipher_suite(&query_request->supported_eat_suit_cipher_suites.items[i]);
+        if (result != TEEP_SUCCESS) {
+            return result;
+        }
+        if (i + 1 < query_request->supported_eat_suit_cipher_suites.len) {
             printf(",");
         }
         printf("\n");
@@ -389,7 +402,7 @@ teep_err_t teep_print_query_response(const teep_query_response_t *query_response
         printed = true;
 
         printf("%*s/ selected-teep-cipher-suite / %d : ", indent_space + 2 * indent_delta, "", TEEP_OPTIONS_KEY_SELECTED_TEEP_CIPHER_SUITE);
-        result = teep_print_cipher_suite(&query_response->selected_cipher_suite);
+        result = teep_print_cipher_suite(&query_response->selected_teep_cipher_suite);
         if (result != TEEP_SUCCESS) {
             return result;
         }
@@ -424,6 +437,21 @@ teep_err_t teep_print_query_response(const teep_query_response_t *query_response
         result = teep_print_hex(query_response->attestation_payload.ptr, query_response->attestation_payload.len);
         if (result != TEEP_SUCCESS) {
             return result;
+        }
+    }
+    if (query_response->contains & TEEP_MESSAGE_CONTAINS_SUIT_REPORTS) {
+        if (printed) {
+            printf(",\n");
+        }
+        printed = true;
+
+        printf("%*s/ suit-reports / %d : [\n", indent_space + 2 * indent_delta, "", TEEP_OPTIONS_KEY_SUIT_REPORTS);
+        for (size_t i = 0; i < query_response->suit_reports.len; i++) {
+            printf("%*s", indent_space + 3 * indent_delta, "");
+            teep_print_hex(query_response->suit_reports.items[i].ptr, query_response->suit_reports.items[i].len);
+            if (i + 1 < query_response->suit_reports.len) {
+                printf(",\n");
+            }
         }
     }
     if (query_response->contains & TEEP_MESSAGE_CONTAINS_TC_LIST) {
@@ -467,6 +495,22 @@ teep_err_t teep_print_query_response(const teep_query_response_t *query_response
             printf("\n%*s}\n", indent_space + 3 * indent_delta, "");
         }
         printf("%*s]\n", indent_space + 2 * indent_delta, "");
+    }
+    if (query_response->contains & TEEP_MESSAGE_CONTAINS_UNNEEDED_TC_LIST) {
+        if (printed) {
+            printf(",\n");
+        }
+        printed = true;
+
+        printf("%*s/ unneeded-tc-list / %d : [\n", indent_space + 2 * indent_delta, "", TEEP_OPTIONS_KEY_UNNEEDED_TC_LIST);
+        for (size_t i = 0; i < query_response->unneeded_tc_list.len; i++) {
+            printf("%*s", indent_space + 3 * indent_delta, "");
+            result = teep_print_component_id(&query_response->unneeded_tc_list.items[i]);
+            if (result != TEEP_SUCCESS) {
+                return result;
+            }
+        }
+        printf("\n%*s]", indent_space + 2 * indent_delta, "");
     }
     if (query_response->contains & TEEP_MESSAGE_CONTAINS_EXT_LIST) {
         if (printed) {
@@ -552,6 +596,30 @@ teep_err_t teep_print_update(const teep_update_t *teep_update,
         }
         printf("%*s]", indent_space + 2 * indent_delta, "");
     }
+    if (teep_update->contains & TEEP_MESSAGE_CONTAINS_ATTESTATION_PAYLOAD_FORMAT) {
+        if (printed) {
+            printf(",\n");
+        }
+        printed = true;
+
+        printf("%*s/ attestation-payload-format / %d : ", indent_space + 2 * indent_delta, "", TEEP_OPTIONS_KEY_ATTESTATION_PAYLOAD_FORMAT);
+        result = teep_print_string(&teep_update->attestation_payload_format);
+        if (result != TEEP_SUCCESS) {
+            return result;
+        }
+    }
+    if (teep_update->contains & TEEP_MESSAGE_CONTAINS_ATTESTATION_PAYLOAD) {
+        if (printed) {
+            printf(",\n");
+        }
+        printed = true;
+
+        printf("%*s/ attestation-payload / %d : ", indent_space + 2 * indent_delta, "", TEEP_OPTIONS_KEY_ATTESTATION_PAYLOAD);
+        result = teep_print_hex(teep_update->attestation_payload.ptr, teep_update->attestation_payload.len);
+        if (result != TEEP_SUCCESS) {
+            return result;
+        }
+    }
     printf("\n%*s}\n%*s]\n", indent_space + indent_delta, "", indent_space, "");
     return TEEP_SUCCESS;
 }
@@ -596,15 +664,46 @@ teep_err_t teep_print_error(const teep_error_t *teep_error,
         printed = true;
 
         printf("%*s/ supported-teep-cipher-suites / %d : [\n", indent_space + 2 * indent_delta, "", TEEP_OPTIONS_KEY_SUPPORTED_TEEP_CIPHER_SUITES);
-        for (size_t i = 0; i < teep_error->supported_cipher_suites.len; i++) {
+        for (size_t i = 0; i < teep_error->supported_teep_cipher_suites.len; i++) {
             printf("%*s", indent_space + 6, "");
-            result = teep_print_cipher_suite(&teep_error->supported_cipher_suites.items[i]);
+            result = teep_print_cipher_suite(&teep_error->supported_teep_cipher_suites.items[i]);
             if (result != TEEP_SUCCESS) {
                 return result;
             }
             printf(",\n");
         }
         printf("%*s]", indent_space + 2 * indent_delta, "");
+    }
+    /*
+    if (teep_error->contains & TEEP_MESSAGE_CONTAINS_SUPPORTED_EAT_SUIT_CIPHER_SUITES) {
+        if (printed) {
+            printf(",\n");
+        }
+        printed = true;
+
+        printf("%*s/ supported-eat-suit-cipher-suites / %d : [\n", indent_space + 2 * indent_delta, "", TEEP_OPTIONS_KEY_SUPPORTED_TEEP_CIPHER_SUITES);
+        for (size_t i = 0; i < teep_error->supported_teep_cipher_suites.len; i++) {
+            printf("%*s", indent_space + 6, "");
+            result = teep_print_cipher_suite(&teep_error->supported_teep_cipher_suites.items[i]);
+            if (result != TEEP_SUCCESS) {
+                return result;
+            }
+            printf(",\n");
+        }
+        printf("%*s]", indent_space + 2 * indent_delta, "");
+    }
+    */
+    if (teep_error->contains & TEEP_MESSAGE_CONTAINS_SUPPORTED_FRESHNESS_MECHANISMS) {
+        if (printed) {
+            printf(",\n");
+        }
+        printed = true;
+
+        printf("%*s/ supported-freshness-mechanisms / %d : [ ", indent_space + 2 * indent_delta, "", TEEP_OPTIONS_KEY_SUPPORTED_FRESHNESS_MECHANISMS);
+        for (size_t i = 0; i < teep_error->supported_freshness_mechanisms.len; i++) {
+            printf("%u, ", teep_error->supported_freshness_mechanisms.items[i]);
+        }
+        printf("]");
     }
     if (teep_error->contains & TEEP_MESSAGE_CONTAINS_VERSIONS) {
         if (printed) {
@@ -620,6 +719,21 @@ teep_err_t teep_print_error(const teep_error_t *teep_error,
             }
         }
         printf("]");
+    }
+    if (teep_error->contains & TEEP_MESSAGE_CONTAINS_SUIT_REPORTS) {
+        if (printed) {
+            printf(",\n");
+        }
+        printed = true;
+
+        printf("%*s/ suit-reports / %d : [\n", indent_space + 2 * indent_delta, "", TEEP_OPTIONS_KEY_SUIT_REPORTS);
+        for (size_t i = 0; i < teep_error->suit_reports.len; i++) {
+            printf("%*s", indent_space + 3 * indent_delta, "");
+            teep_print_hex(teep_error->suit_reports.items[i].ptr, teep_error->suit_reports.items[i].len);
+            if (i + 1 < teep_error->suit_reports.len) {
+                printf(",\n");
+            }
+        }
     }
     printf("\n%*s},\n", indent_space + indent_delta, "");
     printf("%*s/ err-code : / %u / (%s) /\n", indent_space + indent_delta, "", teep_error->err_code, teep_err_code_to_str(teep_error->err_code));
@@ -667,7 +781,8 @@ teep_err_t teep_print_success(const teep_success_t *teep_success,
 teep_err_t teep_print_message(const teep_message_t *msg,
                               uint32_t indent_space,
                               uint32_t indent_delta,
-                              const char *ta_public_key) {
+                              const char *ta_public_key)
+{
     if (msg == NULL) {
         return TEEP_ERR_UNEXPECTED_ERROR;
     }
