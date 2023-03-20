@@ -10,7 +10,8 @@
 
 void test_set_out_of_teep_buf(void);
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
     CU_pSuite suite;
     CU_initialize_registry();
     suite = CU_add_suite("TEEP", NULL, NULL);
@@ -21,7 +22,10 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
-void test_set_out_of_teep_buf_from_buf(uint8_t *ptr, size_t len, teep_buf_t *buf) {
+void test_set_out_of_teep_buf_from_buf(uint8_t *ptr,
+                                       size_t len,
+                                       teep_buf_t *buf)
+{
     QCBORDecodeContext context;
     QCBORItem item;
     QCBORError error;
@@ -35,7 +39,8 @@ void test_set_out_of_teep_buf_from_buf(uint8_t *ptr, size_t len, teep_buf_t *buf
     return;
 }
 
-void test_set_out_of_teep_buf(void) {
+void test_set_out_of_teep_buf(void)
+{
     teep_buf_t teep_buf;
 
     /* SUIT_Envelope as .cbor bstr */
@@ -50,3 +55,5 @@ void test_set_out_of_teep_buf(void) {
     CU_ASSERT(teep_buf.len == sizeof(buf1));
     CU_ASSERT(teep_buf.ptr == buf1);
 }
+
+
