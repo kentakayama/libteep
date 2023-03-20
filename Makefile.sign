@@ -5,7 +5,7 @@
 #
 
 CFLAGS			= -Wall -g
-LDFLAGS			= -lt_cose -lqcbor -lcrypto -lm
+LDFLAGS			= -lt_cose -lqcbor -lm
 INC				= -I ./inc -I ./examples/inc
 TARGET			= ./bin/teep_sign_test
 SRCS			= examples/teep_sign_test_main.c examples/teep_examples_common.c examples/teep_examples_cose.c src/teep_common.c src/teep_message_encode.c src/teep_message_decode.c src/teep_message_print.c src/teep_cose.c
