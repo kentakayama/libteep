@@ -460,9 +460,9 @@ teep_err_t teep_print_query_response(const teep_query_response_t *query_response
         }
         printed = true;
 
-        printf("%*s/ tc-list / %d : [\n", indent_space + 2 * indent_delta, "", TEEP_OPTIONS_KEY_TC_LIST);
+        printf("%*s/ tc-list / %d : [", indent_space + 2 * indent_delta, "", TEEP_OPTIONS_KEY_TC_LIST);
         for (size_t i = 0; i < query_response->tc_list.len; i++) {
-            printf("%*s", indent_space + 3 * indent_delta, "");
+            printf("\n%*s", indent_space + 3 * indent_delta, "");
             teep_print_hex(query_response->tc_list.items[i].ptr, query_response->tc_list.items[i].len);
             if (i + 1 < query_response->tc_list.len) {
                 printf(",\n");
@@ -669,7 +669,7 @@ teep_err_t teep_print_error(const teep_error_t *teep_error,
 
         printf("%*s/ supported-teep-cipher-suites / %d : [\n", indent_space + 2 * indent_delta, "", TEEP_OPTIONS_KEY_SUPPORTED_TEEP_CIPHER_SUITES);
         for (size_t i = 0; i < teep_error->supported_teep_cipher_suites.len; i++) {
-            printf("%*s", indent_space + 6, "");
+            printf("%*s", indent_space + 3 * indent_delta, "");
             result = teep_print_cipher_suite(&teep_error->supported_teep_cipher_suites.items[i]);
             if (result != TEEP_SUCCESS) {
                 return result;
@@ -687,7 +687,7 @@ teep_err_t teep_print_error(const teep_error_t *teep_error,
 
         printf("%*s/ supported-eat-suit-cipher-suites / %d : [\n", indent_space + 2 * indent_delta, "", TEEP_OPTIONS_KEY_SUPPORTED_TEEP_CIPHER_SUITES);
         for (size_t i = 0; i < teep_error->supported_teep_cipher_suites.len; i++) {
-            printf("%*s", indent_space + 6, "");
+            printf("%*s", indent_space + 3 * indent_delta, "");
             result = teep_print_cipher_suite(&teep_error->supported_teep_cipher_suites.items[i]);
             if (result != TEEP_SUCCESS) {
                 return result;

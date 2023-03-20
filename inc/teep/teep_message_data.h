@@ -374,6 +374,12 @@ teep_err_t teep_set_success(QCBORDecodeContext *teep_message, QCBORItem *item, t
 teep_err_t teep_set_error(QCBORDecodeContext *teep_message, QCBORItem *item, teep_error_t *teep_error);
 teep_err_t teep_set_message_from_bytes(const uint8_t *buf, const size_t len, teep_message_t *msg);
 
-teep_err_t teep_encode_message(const teep_message_t *message, void **buf, size_t *len);
+teep_err_t teep_encode_signed_message(const teep_message_t *message,
+                                      teep_key_t *key_pair,
+                                      void **buf,
+                                      size_t *len);
+teep_err_t teep_encode_message(const teep_message_t *message,
+                               void **buf,
+                               size_t *len);
 
 #endif  /* TEEP_MESSAGE_DATA_H */
