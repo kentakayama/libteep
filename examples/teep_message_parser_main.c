@@ -26,7 +26,8 @@ const unsigned char *teep_public_key = tam_es256_public_key;
 const unsigned char *teep_public_key = teep_agent_es256_public_key;
 #endif
 
-int main(int argc, const char * argv[]) {
+int main(int argc, const char * argv[])
+{
     int32_t result;
     teep_message_t msg = { 0 };
     const char *cbor_file_name = NULL;

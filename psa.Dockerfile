@@ -25,7 +25,9 @@ WORKDIR /root/libteep
 RUN make MBEDTLS=1
 RUN make -f Makefile.cose MBEDTLS=1
 RUN make -f Makefile.parser MBEDTLS=1
+RUN make -f Makefile.sign MBEDTLS=1
 
 CMD make MBEDTLS=1 test && \
     make -f Makefile.cose MBEDTLS=1 run && \
-    make -f Makefile.parser MBEDTLS=1 run
+    make -f Makefile.parser MBEDTLS=1 run && \
+    make -f Makefile.sign MBEDTLS=1 run
