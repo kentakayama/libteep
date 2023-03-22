@@ -548,7 +548,7 @@ teep_err_t teep_print_update(const teep_update_t *teep_update,
         }
         printed = true;
 
-        printf("%*s/ token / %d : ", indent_space + indent_delta, "", TEEP_OPTIONS_KEY_TOKEN);
+        printf("%*s/ token / %d : ", indent_space + 2 * indent_delta, "", TEEP_OPTIONS_KEY_TOKEN);
         teep_print_hex(teep_update->token.ptr, teep_update->token.len);
     }
     if (teep_update->contains & TEEP_MESSAGE_CONTAINS_UNNEEDED_TC_LIST) {
@@ -582,7 +582,7 @@ teep_err_t teep_print_update(const teep_update_t *teep_update,
             if (suit_result != SUIT_SUCCESS) {
                 return TEEP_ERR_UNEXPECTED_ERROR;
             }
-            suit_result = suit_print_envelope(SUIT_DECODE_MODE_SKIP_ANY_ERROR, &envelope, indent_space + 6);
+            suit_result = suit_print_envelope(SUIT_DECODE_MODE_SKIP_ANY_ERROR, &envelope, indent_space + 3 * indent_delta);
             if (result != SUIT_SUCCESS) {
                 return TEEP_ERR_UNEXPECTED_ERROR;
             }
