@@ -25,13 +25,22 @@ UsefulBufC kid = (UsefulBufC){
     .ptr = "101",
     .len = 3,
 };
-#else /* TEEP_ACTOR_TAM as default */
+#elif TEEP_ACTOR_TAM == 1
 #include "tam_es256_private_key.h"
 #include "tam_es256_public_key.h"
 const unsigned char *teep_private_key = tam_es256_private_key;
 const unsigned char *teep_public_key = tam_es256_public_key;
 UsefulBufC kid = (UsefulBufC){
     .ptr = "201",
+    .len = 3,
+};
+#else
+#include "verifier_es256_private_key.h"
+#include "verifier_es256_public_key.h"
+const unsigned char *teep_private_key = verifier_es256_private_key;
+const unsigned char *teep_public_key = verifier_es256_public_key;
+UsefulBufC kid = (UsefulBufC){
+    .ptr = "301",
     .len = 3,
 };
 #endif

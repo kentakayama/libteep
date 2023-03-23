@@ -8,7 +8,9 @@ TARGETS	:=	query_request.cbor \
 			query_response.cbor \
 			update.cbor \
 			teep_success.cbor \
-			teep_error.cbor
+			teep_error.cbor \
+			evidence.cbor \
+			attestation_results.cbor
 
 .PHONY: all clean
 
