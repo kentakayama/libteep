@@ -24,8 +24,8 @@ endif
 
 all: $(TARGET)
 
-$(TARGET):
-	$(CC) -o $@ main.c $(CFLAGS) $(LDFLAGS) $(INC)
+$(TARGET): main.c
+	$(CC) -o $@ $< $(CFLAGS) $(LDFLAGS) $(INC)
 
 $(RESULT): $(TARGET)
 	$(TARGET) > $(RESULT)

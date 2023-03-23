@@ -365,6 +365,9 @@ typedef union {
     teep_error_t teep_error;
 } teep_message_t;
 
+void teep_QCBOREncode_AddUsefulBufC(QCBOREncodeContext *pMe, UsefulBufC buf);
+void teep_QCBOREncode_AddUsefulBufCToMapN(QCBOREncodeContext *pMe, int64_t uLabel, UsefulBufC buf);
+
 teep_err_t teep_set_out_of_teep_buf(QCBORDecodeContext *message, QCBORItem *item, teep_buf_t *teep_buf);
 uint64_t get_teep_message_type(QCBORDecodeContext *teep_message);
 teep_err_t teep_set_query_request(QCBORDecodeContext *teep_message, QCBORItem *item, teep_query_request_t *query_request);
