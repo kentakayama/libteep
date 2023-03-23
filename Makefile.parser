@@ -66,4 +66,4 @@ run: $(TAM) $(AGENT)
 	$(TAM) ./testfiles/teep_error$(COSE_FLAG).cbor || exit 1
 
 clean:
-	rm -f $(OBJS) $(TAM_OBJ) $(AGENT_OBJ) $(TAM) $(AGENT)
+	$(RM) $(OBJS) $(TAM_OBJ) $(AGENT_OBJ) $(TAM) $(AGENT)

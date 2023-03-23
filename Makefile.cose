@@ -54,7 +54,7 @@ $(VERIFIER): $(OBJS) $(VERIFIER_OBJ)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 clean:
-	$(RM) -f $(OBJS) $(TAM_OBJ) $(AGENT_OBJ) $(TAM) $(AGENT)
+	$(RM) $(OBJS) $(TAM_OBJ) $(AGENT_OBJ) $(VERIFIER_OBJ) $(TAM) $(AGENT) $(VERIFIER)
 
 
 SOURCES	:= query_request.cbor query_response.cbor update.cbor teep_success.cbor teep_error.cbor evidence.cbor attestation_results.cbor
