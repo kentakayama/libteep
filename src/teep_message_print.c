@@ -585,15 +585,18 @@ teep_err_t teep_print_update(const teep_update_t *teep_update,
             suit_mechanisms[0].use = true;
 
             suit_buf_t buf = {.ptr = teep_update->manifest_list.items[i].ptr, .len = teep_update->manifest_list.items[i].len};
-            suit_envelope_t envelope;
+            suit_envelope_t envelope = {0};
             suit_result = suit_decode_envelope(SUIT_DECODE_MODE_SKIP_ANY_ERROR, &buf, &envelope, suit_mechanisms);
             if (suit_result != SUIT_SUCCESS) {
                 return TEEP_ERR_UNEXPECTED_ERROR;
             }
-            suit_result = suit_print_envelope(SUIT_DECODE_MODE_SKIP_ANY_ERROR, &envelope, indent_space + 3 * indent_delta, indent_delta);
+
+            printf("%*s<<", indent_space + 3 * indent_delta, "");
+            suit_result = suit_print_envelope(SUIT_DECODE_MODE_SKIP_ANY_ERROR, &envelope, indent_space + 4 * indent_delta, indent_delta);
             if (suit_result != SUIT_SUCCESS) {
                 return TEEP_ERR_UNEXPECTED_ERROR;
             }
+            printf("\n%*s>>", indent_space + 3 * indent_delta, "");
 #else
             printf("%*s", indent_space + 3 * indent_delta, "");
             result = teep_print_hex_within_max(teep_update->manifest_list.items[i].ptr, teep_update->manifest_list.items[i].len, TEEP_MAX_PRINT_BYTE_COUNT);

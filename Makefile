@@ -5,7 +5,6 @@
 #
 
 NAME	= libteep
-CC		= gcc
 CFLAGS	= -Wall -g -fPIC
 LDFLAGS	= -lt_cose -lqcbor
 INC		= -I ./inc
@@ -22,6 +21,13 @@ else
     # use OpenSSL
     MBEDTLS=0
     LDFLAGS += -lcrypto
+endif
+
+ifdef suit
+    CFLAGS += -DPARSE_SUIT
+    #LDFLAGS := ../libcsuit/bin/libcsuit.a $(LDFLAGS)
+    INC += -I ../libcsuit/inc -I ../libcsuit/examples/inc
+    #OBJ += $(SUIT_EXAMPLES_COSE)
 endif
 
 .PHONY: all so install uninstall build_test test clean
