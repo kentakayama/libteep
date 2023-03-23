@@ -480,17 +480,17 @@ teep_err_t teep_print_query_response(const teep_query_response_t *query_response
         printf("%*s/ requested-tc-list / %d : [\n", indent_space + 2 * indent_delta, "", TEEP_OPTIONS_KEY_REQUESTED_TC_LIST);
         for (size_t i = 0; i < query_response->requested_tc_list.len; i++) {
             printf("%*s{\n", indent_space + 3 * indent_delta, "");
-            printf("%*s/ component-id : / ", indent_space + 4 * indent_delta, "");
+            printf("%*s/ component-id / %d : ", indent_space + 4 * indent_delta, "", TEEP_OPTIONS_KEY_COMPONENT_ID);
             result = teep_print_component_id(&query_response->requested_tc_list.items[i].component_id);
             if (result != TEEP_SUCCESS) {
                 return result;
             }
 
             if (query_response->requested_tc_list.items[i].contains & TEEP_MESSAGE_CONTAINS_TC_MANIFEST_SEQUENCE_NUMBER) {
-                printf(",\n%*s/ tc-manifest-sequence-number : / %lu", indent_space + 4 * indent_delta, "", query_response->requested_tc_list.items[i].tc_manifest_sequence_number);
+                printf(",\n%*s/ tc-manifest-sequence-number / %d : %lu", indent_space + 4 * indent_delta, "", TEEP_OPTIONS_KEY_TC_MANIFEST_SEQUENCE_NUMBER, query_response->requested_tc_list.items[i].tc_manifest_sequence_number);
             }
             if (query_response->requested_tc_list.items[i].contains & TEEP_MESSAGE_CONTAINS_HAVE_BINARY) {
-                printf(",\n%*s/ have-binary : / %s", indent_space + 4 * indent_delta, "", (query_response->requested_tc_list.items[i].have_binary) ? "true" : "false");
+                printf(",\n%*s/ have-binary / %d : %s", indent_space + 4 * indent_delta, "", TEEP_OPTIONS_KEY_HAVE_BINARY, (query_response->requested_tc_list.items[i].have_binary) ? "true" : "false");
             }
             printf("\n%*s}\n", indent_space + 3 * indent_delta, "");
         }
