@@ -10,6 +10,7 @@
 
 #ifdef PARSE_SUIT
 #include "csuit/csuit.h"
+#include "suit_examples_common.h"
 #endif
 
 const char *teep_err_to_str(teep_err_t err)
@@ -360,7 +361,7 @@ teep_err_t teep_print_component_id(const teep_buf_t *component_id)
 #ifdef PARSE_SUIT
     suit_buf_t buf = {.ptr = component_id->ptr, .len = component_id->len};
     suit_component_identifier_t identifier;
-    suit_err_t suit_result = suit_set_component_identifiers(SUIT_DECODE_MODE_SKIP_ANY_ERROR, &buf, &identifier);
+    suit_err_t suit_result = suit_decode_component_identifiers(SUIT_DECODE_MODE_SKIP_ANY_ERROR, &buf, &identifier);
     if (suit_result != SUIT_SUCCESS) {
         return TEEP_ERR_UNEXPECTED_ERROR;
     }
@@ -531,7 +532,7 @@ teep_err_t teep_print_query_response(const teep_query_response_t *query_response
 teep_err_t teep_print_update(const teep_update_t *teep_update,
                              uint32_t indent_space,
                              uint32_t indent_delta,
-                             const char *ta_public_key)
+                             const unsigned char *ta_public_key)
 {
     if (teep_update == NULL) {
         return TEEP_ERR_UNEXPECTED_ERROR;
@@ -575,14 +576,22 @@ teep_err_t teep_print_update(const teep_update_t *teep_update,
         printf("%*s/ manifest-list / %d : [\n", indent_space + 2 * indent_delta, "", TEEP_OPTIONS_KEY_MANIFEST_LIST);
         for (size_t i = 0; i < teep_update->manifest_list.len; i++) {
 #ifdef PARSE_SUIT
-            suit_buf_t buf = {.ptr = teep_update->manifest_list.items[i].ptr, .len = teep_update->manifest_list.items[i].len};
-            suit_envelope_t envelope;
-            suit_err_t suit_result = suit_set_envelope(SUIT_DECODE_MODE_SKIP_ANY_ERROR, &buf, &envelope, ta_public_key);
+            suit_mechanism_t suit_mechanisms[SUIT_MAX_KEY_NUM] = {0};
+            suit_err_t suit_result = suit_key_init_es256_public_key(ta_public_key, &suit_mechanisms[0].key);
             if (suit_result != SUIT_SUCCESS) {
                 return TEEP_ERR_UNEXPECTED_ERROR;
             }
-            suit_result = suit_print_envelope(SUIT_DECODE_MODE_SKIP_ANY_ERROR, &envelope, indent_space + 3 * indent_delta);
-            if (result != SUIT_SUCCESS) {
+            suit_mechanisms[0].cose_tag = CBOR_TAG_COSE_SIGN1;
+            suit_mechanisms[0].use = true;
+
+            suit_buf_t buf = {.ptr = teep_update->manifest_list.items[i].ptr, .len = teep_update->manifest_list.items[i].len};
+            suit_envelope_t envelope;
+            suit_result = suit_decode_envelope(SUIT_DECODE_MODE_SKIP_ANY_ERROR, &buf, &envelope, suit_mechanisms);
+            if (suit_result != SUIT_SUCCESS) {
+                return TEEP_ERR_UNEXPECTED_ERROR;
+            }
+            suit_result = suit_print_envelope(SUIT_DECODE_MODE_SKIP_ANY_ERROR, &envelope, indent_space + 3 * indent_delta, indent_delta);
+            if (suit_result != SUIT_SUCCESS) {
                 return TEEP_ERR_UNEXPECTED_ERROR;
             }
 #else
@@ -784,7 +793,7 @@ teep_err_t teep_print_success(const teep_success_t *teep_success,
 teep_err_t teep_print_message(const teep_message_t *msg,
                               uint32_t indent_space,
                               uint32_t indent_delta,
-                              const char *ta_public_key)
+                              const unsigned char *ta_public_key)
 {
     if (msg == NULL) {
         return TEEP_ERR_UNEXPECTED_ERROR;
