@@ -381,6 +381,70 @@ teep_err_t teep_set_cipher_suite(QCBORDecodeContext *message,
     return TEEP_SUCCESS;
 }
 
+teep_err_t teep_set_profile(QCBORDecodeContext *message,
+                            QCBORItem *item,
+                            teep_profile_t *profile)
+{
+    teep_err_t result;
+
+    if (item->uDataType != QCBOR_TYPE_ARRAY) {
+        return TEEP_ERR_INVALID_TYPE_OF_ARGUMENT;
+    }
+    if (item->val.uCount > TEEP_MAX_CIPHER_SUITES_LENGTH) {
+        return TEEP_ERR_NO_MEMORY;
+    }
+
+    size_t array_length = item->val.uCount;
+    if (array_length != 2) {
+        return TEEP_ERR_INVALID_LENGTH;
+    }
+
+    /* get signing algorithm */
+    result = teep_qcbor_get_next(message, item, QCBOR_TYPE_INT64);
+    if (result != TEEP_SUCCESS) {
+        return result;
+    }
+    profile->signing = item->val.int64;
+
+    /* get encryption algorithm */
+    result = teep_qcbor_get_next(message, item, QCBOR_TYPE_INT64);
+    if (result != TEEP_SUCCESS) {
+        return result;
+    }
+    profile->encryption = item->val.int64;
+
+    return TEEP_SUCCESS;
+}
+
+teep_err_t teep_set_profile_array(QCBORDecodeContext *message,
+                                  QCBORItem *item,
+                                  teep_profile_array_t *profiles)
+{
+    teep_err_t result = teep_qcbor_get_next(message, item, QCBOR_TYPE_ARRAY);
+    if (result != TEEP_SUCCESS) {
+        return result;
+    }
+    if (item->val.uCount > TEEP_MAX_ARRAY_LENGTH) {
+        return TEEP_ERR_NO_MEMORY;
+    }
+    size_t array_size = item->val.uCount;
+    for (size_t i = 0 ; i < array_size; i++) {
+        teep_err_t result = teep_qcbor_get_next(message, item, QCBOR_TYPE_ARRAY);
+        if (result != TEEP_SUCCESS) {
+            return result;
+        }
+
+        result = teep_set_profile(message, item, &profiles->items[i]);
+        if (result != TEEP_SUCCESS) {
+            return result;
+        }
+    }
+    profiles->len = array_size;
+
+    return TEEP_SUCCESS;
+
+}
+
 teep_err_t teep_set_cipher_suite_array(QCBORDecodeContext *message,
                                        QCBORItem *item,
                                        teep_cipher_suite_array_t *cipher_suites)
@@ -549,7 +613,7 @@ teep_err_t teep_set_query_request(QCBORDecodeContext *message,
     INITIALIZE_TEEP_BUF(query_request->challenge);
     INITIALIZE_TEEP_ARRAY(query_request->versions);
     INITIALIZE_TEEP_ARRAY(query_request->supported_teep_cipher_suites);
-    INITIALIZE_TEEP_ARRAY(query_request->supported_eat_suit_cipher_suites);
+    INITIALIZE_TEEP_ARRAY(query_request->supported_suit_cose_profiles);
     query_request->data_item_requested.val = 0;
 
     result = teep_qcbor_get_next(message, item, QCBOR_TYPE_MAP);
@@ -601,7 +665,7 @@ teep_err_t teep_set_query_request(QCBORDecodeContext *message,
         return result;
     }
 
-    result = teep_set_cipher_suite_array(message, item, &query_request->supported_eat_suit_cipher_suites);
+    result = teep_set_profile_array(message, item, &query_request->supported_suit_cose_profiles);
     if (result != TEEP_SUCCESS) {
         return result;
     }

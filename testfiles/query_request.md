@@ -21,8 +21,9 @@
     [ [ 18, -7 ] ], / Sign1 using ES256 /
     [ [ 18, -8 ] ]  / Sign1 using EdDSA /
   ],
-  / supported-eat-suit-cipher-suites: / [
-    [ [ 18, -7 ] ] / Sign1 using ES256 /
+  / supported-suit-cose-profiles: / [
+    [ -7, 1 ] / suit-sha256-es256-hpke-a128gcm /,
+    [ -8, 1 ] / suit-sha256-eddsa-hpke-a128gcm /
   ],
   / data-item-requested: / 3 / attestation | trusted-components /
 ]
@@ -49,11 +50,12 @@
          82         # array(2)
             12      # unsigned(18)  / 18 = COSE_Sign1 /
             27      # negative(7)   / -8 = cose-alg-eddsa /
-   81               # array(1)      / supported-eat-suit-cipher-suites: /
-      81            # array(1)
-         82         # array(2)
-            12      # unsigned(18) / 18 = COSE_Sign1 /
-            27      # negative(7) / -8 = cose-alg-eddsa /
-
+   82               # array(2)      / supported-suit-cose-profiles: /
+      82            # array(2)      / suit-sha256-es256-hpke-a128gcm /
+         26         # negative(6)   / -7 = cose-alg-es256 /
+         01         # unsigned(1)   / 1 = A128GCM /
+      82            # array(2)
+         26         # negative(7)   / -8 = cose-alg-eddsa /
+         01         # unsigned(1)   / 1 = A128GCM /
    03               # unsigned(3) / attestation | trusted-components /
 ~~~~

@@ -175,6 +175,10 @@ const char *teep_cose_algs_key_to_str(int64_t cose_algs_key)
         return "EdDSA";
     case TEEP_COSE_SIGN_HSS_LMS:
         return "HSS-LMS";
+    case TEEP_COSE_ENCRYPT_A128_GCM:
+        return "AES-GCM-128";
+    case TEEP_COSE_ENCRYPT_A192_GCM:
+        return "AES-GCM-192";
     case TEEP_COSE_ENCRYPT_A256_GCM:
         return "AES-GCM-256";
     case TEEP_COSE_ENCRYPT_ACCM_16_64_128:
@@ -209,6 +213,20 @@ void teep_debug_print(QCBORDecodeContext *message,
     if (expecting != QCBOR_TYPE_ANY && expecting != item->uDataType) {
         printf("    item->uDataType %d != %d\n", item->uDataType, expecting);
     }
+}
+
+teep_err_t teep_print_profile(const teep_profile_t *profile)
+{
+    if (profile == NULL) {
+        return TEEP_ERR_UNEXPECTED_ERROR;
+    }
+    printf("[ %d / (%s) /, %d / (%s) / ]",
+        profile->signing,
+        teep_cose_algs_key_to_str(profile->signing),
+        profile->encryption,
+        teep_cose_algs_key_to_str(profile->encryption)
+    );
+    return TEEP_SUCCESS;
 }
 
 teep_err_t teep_print_cipher_suite(const teep_cipher_suite_t *cipher_suite)
@@ -332,14 +350,14 @@ teep_err_t teep_print_query_request(const teep_query_request_t *query_request,
         printf("\n");
     }
     printf("%*s],\n", indent_space + indent_delta, "");
-    printf("%*s/ supported-eat-suit-cipher-suites : / [\n", indent_space + indent_delta, "");
-    for (size_t i = 0; i < query_request->supported_eat_suit_cipher_suites.len; i++) {
+    printf("%*s/ supported-suit-cose-profiles : / [\n", indent_space + indent_delta, "");
+    for (size_t i = 0; i < query_request->supported_suit_cose_profiles.len; i++) {
         printf("%*s", indent_space + 2 * indent_delta, "");
-        result = teep_print_cipher_suite(&query_request->supported_eat_suit_cipher_suites.items[i]);
+        result = teep_print_profile(&query_request->supported_suit_cose_profiles.items[i]);
         if (result != TEEP_SUCCESS) {
             return result;
         }
-        if (i + 1 < query_request->supported_eat_suit_cipher_suites.len) {
+        if (i + 1 < query_request->supported_suit_cose_profiles.len) {
             printf(",");
         }
         printf("\n");
@@ -466,7 +484,7 @@ teep_err_t teep_print_query_response(const teep_query_response_t *query_response
             printf("\n%*s", indent_space + 3 * indent_delta, "");
             teep_print_hex(query_response->tc_list.items[i].ptr, query_response->tc_list.items[i].len);
             if (i + 1 < query_response->tc_list.len) {
-                printf(",\n");
+                printf(",");
             }
         }
         printf("\n%*s]", indent_space + 2 * indent_delta, "");
@@ -690,13 +708,13 @@ teep_err_t teep_print_error(const teep_error_t *teep_error,
         printf("%*s]", indent_space + 2 * indent_delta, "");
     }
     /*
-    if (teep_error->contains & TEEP_MESSAGE_CONTAINS_SUPPORTED_EAT_SUIT_CIPHER_SUITES) {
+    if (teep_error->contains & TEEP_MESSAGE_CONTAINS_SUPPORTED_SUIT_COSE_PROFILES) {
         if (printed) {
             printf(",\n");
         }
         printed = true;
 
-        printf("%*s/ supported-eat-suit-cipher-suites / %d : [\n", indent_space + 2 * indent_delta, "", TEEP_OPTIONS_KEY_SUPPORTED_TEEP_CIPHER_SUITES);
+        printf("%*s/ supported-suit-cose-profiles / %d : [\n", indent_space + 2 * indent_delta, "", TEEP_OPTIONS_KEY_SUPPORTED_SUIT_COSE_PROFILES);
         for (size_t i = 0; i < teep_error->supported_teep_cipher_suites.len; i++) {
             printf("%*s", indent_space + 3 * indent_delta, "");
             result = teep_print_cipher_suite(&teep_error->supported_teep_cipher_suites.items[i]);
