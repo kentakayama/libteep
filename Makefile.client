@@ -37,7 +37,7 @@ endif
 
 .PHONY: all debug clean
 
-all: clean $(TARGET)
+all: $(TARGET)
 
 $(TARGET): $(OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
@@ -53,4 +53,4 @@ run: $(TARGET)
 	sh -c "$(TARGET) > agent_stdout.txt"
 
 clean:
-	rm -f $(OBJS) $(TARGET)
+	$(RM) $(OBJS) $(TARGET)

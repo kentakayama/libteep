@@ -24,6 +24,13 @@ void teep_QCBOREncode_AddUsefulBufCToMapN(QCBOREncodeContext *pMe, int64_t uLabe
     teep_QCBOREncode_AddUsefulBufC(pMe, buf);
 }
 
+void teep_encode_add_profile(QCBOREncodeContext *pMe, teep_profile_t profile) {
+    QCBOREncode_OpenArray(pMe);
+    QCBOREncode_AddInt64(pMe, profile.signing);
+    QCBOREncode_AddInt64(pMe, profile.encryption);
+    QCBOREncode_CloseArray(pMe);
+}
+
 void teep_encode_add_cipher_suite(QCBOREncodeContext *pMe, teep_cipher_suite_t cipher_suite) {
     QCBOREncode_OpenArray(pMe);
     for (size_t i = 0; i < TEEP_MAX_CIPHER_SUITES_LENGTH; i++) {
@@ -220,10 +227,10 @@ teep_err_t teep_encode_query_request(const teep_query_request_t *query_request, 
     }
     QCBOREncode_CloseArray(context);
 
-    /* supported-eat-suit-cipher-suites */
+    /* supported-suit-cose-profiles */
     QCBOREncode_OpenArray(context);
-    for (size_t i = 0; i < query_request->supported_eat_suit_cipher_suites.len; i++) {
-        teep_encode_add_cipher_suite(context, query_request->supported_eat_suit_cipher_suites.items[i]);
+    for (size_t i = 0; i < query_request->supported_suit_cose_profiles.len; i++) {
+        teep_encode_add_profile(context, query_request->supported_suit_cose_profiles.items[i]);
     }
     QCBOREncode_CloseArray(context);
 

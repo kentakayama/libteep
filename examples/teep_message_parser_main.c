@@ -16,7 +16,7 @@
 #include "t_cose/q_useful_buf.h"
 
 
-#define MAX_FILE_BUFFER_SIZE                512
+#define MAX_FILE_BUFFER_SIZE                ( 4 * 1024 * 1024)
 
 #if TEEP_ACTOR_AGENT == 1
 #include "tam_es256_public_key.h"
@@ -24,6 +24,13 @@ const unsigned char *teep_public_key = tam_es256_public_key;
 #else /* TEEP_ACTOR_TAM as default */
 #include "teep_agent_es256_public_key.h"
 const unsigned char *teep_public_key = teep_agent_es256_public_key;
+#endif
+
+#ifdef PARSE_SUIT
+#include "trust_anchor_prime256v1_pub.h"
+const unsigned char *suit_manifest_key = trust_anchor_prime256v1_public_key;
+#else
+const unsigned char *suit_manifest_key = NULL;
 #endif
 
 int main(int argc, const char * argv[])
@@ -48,14 +55,22 @@ int main(int argc, const char * argv[])
     printf("\n");
 
     // Read cbor file.
-    UsefulBuf_MAKE_STACK_UB(cbor_buf, MAX_FILE_BUFFER_SIZE);
+    UsefulBuf cbor_buf = (UsefulBuf) {
+        .ptr = malloc(MAX_FILE_BUFFER_SIZE),
+        .len = MAX_FILE_BUFFER_SIZE
+    };
+    if (cbor_buf.ptr == NULL) {
+        printf("main : Memory allocation failure.\n");
+        return EXIT_FAILURE;
+    }
+
     printf("main : Read CBOR file.\n");
     cbor_buf.len = read_from_file(cbor_file_name, MAX_FILE_BUFFER_SIZE, cbor_buf.ptr);
     if (cbor_buf.len == 0) {
         printf("main : Failed to read CBOR file.\n");
         return EXIT_FAILURE;
     }
-    teep_print_hex(cbor_buf.ptr, cbor_buf.len);
+    teep_print_hex_within_max(cbor_buf.ptr, cbor_buf.len, 1024);
     printf("\n");
 
     // Verify cbor file.
@@ -76,7 +91,7 @@ int main(int argc, const char * argv[])
     else {
         printf("main : Success to verify. Print cose payload.\n");
     }
-    teep_print_hex(returned_payload.ptr, returned_payload.len);
+    teep_print_hex_within_max(returned_payload.ptr, returned_payload.len, 1024);
     printf("\n");
 
     // Parse teep message.
@@ -87,12 +102,13 @@ int main(int argc, const char * argv[])
     }
 
     // Print teep message.
-    result = teep_print_message(&msg, 0, 2, NULL);
+    result = teep_print_message(&msg, 0, 2, suit_manifest_key);
     if (result != TEEP_SUCCESS) {
         printf("main : Failed to print CBOR as teep-message. %s(%d)\n", teep_err_to_str(result), result);
         return EXIT_FAILURE;
     }
     teep_free_key(&public_key);
+    free(cbor_buf.ptr);
 
     return EXIT_SUCCESS;
 }

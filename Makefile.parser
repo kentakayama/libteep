@@ -14,11 +14,14 @@ TAM_OBJ			= obj/examples/teep_message_parser_tam.o
 AGENT_OBJ		= obj/examples/teep_message_parser_agent.o
 OBJDIR			= ./obj
 OBJS			= $(addprefix $(OBJDIR)/,$(patsubst %.c,%.o,$(SRCS)))
+SUIT_EXAMPLES_COSE=../libcsuit/obj/examples/suit_examples_cose.o
 COSE_FLAG		= _cose
 
 ifdef suit
     CFLAGS += -DPARSE_SUIT
-    LDFLAGS += -lcsuit
+    LDFLAGS := ../libcsuit/bin/libcsuit.a $(LDFLAGS)
+    INC += -I ../libcsuit/inc -I ../libcsuit/examples/inc
+    OBJ += $(SUIT_EXAMPLES_COSE)
 endif
 ifdef debug
     CFLAGS += -DALLOW_CBOR_WITHOUT_SIGN1
@@ -63,4 +66,4 @@ run: $(TAM) $(AGENT)
 	$(TAM) ./testfiles/teep_error$(COSE_FLAG).cbor || exit 1
 
 clean:
-	rm -f $(OBJS) $(TAM_OBJ) $(AGENT_OBJ) $(TAM) $(AGENT)
+	$(RM) $(OBJS) $(TAM_OBJ) $(AGENT_OBJ) $(TAM) $(AGENT)

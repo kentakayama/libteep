@@ -10,6 +10,7 @@
 
 #ifdef PARSE_SUIT
 #include "csuit/csuit.h"
+#include "suit_examples_common.h"
 #endif
 
 const char *teep_err_to_str(teep_err_t err)
@@ -174,6 +175,10 @@ const char *teep_cose_algs_key_to_str(int64_t cose_algs_key)
         return "EdDSA";
     case TEEP_COSE_SIGN_HSS_LMS:
         return "HSS-LMS";
+    case TEEP_COSE_ENCRYPT_A128_GCM:
+        return "AES-GCM-128";
+    case TEEP_COSE_ENCRYPT_A192_GCM:
+        return "AES-GCM-192";
     case TEEP_COSE_ENCRYPT_A256_GCM:
         return "AES-GCM-256";
     case TEEP_COSE_ENCRYPT_ACCM_16_64_128:
@@ -208,6 +213,20 @@ void teep_debug_print(QCBORDecodeContext *message,
     if (expecting != QCBOR_TYPE_ANY && expecting != item->uDataType) {
         printf("    item->uDataType %d != %d\n", item->uDataType, expecting);
     }
+}
+
+teep_err_t teep_print_profile(const teep_profile_t *profile)
+{
+    if (profile == NULL) {
+        return TEEP_ERR_UNEXPECTED_ERROR;
+    }
+    printf("[ %d / (%s) /, %d / (%s) / ]",
+        profile->signing,
+        teep_cose_algs_key_to_str(profile->signing),
+        profile->encryption,
+        teep_cose_algs_key_to_str(profile->encryption)
+    );
+    return TEEP_SUCCESS;
 }
 
 teep_err_t teep_print_cipher_suite(const teep_cipher_suite_t *cipher_suite)
@@ -331,14 +350,14 @@ teep_err_t teep_print_query_request(const teep_query_request_t *query_request,
         printf("\n");
     }
     printf("%*s],\n", indent_space + indent_delta, "");
-    printf("%*s/ supported-eat-suit-cipher-suites : / [\n", indent_space + indent_delta, "");
-    for (size_t i = 0; i < query_request->supported_eat_suit_cipher_suites.len; i++) {
+    printf("%*s/ supported-suit-cose-profiles : / [\n", indent_space + indent_delta, "");
+    for (size_t i = 0; i < query_request->supported_suit_cose_profiles.len; i++) {
         printf("%*s", indent_space + 2 * indent_delta, "");
-        result = teep_print_cipher_suite(&query_request->supported_eat_suit_cipher_suites.items[i]);
+        result = teep_print_profile(&query_request->supported_suit_cose_profiles.items[i]);
         if (result != TEEP_SUCCESS) {
             return result;
         }
-        if (i + 1 < query_request->supported_eat_suit_cipher_suites.len) {
+        if (i + 1 < query_request->supported_suit_cose_profiles.len) {
             printf(",");
         }
         printf("\n");
@@ -360,7 +379,7 @@ teep_err_t teep_print_component_id(const teep_buf_t *component_id)
 #ifdef PARSE_SUIT
     suit_buf_t buf = {.ptr = component_id->ptr, .len = component_id->len};
     suit_component_identifier_t identifier;
-    suit_err_t suit_result = suit_set_component_identifiers(SUIT_DECODE_MODE_SKIP_ANY_ERROR, &buf, &identifier);
+    suit_err_t suit_result = suit_decode_component_identifiers(SUIT_DECODE_MODE_SKIP_ANY_ERROR, &buf, &identifier);
     if (suit_result != SUIT_SUCCESS) {
         return TEEP_ERR_UNEXPECTED_ERROR;
     }
@@ -465,7 +484,7 @@ teep_err_t teep_print_query_response(const teep_query_response_t *query_response
             printf("\n%*s", indent_space + 3 * indent_delta, "");
             teep_print_hex(query_response->tc_list.items[i].ptr, query_response->tc_list.items[i].len);
             if (i + 1 < query_response->tc_list.len) {
-                printf(",\n");
+                printf(",");
             }
         }
         printf("\n%*s]", indent_space + 2 * indent_delta, "");
@@ -479,22 +498,21 @@ teep_err_t teep_print_query_response(const teep_query_response_t *query_response
         printf("%*s/ requested-tc-list / %d : [\n", indent_space + 2 * indent_delta, "", TEEP_OPTIONS_KEY_REQUESTED_TC_LIST);
         for (size_t i = 0; i < query_response->requested_tc_list.len; i++) {
             printf("%*s{\n", indent_space + 3 * indent_delta, "");
-            if (query_response->requested_tc_list.items[i].contains & TEEP_MESSAGE_CONTAINS_COMPONENT_ID) {
-                printf("%*s/ component-id : / ", indent_space + 4 * indent_delta, "");
-                result = teep_print_component_id(&query_response->requested_tc_list.items[i].component_id);
-                if (result != TEEP_SUCCESS) {
-                    return result;
-                }
+            printf("%*s/ component-id / %d : ", indent_space + 4 * indent_delta, "", TEEP_OPTIONS_KEY_COMPONENT_ID);
+            result = teep_print_component_id(&query_response->requested_tc_list.items[i].component_id);
+            if (result != TEEP_SUCCESS) {
+                return result;
             }
+
             if (query_response->requested_tc_list.items[i].contains & TEEP_MESSAGE_CONTAINS_TC_MANIFEST_SEQUENCE_NUMBER) {
-                printf(",\n%*s/ tc-manifest-sequence-number : / %lu,\n", indent_space + 4 * indent_delta, "", query_response->requested_tc_list.items[i].tc_manifest_sequence_number);
+                printf(",\n%*s/ tc-manifest-sequence-number / %d : %lu", indent_space + 4 * indent_delta, "", TEEP_OPTIONS_KEY_TC_MANIFEST_SEQUENCE_NUMBER, query_response->requested_tc_list.items[i].tc_manifest_sequence_number);
             }
             if (query_response->requested_tc_list.items[i].contains & TEEP_MESSAGE_CONTAINS_HAVE_BINARY) {
-                printf(",\n%*s/ have-binary : / %s,\n", indent_space + 4 * indent_delta, "", (query_response->requested_tc_list.items[i].have_binary) ? "true" : "false");
+                printf(",\n%*s/ have-binary / %d : %s", indent_space + 4 * indent_delta, "", TEEP_OPTIONS_KEY_HAVE_BINARY, (query_response->requested_tc_list.items[i].have_binary) ? "true" : "false");
             }
             printf("\n%*s}\n", indent_space + 3 * indent_delta, "");
         }
-        printf("%*s]\n", indent_space + 2 * indent_delta, "");
+        printf("%*s]", indent_space + 2 * indent_delta, "");
     }
     if (query_response->contains & TEEP_MESSAGE_CONTAINS_UNNEEDED_TC_LIST) {
         if (printed) {
@@ -532,7 +550,7 @@ teep_err_t teep_print_query_response(const teep_query_response_t *query_response
 teep_err_t teep_print_update(const teep_update_t *teep_update,
                              uint32_t indent_space,
                              uint32_t indent_delta,
-                             const char *ta_public_key)
+                             const unsigned char *ta_public_key)
 {
     if (teep_update == NULL) {
         return TEEP_ERR_UNEXPECTED_ERROR;
@@ -548,7 +566,7 @@ teep_err_t teep_print_update(const teep_update_t *teep_update,
         }
         printed = true;
 
-        printf("%*s/ token / %d : ", indent_space + indent_delta, "", TEEP_OPTIONS_KEY_TOKEN);
+        printf("%*s/ token / %d : ", indent_space + 2 * indent_delta, "", TEEP_OPTIONS_KEY_TOKEN);
         teep_print_hex(teep_update->token.ptr, teep_update->token.len);
     }
     if (teep_update->contains & TEEP_MESSAGE_CONTAINS_UNNEEDED_TC_LIST) {
@@ -576,16 +594,27 @@ teep_err_t teep_print_update(const teep_update_t *teep_update,
         printf("%*s/ manifest-list / %d : [\n", indent_space + 2 * indent_delta, "", TEEP_OPTIONS_KEY_MANIFEST_LIST);
         for (size_t i = 0; i < teep_update->manifest_list.len; i++) {
 #ifdef PARSE_SUIT
-            suit_buf_t buf = {.ptr = teep_update->manifest_list.items[i].ptr, .len = teep_update->manifest_list.items[i].len};
-            suit_envelope_t envelope;
-            suit_err_t suit_result = suit_set_envelope(SUIT_DECODE_MODE_SKIP_ANY_ERROR, &buf, &envelope, ta_public_key);
+            suit_mechanism_t suit_mechanisms[SUIT_MAX_KEY_NUM] = {0};
+            suit_err_t suit_result = suit_key_init_es256_public_key(ta_public_key, &suit_mechanisms[0].key);
             if (suit_result != SUIT_SUCCESS) {
                 return TEEP_ERR_UNEXPECTED_ERROR;
             }
-            suit_result = suit_print_envelope(SUIT_DECODE_MODE_SKIP_ANY_ERROR, &envelope, indent_space + 6);
-            if (result != SUIT_SUCCESS) {
+            suit_mechanisms[0].cose_tag = CBOR_TAG_COSE_SIGN1;
+            suit_mechanisms[0].use = true;
+
+            suit_buf_t buf = {.ptr = teep_update->manifest_list.items[i].ptr, .len = teep_update->manifest_list.items[i].len};
+            suit_envelope_t envelope = {0};
+            suit_result = suit_decode_envelope(SUIT_DECODE_MODE_SKIP_ANY_ERROR, &buf, &envelope, suit_mechanisms);
+            if (suit_result != SUIT_SUCCESS) {
                 return TEEP_ERR_UNEXPECTED_ERROR;
             }
+
+            printf("%*s<<", indent_space + 3 * indent_delta, "");
+            suit_result = suit_print_envelope(SUIT_DECODE_MODE_SKIP_ANY_ERROR, &envelope, indent_space + 4 * indent_delta, indent_delta);
+            if (suit_result != SUIT_SUCCESS) {
+                return TEEP_ERR_UNEXPECTED_ERROR;
+            }
+            printf("\n%*s>>", indent_space + 3 * indent_delta, "");
 #else
             printf("%*s", indent_space + 3 * indent_delta, "");
             result = teep_print_hex_within_max(teep_update->manifest_list.items[i].ptr, teep_update->manifest_list.items[i].len, TEEP_MAX_PRINT_BYTE_COUNT);
@@ -679,13 +708,13 @@ teep_err_t teep_print_error(const teep_error_t *teep_error,
         printf("%*s]", indent_space + 2 * indent_delta, "");
     }
     /*
-    if (teep_error->contains & TEEP_MESSAGE_CONTAINS_SUPPORTED_EAT_SUIT_CIPHER_SUITES) {
+    if (teep_error->contains & TEEP_MESSAGE_CONTAINS_SUPPORTED_SUIT_COSE_PROFILES) {
         if (printed) {
             printf(",\n");
         }
         printed = true;
 
-        printf("%*s/ supported-eat-suit-cipher-suites / %d : [\n", indent_space + 2 * indent_delta, "", TEEP_OPTIONS_KEY_SUPPORTED_TEEP_CIPHER_SUITES);
+        printf("%*s/ supported-suit-cose-profiles / %d : [\n", indent_space + 2 * indent_delta, "", TEEP_OPTIONS_KEY_SUPPORTED_SUIT_COSE_PROFILES);
         for (size_t i = 0; i < teep_error->supported_teep_cipher_suites.len; i++) {
             printf("%*s", indent_space + 3 * indent_delta, "");
             result = teep_print_cipher_suite(&teep_error->supported_teep_cipher_suites.items[i]);
@@ -785,7 +814,7 @@ teep_err_t teep_print_success(const teep_success_t *teep_success,
 teep_err_t teep_print_message(const teep_message_t *msg,
                               uint32_t indent_space,
                               uint32_t indent_delta,
-                              const char *ta_public_key)
+                              const unsigned char *ta_public_key)
 {
     if (msg == NULL) {
         return TEEP_ERR_UNEXPECTED_ERROR;

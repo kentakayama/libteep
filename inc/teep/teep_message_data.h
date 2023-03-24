@@ -55,7 +55,7 @@ typedef enum teep_options_key {
     TEEP_OPTIONS_KEY_SUPPORTED_TEEP_CIPHER_SUITES       = 1,
     TEEP_OPTIONS_KEY_CHALLENGE                          = 2,
     TEEP_OPTIONS_KEY_VERSIONS                           = 3,
-    TEEP_OPTIONS_KEY_SUPPORTED_EAT_SUIT_CIPHER_SUITED   = 4,
+    TEEP_OPTIONS_KEY_SUPPORTED_SUIT_COSE_PROFILES       = 4,
     TEEP_OPTIONS_KEY_SELECTED_TEEP_CIPHER_SUITE         = 5,
     TEEP_OPTIONS_KEY_SELECTED_VERSION                   = 6,
     TEEP_OPTIONS_KEY_ATTESTATION_PAYLOAD                = 7,
@@ -82,6 +82,8 @@ typedef enum teep_cose_algs {
     TEEP_COSE_SIGN_EDDSA                = -8,   // cose-alg-eddsa
     TEEP_COSE_SIGN_HSS_LMS              = -46,  // cose-alg-hss-lms
 
+    TEEP_COSE_ENCRYPT_A128_GCM          = 1,    // cose-alg-aes-gcm-128
+    TEEP_COSE_ENCRYPT_A192_GCM          = 2,    // cose-alg-aes-gcm-192
     TEEP_COSE_ENCRYPT_A256_GCM          = 3,    // cose-alg-aes-gcm-256
     TEEP_COSE_ENCRYPT_ACCM_16_64_128    = 10,   // cose-alg-aes-ccm-16-64-128
 
@@ -89,9 +91,9 @@ typedef enum teep_cose_algs {
 } teep_cose_algs_t;
 
 /*
- * cipher_suite
+ * $teep-cipher_suite
  */
-#define TEEP_MAX_CIPHER_SUITES_LENGTH 2
+#define TEEP_MAX_CIPHER_SUITES_LENGTH   2
 typedef struct teep_mechanism_pair {
     int cose_tag; // COSE_Sign1, COSE_Sign, COSE_Encrypt0, COSE_Encrypt, etc.
     int algorithm_id;
@@ -111,12 +113,29 @@ typedef struct teep_cipher_suite {
 }
 
 /*
- * [ + cipher_suite ]
+ * [ + $teep-cipher_suite ]
  */
 typedef struct teep_cipher_suite_array {
     size_t              len;
     teep_cipher_suite_t items[TEEP_MAX_ARRAY_LENGTH];
 } teep_cipher_suite_array_t;
+
+/*
+ * $suit-cose-profile
+ */
+typedef struct teep_profile {
+    int signing;
+    int encryption;
+} teep_profile_t;
+
+/*
+ * [ + $suit-cose-profile ]
+ */
+#define TEEP_MAX_PROFILES_LENGTH        2
+typedef struct teep_profile_array {
+    size_t              len;
+    teep_profile_t      items[TEEP_MAX_ARRAY_LENGTH];
+} teep_profile_array_t;
 
 /*
  * TEEP-err-code
@@ -223,6 +242,7 @@ typedef struct teep_requested_tc_info_array {
 #define BIT(nr) (1UL << (nr))
 #define TEEP_MESSAGE_CONTAINS_TYPE BIT(0)
 #define TEEP_MESSAGE_CONTAINS_SUPPORTED_TEEP_CIPHER_SUITES BIT(TEEP_OPTIONS_KEY_SUPPORTED_TEEP_CIPHER_SUITES)
+#define TEEP_MESSAGE_CONTAINS_SUPPORTED_SUIT_COSE_PROFILES BIT(TEEP_OPTIONS_KEY_SUPPORTED_SUIT_COSE_PROFILES)
 #define TEEP_MESSAGE_CONTAINS_CHALLENGE BIT(TEEP_OPTIONS_KEY_CHALLENGE)
 #define TEEP_MESSAGE_CONTAINS_VERSIONS BIT(TEEP_OPTIONS_KEY_VERSIONS)
 #define TEEP_MESSAGE_CONTAINS_SELECTED_TEEP_CIPHER_SUITE BIT(TEEP_OPTIONS_KEY_SELECTED_TEEP_CIPHER_SUITE)
@@ -278,7 +298,7 @@ typedef struct teep_query_request {
     // TODO :                   teep-option-extensions
 
     teep_cipher_suite_array_t   supported_teep_cipher_suites;
-    teep_cipher_suite_array_t   supported_eat_suit_cipher_suites;
+    teep_profile_array_t        supported_suit_cose_profiles;
     teep_data_item_requested_t  data_item_requested;
 } teep_query_request_t;
 
@@ -364,6 +384,9 @@ typedef union {
     teep_success_t teep_success;
     teep_error_t teep_error;
 } teep_message_t;
+
+void teep_QCBOREncode_AddUsefulBufC(QCBOREncodeContext *pMe, UsefulBufC buf);
+void teep_QCBOREncode_AddUsefulBufCToMapN(QCBOREncodeContext *pMe, int64_t uLabel, UsefulBufC buf);
 
 teep_err_t teep_set_out_of_teep_buf(QCBORDecodeContext *message, QCBORItem *item, teep_buf_t *teep_buf);
 uint64_t get_teep_message_type(QCBORDecodeContext *teep_message);

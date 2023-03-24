@@ -9,11 +9,13 @@ LDFLAGS			= -lt_cose -lqcbor -lm
 INC				= -I ./inc -I ./examples/inc
 TAM				= ./bin/teep_cose_tam
 AGENT			= ./bin/teep_cose_agent
+VERIFIER		= ./bin/teep_cose_verifier
 SRCS			= examples/teep_examples_common.c examples/teep_examples_cose.c src/teep_common.c src/teep_message_decode.c src/teep_message_print.c src/teep_cose.c
 OBJDIR			= ./obj
 OBJS			= $(addprefix $(OBJDIR)/,$(patsubst %.c,%.o,$(SRCS)))
 TAM_OBJ			= obj/examples/teep_cose_tam.o
 AGENT_OBJ		= obj/examples/teep_cose_agent.o
+VERIFIER_OBJ	= obj/examples/teep_cose_verifier.o
 
 ifeq ($(MBEDTLS),1)
     # use MbedTLS
@@ -27,7 +29,7 @@ endif
 
 .PHONY: all clean run
 
-all: $(TAM) $(AGENT)
+all: $(TAM) $(AGENT) $(VERIFIER)
 
 $(OBJDIR)/%.o:	%.c
 	mkdir -p $(dir $@)
@@ -39,25 +41,33 @@ $(TAM_OBJ): examples/teep_cose_test_main.c
 $(AGENT_OBJ): examples/teep_cose_test_main.c
 	$(CC) $(CFLAGS) $(INC) -DTEEP_ACTOR_AGENT=1 -o $@ -c $<
 
+$(VERIFIER_OBJ): examples/teep_cose_test_main.c
+	$(CC) $(CFLAGS) $(INC) -DTEEP_ACTOR_VERIFIER=1 -o $@ -c $<
+
 $(TAM): $(OBJS) $(TAM_OBJ)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 $(AGENT): $(OBJS) $(AGENT_OBJ)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
+$(VERIFIER): $(OBJS) $(VERIFIER_OBJ)
+	$(CC) -o $@ $^ $(LDFLAGS)
+
 clean:
-	$(RM) -f $(OBJS) $(TAM_OBJ) $(AGENT_OBJ) $(TAM) $(AGENT)
+	$(RM) $(OBJS) $(TAM_OBJ) $(AGENT_OBJ) $(VERIFIER_OBJ) $(TAM) $(AGENT) $(VERIFIER)
 
 
-SOURCES	:= query_request.cbor query_response.cbor update.cbor teep_success.cbor teep_error.cbor
+SOURCES	:= query_request.cbor query_response.cbor update.cbor teep_success.cbor teep_error.cbor evidence.cbor attestation_results.cbor
 
 $(SOURCES):
 	$(MAKE) -C testfiles $@
 
-run: $(TAM) $(AGENT) $(SOURCES)
+run: $(TAM) $(AGENT) $(VERIFIER) $(SOURCES)
 	$(TAM)   ./testfiles/query_request.cbor  ./testfiles/query_request_cose.cbor  || exit 1
 	$(AGENT) ./testfiles/query_response.cbor ./testfiles/query_response_cose.cbor || exit 1
 	$(TAM)   ./testfiles/update.cbor         ./testfiles/update_cose.cbor         || exit 1
 	$(AGENT) ./testfiles/teep_success.cbor   ./testfiles/teep_success_cose.cbor   || exit 1
 	$(AGENT) ./testfiles/teep_error.cbor     ./testfiles/teep_error_cose.cbor     || exit 1
+	$(AGENT) ./testfiles/evidence.cbor       ./testfiles/evidence_cose.cbor       || exit 1
+	$(VERIFIER) ./testfiles/attestation_results.cbor ./testfiles/attestation_results_cose.cbor || exit 1
 
