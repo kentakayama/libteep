@@ -22,7 +22,9 @@ WORKDIR /root/libteep
 RUN make
 RUN make -f Makefile.cose
 RUN make -f Makefile.parser
+RUN make -f Makefile.sign
 
 CMD make test && \
     make -f Makefile.cose run && \
-    make -f Makefile.parser run
+    make -f Makefile.parser run && \
+    make -f Makefile.sign run

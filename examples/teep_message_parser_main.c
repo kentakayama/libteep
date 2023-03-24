@@ -33,7 +33,8 @@ const unsigned char *suit_manifest_key = trust_anchor_prime256v1_public_key;
 const unsigned char *suit_manifest_key = NULL;
 #endif
 
-int main(int argc, const char * argv[]) {
+int main(int argc, const char * argv[])
+{
     int32_t result;
     teep_message_t msg = { 0 };
     const char *cbor_file_name = NULL;
