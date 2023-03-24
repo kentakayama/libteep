@@ -609,7 +609,7 @@ teep_err_t teep_print_update(const teep_update_t *teep_update,
                 return TEEP_ERR_UNEXPECTED_ERROR;
             }
 
-            printf("%*s<<", indent_space + 3 * indent_delta, "");
+            printf("%*s<<\n", indent_space + 3 * indent_delta, "");
             suit_result = suit_print_envelope(SUIT_DECODE_MODE_SKIP_ANY_ERROR, &envelope, indent_space + 4 * indent_delta, indent_delta);
             if (suit_result != SUIT_SUCCESS) {
                 return TEEP_ERR_UNEXPECTED_ERROR;
