@@ -9,9 +9,11 @@ LDFLAGS			= -lt_cose -lqcbor -lm
 INC				= -I ./inc -I ./examples/inc
 TAM				= ./bin/teep_message_parser_tam
 AGENT			= ./bin/teep_message_parser_agent
+VERIFIER		= ./bin/teep_message_parser_verifier
 SRCS			= examples/teep_examples_common.c examples/teep_examples_cose.c src/teep_common.c src/teep_message_decode.c src/teep_message_print.c src/teep_cose.c
 TAM_OBJ			= obj/examples/teep_message_parser_tam.o
 AGENT_OBJ		= obj/examples/teep_message_parser_agent.o
+VERIFIER_OBJ	= obj/examples/teep_message_parser_verifier.o
 OBJDIR			= ./obj
 OBJS			= $(addprefix $(OBJDIR)/,$(patsubst %.c,%.o,$(SRCS)))
 SUIT_EXAMPLES_COSE=../libcsuit/obj/examples/suit_examples_cose.o
@@ -40,7 +42,7 @@ endif
 
 .PHONY: all run clean debug_test
 
-all: $(TAM) $(AGENT)
+all: $(TAM) $(AGENT) $(VERIFIER)
 
 $(OBJDIR)/%.o: %.c
 	mkdir -p $(dir $@)
@@ -52,18 +54,25 @@ $(TAM_OBJ): examples/teep_message_parser_main.c
 $(AGENT_OBJ): examples/teep_message_parser_main.c
 	$(CC) $(CFLAGS) $(INC) -DTEEP_ACTOR_AGENT=1 -o $@ -c $<
 
+$(VERIFIER_OBJ): examples/teep_message_parser_main.c
+	$(CC) $(CFLAGS) $(INC) -DTEEP_ACTOR_VERIFIER=1 -o $@ -c $<
+
 $(TAM): $(OBJS) $(TAM_OBJ)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 $(AGENT): $(OBJS) $(AGENT_OBJ)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
-run: $(TAM) $(AGENT)
+$(VERIFIER): $(OBJS) $(VERIFIER_OBJ)
+	$(CC) -o $@ $^ $(LDFLAGS)
+
+run: $(TAM) $(AGENT) $(VERIFIER)
 	$(AGENT) ./testfiles/query_request$(COSE_FLAG).cbor || exit 1
 	$(TAM) ./testfiles/query_response$(COSE_FLAG).cbor || exit 1
 	$(AGENT) ./testfiles/update$(COSE_FLAG).cbor || exit 1
 	$(TAM) ./testfiles/teep_success$(COSE_FLAG).cbor || exit 1
 	$(TAM) ./testfiles/teep_error$(COSE_FLAG).cbor || exit 1
+	$(VERIFIER) ./testfiles/attestation_results$(COSE_FLAG).cbor || exit 1
 
 clean:
-	$(RM) $(OBJS) $(TAM_OBJ) $(AGENT_OBJ) $(TAM) $(AGENT)
+	$(RM) $(OBJS) $(TAM_OBJ) $(AGENT_OBJ) $(VERIFIER_OBJ) $(TAM) $(AGENT) $(VERIFIER)

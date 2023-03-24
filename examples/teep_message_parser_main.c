@@ -21,9 +21,14 @@
 #if TEEP_ACTOR_AGENT == 1
 #include "tam_es256_public_key.h"
 const unsigned char *teep_public_key = tam_es256_public_key;
-#else /* TEEP_ACTOR_TAM as default */
+#elif TEEP_ACTOR_TAM == 1
 #include "teep_agent_es256_public_key.h"
 const unsigned char *teep_public_key = teep_agent_es256_public_key;
+#elif TEEP_ACTOR_VERIFIER == 1
+#include "verifier_es256_public_key.h"
+const unsigned char *teep_public_key = verifier_es256_public_key;
+#else
+const unsigned char *teep_public_key = NULL;
 #endif
 
 #ifdef PARSE_SUIT
@@ -36,7 +41,6 @@ const unsigned char *suit_manifest_key = NULL;
 int main(int argc, const char * argv[])
 {
     int32_t result;
-    teep_message_t msg = { 0 };
     const char *cbor_file_name = NULL;
 
     if (argc < 2) {
@@ -94,7 +98,9 @@ int main(int argc, const char * argv[])
     teep_print_hex_within_max(returned_payload.ptr, returned_payload.len, 1024);
     printf("\n");
 
+#if TEEP_ACTOR_VERIFIER != 1
     // Parse teep message.
+    teep_message_t msg = { 0 };
     result = teep_set_message_from_bytes(returned_payload.ptr, returned_payload.len, &msg);
     if (result != TEEP_SUCCESS) {
         printf("main : Failed to parse CBOR as teep-message. %s(%d)\n", teep_err_to_str(result), result);
@@ -107,6 +113,7 @@ int main(int argc, const char * argv[])
         printf("main : Failed to print CBOR as teep-message. %s(%d)\n", teep_err_to_str(result), result);
         return EXIT_FAILURE;
     }
+#endif
     teep_free_key(&public_key);
     free(cbor_buf.ptr);
 
