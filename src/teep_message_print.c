@@ -1070,47 +1070,36 @@ const char* teep_debug_to_str(const char* (*from)(int64_t, int64_t))
 
 void* teep_a_to_str(const char* (*from)(int64_t, int64_t), bool is_map, const int64_t label)
 {
-    //const char* (*to)(int64_t, int64_t) = NULL;
-
-    //printf("{t str %s, %d, %ld}", teep_debug_to_str(from), is_map, label);
     if (from == teep_eat_claim_label_to_str_sentinel) {
-        //printf("{claim_sentinel->sentinel}");
         return teep_eat_claim_label_to_str;
     }
     else if (from == teep_position_to_str) {
         if (is_map) {
-            //printf("{position->options_key}");
             return teep_options_key_to_str;
         }
         else {
             switch (label) {
             case 2: return teep_position_cipher_suites;
-            case 3: return NULL;
+            case 3: return NULL; /* TODO: teep_position_profiles */
             }
         }
     }
-
     else if (from == teep_eat_claim_label_to_str) {
-        //printf("teep_eat_claim -> (%ld)\n", label);
         switch (label) {
         case EAT_CLAIM_CONFIRMATION:
             return teep_eat_cnf_label_to_str;
         }
     }
     else if (from == teep_position_to_str) {
-        //printf("{position->option}");
         return teep_options_key_to_str;
     }
     else if (from == teep_position_requested_tc_list_to_str) {
-        //printf("<r %d %ld>", is_map, label);
         return teep_options_key_to_str;
     }
     else if (from == teep_position_to_str_sentinel) {
-        //printf("{position_sentinel->position}");
         return teep_position_to_str;
     }
     else if (from == teep_options_key_to_str) {
-        //printf("<R %d %ld>", is_map, label);
         switch (label) {
         //printf("<options->position_requested_tc_list>");
         case TEEP_OPTIONS_KEY_REQUESTED_TC_LIST:
@@ -1199,12 +1188,9 @@ void teep_print_map(QCBORDecodeContext *context,
 {
     printf("{\n");
     size_t length = item->val.uCount;
-    //int64_t prev_label = item->label.int64;
-    //printf("{M prev_label:%ld,len:%ld}", prev_label, length);
     for (size_t i = 0; i < length; i++) {
         QCBORDecode_PeekNext(context, item);
         const char* (*tmp_label_to_str)(int64_t, int64_t) = label_to_str;
-        //printf("{! %ld->%ld for %d}", prev_label, item->val.int64, item->uDataType);
         if (item->uDataType == QCBOR_TYPE_ARRAY) {
             tmp_label_to_str = teep_a_to_str(label_to_str, false, item->label.int64);
         }
@@ -1237,7 +1223,6 @@ void teep_print_array(QCBORDecodeContext *context,
 {
     teep_data_item_requested_t r = {0};
     size_t length = item->val.uCount;
-    //position_to_str = teep_a_to_str(position_to_str, false, 0);
 
     int64_t type = 0;
     bool is_teep_protocol = position_to_str == teep_position_to_str;
@@ -1245,17 +1230,14 @@ void teep_print_array(QCBORDecodeContext *context,
         QCBORDecode_PeekNext(context, item);
         type = item->val.int64;
     }
-    //printf("{position_to_str = %p (%p)}", position_to_str, teep_position_to_str);
     bool is_inline = (position_to_str == NULL);
     bool has_label = (is_inline) ? false : position_to_str(0, type) != NULL;
     printf("[%c", is_inline ? ' ' : '\n');
 
     int64_t prev_label = item->label.int64;
-    //printf("{A prev_label:%ld,type:%ld,len:%ld}", prev_label, type, length);
     for (size_t i = 0; i < length; i++) {
         QCBORDecode_PeekNext(context, item);
         const char* (*tmp_position_to_str)(int64_t, int64_t) = position_to_str;
-        //printf("{? %ld->%ld for %d}", prev_label, item->val.int64, item->uDataType);
         if (item->uDataType == QCBOR_TYPE_ARRAY) {
             tmp_position_to_str = teep_a_to_str(position_to_str, false, i);
         }
@@ -1301,10 +1283,7 @@ void teep_print_array(QCBORDecodeContext *context,
                     }
                     printf(" /");
                 }
-
             }
-
-
         }
 
         if (i + 1 < length) {
@@ -1331,110 +1310,6 @@ teep_err_t teep_print_cose_header(QCBORDecodeContext *context,
     QCBORDecode_ExitMap(context);
     return TEEP_SUCCESS;
 }
-
-/*
-teep_err_t teep_print_tail_error(QCBORDecodeContext *context,
-                                         QCBORItem *item,
-                                         const uint32_t indent_space,
-                                         const uint32_t indent_delta)
-{
-    uint64_t err_code;
-    QCBORDecode_GetUInt64(context, &err_code);
-    printf("%*s/ err-code: / %lu\n", indent_space, "", err_code);
-    return TEEP_SUCCESS;
-}
-
-teep_err_t teep_print_tail_query_request(QCBORDecodeContext *context,
-                                         QCBORItem *item,
-                                         const uint32_t indent_space,
-                                         const uint32_t indent_delta,
-                                         const char* (*label_to_str)(int64_t, int64_t))
-{
-    QCBORDecode_PeekNext(context, item);
-    printf("%*s/ supported-teep-cipher-suites: / ", indent_space, "");
-    teep_print_value(context, item, indent_space + indent_delta, indent_delta, label_to_str, false, false);
-    printf(",\n");
-
-    QCBORDecode_PeekNext(context, item);
-    printf("%*s/ supported-suit-cose-profiles: / ", indent_space, "");
-    teep_print_value(context, item, indent_space + indent_delta, indent_delta, label_to_str, false, false);
-    printf(",\n");
-
-    teep_data_item_requested_t data_item_requested;
-    QCBORDecode_GetUInt64(context, &data_item_requested.val);
-    bool printed = false;
-    printf("%*s/ data-item-requested: / %lu / ", indent_space, "", data_item_requested.val);
-    if (data_item_requested.attestation) {
-        if (printed) {
-            printf("|");
-        }
-        printf("attestation");
-        printed = true;
-    }
-    if (data_item_requested.trusted_components) {
-        if (printed) {
-            printf("|");
-        }
-        printf("trusted_components");
-        printed = true;
-    }
-    if (data_item_requested.extensions) {
-        if (printed) {
-            printf("|");
-        }
-        printf("extensions");
-        printed = true;
-    }
-    printf(" /\n");
-    return TEEP_SUCCESS;
-}
-*/
-
-/*
-teep_err_t teep_print_payload(QCBORDecodeContext *context,
-                              QCBORItem *item,
-                              const uint32_t indent_space,
-                              const uint32_t indent_delta,
-                              const char* (*label_to_str)(int64_t))
-{
-    QCBORDecode_EnterArray(context, item);
-    uint64_t teep_message_type;
-    QCBORDecode_GetUInt64(context, &teep_message_type);
-    printf("\n%*s/ type: / %lu / %s /,\n", indent_space, "", teep_message_type, teep_message_type_to_str(teep_message_type));
-    QCBORDecode_EnterMap(context, item);
-    printf("%*s/ options: / {\n", indent_space, "");
-    size_t options_len = item->val.uCount;
-    for (size_t i = 0; i < options_len; i++) {
-        QCBORDecode_PeekNext(context, item);
-        uint64_t label = item->label.uint64;
-        printf("%*s/ %s / %ld : ", indent_space + indent_delta, "", teep_options_key_to_str(label), label);
-        teep_print_value(context, item, indent_space + indent_delta, indent_delta, teep_options_key_to_str, false, false);
-
-        if (i + 1 < options_len) {
-            printf(",");
-        }
-        printf("\n");
-    }
-    QCBORDecode_ExitMap(context);
-    printf("%*s}", indent_space, "");
-
-    switch (teep_message_type) {
-    case TEEP_TYPE_QUERY_REQUEST:
-        printf(",\n");
-        teep_print_tail_query_request(context, item, indent_space, indent_delta, NULL);
-        break;
-    case TEEP_TYPE_TEEP_ERROR:
-        printf(",\n");
-        teep_print_tail_error(context, item, indent_space, indent_delta);
-        break;
-    default:
-        printf("\n");
-    }
-
-    QCBORDecode_ExitArray(context);
-    return TEEP_SUCCESS;
-}
-*/
 
 teep_err_t teep_print_cose(QCBORDecodeContext *context,
                             const uint32_t indent_space,
@@ -1473,7 +1348,6 @@ teep_err_t teep_print_cose(QCBORDecodeContext *context,
     QCBORDecode_EnterBstrWrapped(context, QCBOR_TAG_REQUIREMENT_NOT_A_TAG, NULL);
     QCBORDecode_PeekNext(context, &item);
     teep_print_value(context, &item, indent_space + indent_delta, indent_delta, label_to_str, 0, false);
-    //teep_print_payload(context, &item, indent_space + 2 * indent_delta, indent_delta, label_to_str);
     QCBORDecode_ExitBstrWrapped(context);
     printf(" >>,\n");
 
@@ -1515,12 +1389,12 @@ teep_err_t teep_print_cose_eat(UsefulBufC cose_eat,
                            const uint32_t indent_space,
                            const uint32_t indent_delta)
 {
-    return teep_print_cose_usefulbufc(cose_eat, indent_space, indent_delta, teep_eat_claim_label_to_str/*_sentinel*/);
+    return teep_print_cose_usefulbufc(cose_eat, indent_space, indent_delta, teep_eat_claim_label_to_str);
 }
 
 teep_err_t teep_print_cose_teep_message(UsefulBufC cose_teep_message,
                            const uint32_t indent_space,
                            const uint32_t indent_delta)
 {
-    return teep_print_cose_usefulbufc(cose_teep_message, indent_space, indent_delta, teep_position_to_str/*_sentinel*/);
+    return teep_print_cose_usefulbufc(cose_teep_message, indent_space, indent_delta, teep_position_to_str);
 }
