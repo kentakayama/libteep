@@ -1037,6 +1037,23 @@ const char* teep_position_cipher_suites(const int64_t position, const int64_t n)
     return NULL;
 }
 
+const char* teep_position_tc_list_to_str(const int64_t position, const int64_t n)
+{
+    return NULL;
+}
+
+const char* suit_system_property_claims_to_str(const int64_t label, const int64_t n)
+{
+    switch (label) {
+    case 0: return "system-component-id";
+#if PARSE_SUIT
+    default: return suit_parameter_key_to_str(label);
+#else
+    default: return NULL;
+#endif
+    }
+}
+
 const char* teep_position_requested_tc_list_to_str(const int64_t position, const int64_t n)
 {
     return NULL;
@@ -1093,6 +1110,9 @@ void* teep_a_to_str(const char* (*from)(int64_t, int64_t), bool is_map, const in
     else if (from == teep_position_to_str) {
         return teep_options_key_to_str;
     }
+    else if (from == teep_position_tc_list_to_str) {
+        return suit_system_property_claims_to_str;
+    }
     else if (from == teep_position_requested_tc_list_to_str) {
         return teep_options_key_to_str;
     }
@@ -1101,7 +1121,8 @@ void* teep_a_to_str(const char* (*from)(int64_t, int64_t), bool is_map, const in
     }
     else if (from == teep_options_key_to_str) {
         switch (label) {
-        //printf("<options->position_requested_tc_list>");
+        case TEEP_OPTIONS_KEY_TC_LIST:
+            return teep_position_tc_list_to_str;
         case TEEP_OPTIONS_KEY_REQUESTED_TC_LIST:
             return teep_position_requested_tc_list_to_str;
         case TEEP_OPTIONS_KEY_SELECTED_TEEP_CIPHER_SUITE:
