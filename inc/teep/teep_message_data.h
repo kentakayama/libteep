@@ -276,7 +276,7 @@ struct teep_message {
 };
 
 typedef union {
-    uint8_t  val;
+    uint64_t  val;
     struct {
         uint8_t  attestation : 1;
         uint8_t  trusted_components : 1;

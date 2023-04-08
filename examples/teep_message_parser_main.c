@@ -95,10 +95,16 @@ int main(int argc, const char * argv[])
     else {
         printf("main : Success to verify. Print cose payload.\n");
     }
+
+    // Print teep message.
+    printf("\nmain : TEEP message in hex.\n");
     teep_print_hex_within_max(returned_payload.ptr, returned_payload.len, 1024);
     printf("\n");
 
 #if TEEP_ACTOR_VERIFIER != 1
+    printf("\nmain : TEEP message with COSE wrapper.\n");
+    teep_print_cose_teep_message(signed_cose, 0, 2);
+
     // Parse teep message.
     teep_message_t msg = { 0 };
     result = teep_set_message_from_bytes(returned_payload.ptr, returned_payload.len, &msg);
@@ -107,12 +113,15 @@ int main(int argc, const char * argv[])
         return EXIT_FAILURE;
     }
 
-    // Print teep message.
+    printf("\nmain : parsed teep_message_t data.\n");
     result = teep_print_message(&msg, 0, 2, suit_manifest_key);
     if (result != TEEP_SUCCESS) {
         printf("main : Failed to print CBOR as teep-message. %s(%d)\n", teep_err_to_str(result), result);
         return EXIT_FAILURE;
     }
+#else
+    printf("\nmain : EAT data.\n");
+    teep_print_cose_eat(signed_cose, 0, 2);
 #endif
     teep_free_key(&public_key);
     free(cbor_buf.ptr);
