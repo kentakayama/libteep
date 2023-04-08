@@ -57,8 +57,7 @@ teep_err_t teep_create_es_key(teep_key_t *key) {
         return TEEP_ERR_VERIFICATION_FAILED;
     }
 
-    key->cose_key.k.key_handle  = key_handle;
-    key->cose_key.crypto_lib    = T_COSE_CRYPTO_LIB_PSA;
+    key->cose_key.key.handle    = key_handle;
 
     return TEEP_SUCCESS;
 }
@@ -290,7 +289,7 @@ teep_err_t teep_key_init_es521_public_key(const unsigned char *public_key,
 
 teep_err_t teep_free_key(const teep_key_t *key) {
 #if defined(LIBTEEP_PSA_CRYPTO_C)
-    psa_destroy_key(key->cose_key.k.key_handle );
+    psa_destroy_key((psa_key_handle_t)key->cose_key.key.handle);
 #else
     EVP_PKEY_free(key->cose_key.k.key_ptr);
 #endif
