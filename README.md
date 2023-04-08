@@ -1,4 +1,4 @@
-# [libteep](https://github.com/yuichitk/libteep/)
+# [libteep](https://github.com/kentakayama/libteep/)
 **libcteep** is a C library for encoding/decoding [IETF TEEP Protocol](https://tools.ietf.org/html/draft-ietf-teep-protocol) messages.
 
 ## Overview
@@ -18,7 +18,7 @@ docker build -f ossl.Dockerfile -t libteep_ossl .
 docker run -t libteep_ossl
 ```
 
-### Parse & Encode tests with OpenSSL 3.0.5
+### Parse & Encode tests with OpenSSL 3
 ```
 docker build -f ossl3.Dockerfile -t libteep_ossl3 .
 docker run -t libteep_ossl3
@@ -40,35 +40,35 @@ docker-compose up
 ## TEEP Protocol Message Examples
 The following description Markdown and CBOR files are compliant with [draft-ietf-teep-protocol-10](https://tools.ietf.org/html/draft-ietf-teep-protocol-10).
 - QueryRequest
-  - [query_request.md](https://github.com/yuichitk/libteep/blob/master/testfiles/query_request.md)
-  - [query_request.cbor](https://github.com/yuichitk/libteep/blob/master/testfiles/query_request.cbor)
-  - [query_request_cose.cbor](https://github.com/yuichitk/libteep/blob/master/testfiles/query_request_cose.cbor)
+  - [query_request.md](https://github.com/kentakayama/libteep/blob/master/testfiles/query_request.md)
+  - [query_request.cbor](https://github.com/kentakayama/libteep/blob/master/testfiles/query_request.cbor)
+  - [query_request_cose.cbor](https://github.com/kentakayama/libteep/blob/master/testfiles/query_request_cose.cbor)
 
 - QueryResponse
-  - [query_response.md](https://github.com/yuichitk/libteep/blob/master/testfiles/query_response.md)
-  - [query_response.cbor](https://github.com/yuichitk/libteep/blob/master/testfiles/query_response.cbor)
-  - [query_response_cose.cbor](https://github.com/yuichitk/libteep/blob/master/testfiles/query_response_cose.cbor)
+  - [query_response.md](https://github.com/kentakayama/libteep/blob/master/testfiles/query_response.md)
+  - [query_response.cbor](https://github.com/kentakayama/libteep/blob/master/testfiles/query_response.cbor)
+  - [query_response_cose.cbor](https://github.com/kentakayama/libteep/blob/master/testfiles/query_response_cose.cbor)
 
 - Update
-  - [update.md](https://github.com/yuichitk/libteep/blob/master/testfiles/update.md)
-  - [update.cbor](https://github.com/yuichitk/libteep/blob/master/testfiles/update.cbor)
-  - [update_cose.cbor](https://github.com/yuichitk/libteep/blob/master/testfiles/update_cose.cbor)
+  - [update.md](https://github.com/kentakayama/libteep/blob/master/testfiles/update.md)
+  - [update.cbor](https://github.com/kentakayama/libteep/blob/master/testfiles/update.cbor)
+  - [update_cose.cbor](https://github.com/kentakayama/libteep/blob/master/testfiles/update_cose.cbor)
 
 - Success
-  - [teep_success.md](https://github.com/yuichitk/libteep/blob/master/testfiles/teep_success.md)
-  - [teep_success.cbor](https://github.com/yuichitk/libteep/blob/master/testfiles/teep_success.cbor)
-  - [teep_success_cose.cbor](https://github.com/yuichitk/libteep/blob/master/testfiles/teep_success_cose.cbor)
+  - [teep_success.md](https://github.com/kentakayama/libteep/blob/master/testfiles/teep_success.md)
+  - [teep_success.cbor](https://github.com/kentakayama/libteep/blob/master/testfiles/teep_success.cbor)
+  - [teep_success_cose.cbor](https://github.com/kentakayama/libteep/blob/master/testfiles/teep_success_cose.cbor)
 
 - Error
-  - [teep_error.md](https://github.com/yuichitk/libteep/blob/master/testfiles/teep_error.md)
-  - [teep_error.cbor](https://github.com/yuichitk/libteep/blob/master/testfiles/teep_error.cbor)
-  - [teep_error_cose.cbor](https://github.com/yuichitk/libteep/blob/master/testfiles/teep_error_cose.cbor)
+  - [teep_error.md](https://github.com/kentakayama/libteep/blob/master/testfiles/teep_error.md)
+  - [teep_error.cbor](https://github.com/kentakayama/libteep/blob/master/testfiles/teep_error.cbor)
+  - [teep_error_cose.cbor](https://github.com/kentakayama/libteep/blob/master/testfiles/teep_error_cose.cbor)
 
 
 ## License and Copyright
 BSD 2-Clause License
 
-Copyright (c) 2020 SECOM CO., LTD. All Rights reserved.
+Copyright (c) 2020-2023 SECOM CO., LTD. All Rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
