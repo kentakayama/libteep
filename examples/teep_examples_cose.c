@@ -2,7 +2,8 @@
 #include "teep_examples_common.h"
 
 #if defined(LIBTEEP_PSA_CRYPTO_C)
-teep_err_t teep_create_es_key(teep_key_t *key) {
+teep_err_t teep_create_es_key(teep_key_t *key)
+{
     psa_key_attributes_t key_attributes = PSA_KEY_ATTRIBUTES_INIT;
     psa_key_handle_t     key_handle = 0;
     psa_status_t         result;
@@ -38,7 +39,7 @@ teep_err_t teep_create_es_key(teep_key_t *key) {
     }
 
     psa_set_key_usage_flags(&key_attributes, usage);
-    psa_set_key_algorithm(&key_attributes, PSA_ALG_ECDSA(hash));
+    psa_set_key_algorithm(&key_attributes, PSA_ALG_DETERMINISTIC_ECDSA(hash));
     if (key->private_key == NULL) {
         psa_set_key_type(&key_attributes, PSA_KEY_TYPE_ECC_PUBLIC_KEY(nid));
         result = psa_import_key(&key_attributes,
@@ -73,7 +74,8 @@ teep_err_t teep_create_es_key(teep_key_t *key) {
 
     \return     This returns TEEP_SUCCESS or TEEP_ERR_FAILED_TO_VERIFY.
  */
-teep_err_t teep_create_es_key(teep_key_t *key) {
+teep_err_t teep_create_es_key(teep_key_t *key)
+{
     teep_err_t      result = TEEP_SUCCESS;
     EVP_PKEY        *pkey = NULL;
     EVP_PKEY_CTX    *ctx = NULL;
@@ -146,7 +148,8 @@ out:
     return result;
 }
 #else /* OPENSSL_VERSION_NUMBER < OPENSSL_VERSION_300 */
-teep_err_t teep_create_es_key(teep_key_t *key) {
+teep_err_t teep_create_es_key(teep_key_t *key)
+{
     /* ****************************************** */
     /* cose algorithm enum -> openssl group name  */
     /* ****************************************** */
@@ -215,7 +218,8 @@ err:
 teep_err_t teep_key_init_es256_key_pair(const unsigned char *private_key,
                                         const unsigned char *public_key,
                                         UsefulBufC kid,
-                                        teep_key_t *cose_key_pair) {
+                                        teep_key_t *cose_key_pair)
+{
     cose_key_pair->private_key = private_key;
     cose_key_pair->private_key_len = PRIME256V1_PRIVATE_KEY_LENGTH;
     cose_key_pair->public_key = public_key;
@@ -228,7 +232,8 @@ teep_err_t teep_key_init_es256_key_pair(const unsigned char *private_key,
 teep_err_t teep_key_init_es384_key_pair(const unsigned char *private_key,
                                         const unsigned char *public_key,
                                         UsefulBufC kid,
-                                        teep_key_t *cose_key_pair) {
+                                        teep_key_t *cose_key_pair)
+{
     cose_key_pair->private_key = private_key;
     cose_key_pair->private_key_len = SECP384R1_PRIVATE_KEY_LENGTH;
     cose_key_pair->public_key = public_key;
@@ -241,7 +246,8 @@ teep_err_t teep_key_init_es384_key_pair(const unsigned char *private_key,
 teep_err_t teep_key_init_es521_key_pair(const unsigned char *private_key,
                                         const unsigned char *public_key,
                                         UsefulBufC kid,
-                                        teep_key_t *cose_key_pair) {
+                                        teep_key_t *cose_key_pair)
+{
     cose_key_pair->private_key = private_key;
     cose_key_pair->private_key_len = SECP521R1_PRIVATE_KEY_LENGTH;
     cose_key_pair->public_key = public_key;
@@ -253,7 +259,8 @@ teep_err_t teep_key_init_es521_key_pair(const unsigned char *private_key,
 
 teep_err_t teep_key_init_es256_public_key(const unsigned char *public_key,
                                           UsefulBufC kid,
-                                          teep_key_t *cose_public_key) {
+                                          teep_key_t *cose_public_key)
+{
     cose_public_key->private_key = NULL;
     cose_public_key->private_key_len = 0;
     cose_public_key->public_key = public_key;
@@ -265,7 +272,8 @@ teep_err_t teep_key_init_es256_public_key(const unsigned char *public_key,
 
 teep_err_t teep_key_init_es384_public_key(const unsigned char *public_key,
                                           UsefulBufC kid,
-                                          teep_key_t *cose_public_key) {
+                                          teep_key_t *cose_public_key)
+{
     cose_public_key->private_key = NULL;
     cose_public_key->private_key_len = 0;
     cose_public_key->public_key = public_key;
@@ -277,7 +285,8 @@ teep_err_t teep_key_init_es384_public_key(const unsigned char *public_key,
 
 teep_err_t teep_key_init_es521_public_key(const unsigned char *public_key,
                                           UsefulBufC kid,
-                                          teep_key_t *cose_public_key) {
+                                          teep_key_t *cose_public_key)
+{
     cose_public_key->private_key = NULL;
     cose_public_key->private_key_len = 0;
     cose_public_key->public_key = public_key;
@@ -287,7 +296,8 @@ teep_err_t teep_key_init_es521_public_key(const unsigned char *public_key,
     return teep_create_es_key(cose_public_key);
 }
 
-teep_err_t teep_free_key(const teep_key_t *key) {
+teep_err_t teep_free_key(const teep_key_t *key)
+{
 #if defined(LIBTEEP_PSA_CRYPTO_C)
     psa_destroy_key((psa_key_handle_t)key->cose_key.key.handle);
 #else
