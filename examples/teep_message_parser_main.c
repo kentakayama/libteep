@@ -69,7 +69,7 @@ int main(int argc, const char * argv[])
     }
 
     printf("main : Read CBOR file.\n");
-    cbor_buf.len = read_from_file(cbor_file_name, MAX_FILE_BUFFER_SIZE, cbor_buf.ptr);
+    cbor_buf.len = read_from_file(cbor_file_name, cbor_buf.ptr, MAX_FILE_BUFFER_SIZE);
     if (cbor_buf.len == 0) {
         printf("main : Failed to read CBOR file.\n");
         return EXIT_FAILURE;

@@ -4,18 +4,25 @@
 # SPDX-License-Identifier: BSD-2-Clause
 #
 
-CFLAGS			= -Wall -g
-LDFLAGS			= -lt_cose -lqcbor -lm
-INC				= -I ./inc -I ./examples/inc
-TARGET			= ./bin/teep_sign_test
-SRCS			= examples/teep_sign_test_main.c examples/teep_examples_common.c examples/teep_examples_cose.c src/teep_common.c src/teep_message_encode.c src/teep_message_decode.c src/teep_message_print.c src/teep_cose.c
-OBJDIR			= ./obj
-OBJS			= $(addprefix $(OBJDIR)/,$(patsubst %.c,%.o,$(SRCS)))
+CFLAGS = -Wall -g
+LDFLAGS = $(CMD_LD) -lt_cose -lqcbor -lm
+INC = $(CMD_INC) -I ./inc -I ./examples/inc
+TARGET = ./bin/teep_sign_test
+SRCS = \
+	examples/teep_sign_test_main.c \
+	examples/teep_examples_common.c \
+	src/teep_common.c src/teep_message_encode.c \
+	src/teep_message_decode.c \
+	src/teep_message_print.c \
+	src/teep_cose.c
+OBJDIR = ./obj
+OBJS = $(addprefix $(OBJDIR)/,$(patsubst %.c,%.o,$(SRCS)))
 
 ifeq ($(MBEDTLS),1)
     # use MbedTLS
-    CFLAGS	+= -DLIBTEEP_PSA_CRYPTO_C=1
-    LDFLAGS	+= -lmbedtls -lmbedx509 -lmbedcrypto
+    CFLAGS += -DLIBTEEP_PSA_CRYPTO_C=1
+    #LDFLAGS += -lmbedtls -lmbedx509
+    LDFLAGS += -lmbedcrypto
 else
     # use OpenSSL
     MBEDTLS=0
@@ -26,7 +33,7 @@ endif
 
 all: $(TARGET)
 
-$(OBJDIR)/%.o:	%.c
+$(OBJDIR)/%.o: %.c
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(INC) -o $@ -c $<
 

@@ -4,26 +4,24 @@
 # SPDX-License-Identifier: BSD-2-Clause
 #
 
-CFLAGS			= -Wall -g
-LDFLAGS			= -lt_cose -lqcbor -lm
-INC				= -I ./inc -I ./examples/inc
-TAM				= ./bin/teep_message_parser_tam
-AGENT			= ./bin/teep_message_parser_agent
-VERIFIER		= ./bin/teep_message_parser_verifier
-SRCS			= examples/teep_examples_common.c examples/teep_examples_cose.c src/teep_common.c src/teep_message_decode.c src/teep_message_print.c src/teep_cose.c
-TAM_OBJ			= obj/examples/teep_message_parser_tam.o
-AGENT_OBJ		= obj/examples/teep_message_parser_agent.o
-VERIFIER_OBJ	= obj/examples/teep_message_parser_verifier.o
-OBJDIR			= ./obj
-OBJS			= $(addprefix $(OBJDIR)/,$(patsubst %.c,%.o,$(SRCS)))
-SUIT_EXAMPLES_COSE=../libcsuit/obj/examples/suit_examples_cose.o
-COSE_FLAG		= _cose
+CFLAGS = -Wall -g
+LDFLAGS = $(CMD_LD) -lt_cose -lqcbor -lm
+INC = $(CMD_INC) -I ./inc -I ./examples/inc
+TAM = ./bin/teep_message_parser_tam
+AGENT = ./bin/teep_message_parser_agent
+VERIFIER = ./bin/teep_message_parser_verifier
+SRCS = examples/teep_examples_common.c examples/teep_examples_cose.c src/teep_common.c src/teep_message_decode.c src/teep_message_print.c src/teep_cose.c
+TAM_OBJ = obj/examples/teep_message_parser_tam.o
+AGENT_OBJ = obj/examples/teep_message_parser_agent.o
+VERIFIER_OBJ = obj/examples/teep_message_parser_verifier.o
+OBJDIR = ./obj
+OBJS = $(addprefix $(OBJDIR)/,$(patsubst %.c,%.o,$(SRCS)))
+COSE_FLAG = _cose
 
 ifeq ($(suit),1)
     CFLAGS += -DPARSE_SUIT
     LDFLAGS := ../libcsuit/bin/libcsuit.a $(LDFLAGS)
     INC += -I ../libcsuit/inc -I ../libcsuit/examples/inc
-    OBJS += $(SUIT_EXAMPLES_COSE)
 endif
 
 ifeq ($(debug),1)
@@ -33,8 +31,9 @@ endif
 
 ifeq ($(MBEDTLS),1)
     # use MbedTLS
-    CFLAGS	+= -DLIBTEEP_PSA_CRYPTO_C=1
-    LDFLAGS	+= -lmbedtls -lmbedx509 -lmbedcrypto
+    CFLAGS += -DLIBTEEP_PSA_CRYPTO_C=1
+    #LDFLAGS += -lmbedtls -lmbedx509
+    LDFLAGS += -lmbedcrypto
 else
     # use OpenSSL
     MBEDTLS=0

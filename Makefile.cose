@@ -4,23 +4,29 @@
 # SPDX-License-Identifier: BSD-2-Clause
 #
 
-CFLAGS			= -Wall -g
-LDFLAGS			= -lt_cose -lqcbor -lm
-INC				= -I ./inc -I ./examples/inc
-TAM				= ./bin/teep_cose_tam
-AGENT			= ./bin/teep_cose_agent
-VERIFIER		= ./bin/teep_cose_verifier
-SRCS			= examples/teep_examples_common.c examples/teep_examples_cose.c src/teep_common.c src/teep_message_decode.c src/teep_message_print.c src/teep_cose.c
-OBJDIR			= ./obj
-OBJS			= $(addprefix $(OBJDIR)/,$(patsubst %.c,%.o,$(SRCS)))
-TAM_OBJ			= obj/examples/teep_cose_tam.o
-AGENT_OBJ		= obj/examples/teep_cose_agent.o
-VERIFIER_OBJ	= obj/examples/teep_cose_verifier.o
+CFLAGS = -Wall -g
+LDFLAGS = $(CMD_LD) -lt_cose -lqcbor -lm
+INC = $(CMD_INC) -I ./inc -I ./examples/inc
+TAM = ./bin/teep_cose_tam
+AGENT = ./bin/teep_cose_agent
+VERIFIER = ./bin/teep_cose_verifier
+SRCS = \
+	examples/teep_examples_common.c \
+	src/teep_common.c \
+	src/teep_message_decode.c \
+	src/teep_message_print.c \
+	src/teep_cose.c
+OBJDIR = ./obj
+OBJS = $(addprefix $(OBJDIR)/,$(patsubst %.c,%.o,$(SRCS)))
+TAM_OBJ = obj/examples/teep_cose_tam.o
+AGENT_OBJ = obj/examples/teep_cose_agent.o
+VERIFIER_OBJ = obj/examples/teep_cose_verifier.o
 
 ifeq ($(MBEDTLS),1)
     # use MbedTLS
-    CFLAGS	+= -DLIBTEEP_PSA_CRYPTO_C=1
-    LDFLAGS	+= -lmbedtls -lmbedx509 -lmbedcrypto
+    CFLAGS += -DLIBTEEP_PSA_CRYPTO_C=1
+    #LDFLAGS += -lmbedtls -lmbedx509
+    LDFLAGS += -lmbedcrypto
 else
     # use OpenSSL
     MBEDTLS=0
@@ -31,7 +37,7 @@ endif
 
 all: $(TAM) $(AGENT) $(VERIFIER)
 
-$(OBJDIR)/%.o:	%.c
+$(OBJDIR)/%.o: %.c
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(INC) -o $@ -c $<
 
@@ -57,7 +63,14 @@ clean:
 	$(RM) $(OBJS) $(TAM_OBJ) $(AGENT_OBJ) $(VERIFIER_OBJ) $(TAM) $(AGENT) $(VERIFIER)
 
 
-SOURCES	:= query_request.cbor query_response.cbor update.cbor teep_success.cbor teep_error.cbor evidence.cbor attestation_results.cbor
+SOURCES := \
+	query_request.cbor \
+	query_response.cbor \
+	update.cbor \
+	teep_success.cbor \
+	teep_error.cbor \
+	evidence.cbor \
+	attestation_results.cbor
 
 $(SOURCES):
 	$(MAKE) -C testfiles $@
