@@ -4,30 +4,35 @@
 # SPDX-License-Identifier: BSD-2-Clause
 #
 
-NAME	= libteep
-CFLAGS	= -Wall -g -fPIC
-LDFLAGS	= -lt_cose -lqcbor
-INC		= -I ./inc
-SRCS	= src/teep_common.c src/teep_cose.c src/teep_message_decode.c src/teep_message_encode.c src/teep_message_print.c
-PUBLIC_INTERFACE	= inc/teep/teep.h inc/teep/teep_common.h inc/teep/teep_message_data.h inc/teep/teep_cose.h inc/teep/teep_message_print.h
-OBJDIR	= ./obj
-OBJS	= $(addprefix $(OBJDIR)/,$(patsubst %.c,%.o,$(SRCS)))
+NAME = libteep
+CFLAGS = -Wall -g -fPIC
+INC = $(CMD_INC) -I ./inc
+SRCS = \
+	src/teep_common.c \
+	src/teep_cose.c \
+	src/teep_message_decode.c \
+	src/teep_message_encode.c \
+	src/teep_message_print.c
+PUBLIC_INTERFACE = \
+	inc/teep/teep.h \
+	inc/teep/teep_common.h \
+	inc/teep/teep_message_data.h \
+	inc/teep/teep_cose.h \
+	inc/teep/teep_message_print.h
+OBJDIR = ./obj
+OBJS = $(addprefix $(OBJDIR)/,$(patsubst %.c,%.o,$(SRCS)))
 
 ifeq ($(MBEDTLS),1)
     # use MbedTLS
     CFLAGS	+= -DLIBTEEP_PSA_CRYPTO_C=1
-    LDFLAGS	+= -lmbedtls -lmbedx509 -lmbedcrypto
 else
     # use OpenSSL
     MBEDTLS=0
-    LDFLAGS += -lcrypto
 endif
 
 ifdef suit
     CFLAGS += -DPARSE_SUIT
-    #LDFLAGS := ../libcsuit/bin/libcsuit.a $(LDFLAGS)
     INC += -I ../libcsuit/inc -I ../libcsuit/examples/inc
-    #OBJ += $(SUIT_EXAMPLES_COSE)
 endif
 
 .PHONY: all so install uninstall build_test test clean

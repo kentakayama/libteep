@@ -71,7 +71,7 @@ int main(int argc, const char * argv[]) {
 #else
     UsefulBuf_MAKE_STACK_UB(cbor_buf, MAX_FILE_BUFFER_SIZE);
 #endif
-    cbor_buf.len = read_from_file(argv[1], MAX_FILE_BUFFER_SIZE, cbor_buf.ptr);
+    cbor_buf.len = read_from_file(argv[1], cbor_buf.ptr, MAX_FILE_BUFFER_SIZE);
     if (!cbor_buf.len) {
         printf("main : Failed to read CBOR file \"%s\".\n", argv[2]);
         return EXIT_FAILURE;
@@ -109,7 +109,7 @@ int main(int argc, const char * argv[]) {
     printf("\n");
 
     if (argc > 2) {
-        size_t write_len = write_to_file(argv[2], signed_cose.len, signed_cose.ptr);
+        size_t write_len = write_to_file(argv[2], signed_cose.ptr, signed_cose.len);
         if (!write_len) {
             printf("main : Failed to write COSE signed CBOR to \"%s\".\n", argv[2]);
             return EXIT_FAILURE;
