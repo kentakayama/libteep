@@ -53,7 +53,7 @@ $(VERIFIER_OBJ): examples/teep_cose_test_main.c
 	$(CC) $(CFLAGS) $(INC) -DTEEP_ACTOR_VERIFIER=1 -o $@ -c $<
 
 $(TRUST_ANCHOR_OBJ): examples/teep_cose_test_main.c
-	$(CC) $(CLFAGS) $(INC) -DTEEP_ACTOR_TRUST_ANCHOR=1 -o $@ -c $<
+	$(CC) $(CFLAGS) $(INC) -DTEEP_ACTOR_TRUST_ANCHOR=1 -o $@ -c $<
 
 $(TAM): $(OBJS) $(TAM_OBJ)
 	$(CC) -o $@ $^ $(LDFLAGS)
