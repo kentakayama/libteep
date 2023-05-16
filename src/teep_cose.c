@@ -355,3 +355,136 @@ teep_err_t teep_free_key(const teep_key_t *key) {
 #endif
     return TEEP_SUCCESS;
 }
+
+teep_err_t teep_set_mechanism_from_cose_key_from_item(QCBORDecodeContext *context,
+                                                      QCBORItem *item,
+                                                      UsefulBufC kid,
+                                                      teep_mechanism_t *mechanism)
+{
+    teep_err_t result;
+    QCBORError error;
+    if (item->uDataType != QCBOR_TYPE_MAP) {
+        return TEEP_ERR_INVALID_TYPE_OF_VALUE;
+    }
+    UsefulBuf_MAKE_STACK_UB(private_key, TEEP_MAX_PRIVATE_KEY_LEN);
+    UsefulBuf_MAKE_STACK_UB(public_key, TEEP_MAX_PUBLIC_KEY_LEN);
+    int64_t crv = 0;
+    int64_t kty = 0;
+
+    UsefulBufC y = NULLUsefulBufC;
+    UsefulBufC x = NULLUsefulBufC;
+    UsefulBufC d = NULLUsefulBufC;
+    QCBORDecode_EnterMap(context, item);
+    const size_t cose_key_map_len = item->val.uCount;
+    for (size_t k = 0; k < cose_key_map_len; k++) {
+        QCBORDecode_GetNext(context, item);
+        if (item->uLabelType != QCBOR_TYPE_INT64) {
+            return TEEP_ERR_INVALID_TYPE_OF_KEY;
+        }
+        switch (item->label.int64) {
+        case TEEP_COSE_D:
+            if (item->uDataType != QCBOR_TYPE_BYTE_STRING) {
+                return TEEP_ERR_INVALID_TYPE_OF_VALUE;
+            }
+            d = item->val.string;
+            break;
+        case TEEP_COSE_Y:
+            if (item->uDataType != QCBOR_TYPE_BYTE_STRING) {
+                return TEEP_ERR_INVALID_TYPE_OF_VALUE;
+            }
+            y = item->val.string;
+            break;
+        case TEEP_COSE_X:
+            if (item->uDataType != QCBOR_TYPE_BYTE_STRING) {
+                return TEEP_ERR_INVALID_TYPE_OF_VALUE;
+            }
+            x = item->val.string;
+            break;
+        case TEEP_COSE_CRV:
+            if (item->uDataType != QCBOR_TYPE_INT64) {
+                return TEEP_ERR_INVALID_TYPE_OF_VALUE;
+            }
+            crv = item->val.int64;
+            break;
+        case TEEP_COSE_KTY:
+            if (item->uDataType != QCBOR_TYPE_INT64) {
+                return TEEP_ERR_INVALID_TYPE_OF_VALUE;
+            }
+            kty = item->val.int64;
+            break;
+        default:
+            return TEEP_ERR_NOT_IMPLEMENTED;
+        }
+    }
+    QCBORDecode_ExitMap(context);
+    error = QCBORDecode_GetError(context);
+    if (error != QCBOR_SUCCESS) {
+        return TEEP_ERR_FATAL;
+    }
+
+    /* check kty */
+    switch (kty) {
+    case TEEP_COSE_KTY_EC2:
+        switch (crv) {
+        case TEEP_COSE_CRV_P256:
+            if ((x.len == 32) &&
+                (y.len == 32)) {
+                /* POINT_CONVERSION_UNCOMPRESSED */
+                ((uint8_t *)public_key.ptr)[0] = 0x04;
+                memcpy(&((uint8_t *)public_key.ptr)[1], x.ptr, 32);
+                memcpy(&((uint8_t *)public_key.ptr)[33], y.ptr, 32);
+                public_key.len = PRIME256V1_PUBLIC_KEY_LENGTH;
+            }
+            else {
+                return TEEP_ERR_INVALID_VALUE;
+            }
+            if (d.len == 32) {
+                memcpy(private_key.ptr, d.ptr, 32);
+                private_key.len = PRIME256V1_PRIVATE_KEY_LENGTH;
+                result = teep_key_init_es256_key_pair(private_key.ptr, public_key.ptr, kid, &mechanism->key);
+            }
+            else if (d.len == 0) {
+                result = teep_key_init_es256_public_key(public_key.ptr, kid, &mechanism->key);
+            }
+            else {
+                return TEEP_ERR_INVALID_VALUE;
+            }
+            if (result != TEEP_SUCCESS) {
+                return result;
+            }
+            break; /* COSE_KEY_CRV_P256 */
+
+        default:
+            return TEEP_ERR_NOT_IMPLEMENTED;
+        }
+        break; /* TEEP_COSE_KTY_EC2 */
+
+    default:
+        return TEEP_ERR_INVALID_TYPE_OF_VALUE;
+    }
+    error = QCBORDecode_GetError(context);
+    if (error != QCBOR_SUCCESS) {
+        return TEEP_ERR_FATAL;
+    }
+    return TEEP_SUCCESS;
+}
+
+teep_err_t teep_set_mechanism_from_cose_key(UsefulBufC buf,
+                                            UsefulBufC kid,
+                                            teep_mechanism_t *mechanism)
+{
+    QCBORDecodeContext decode_context;
+    QCBORItem item;
+    QCBORDecode_Init(&decode_context, buf, QCBOR_DECODE_MODE_NORMAL);
+    QCBORDecode_PeekNext(&decode_context, &item);
+    teep_err_t result = teep_set_mechanism_from_cose_key_from_item(&decode_context, &item, kid, mechanism);
+    if (result != TEEP_SUCCESS) {
+        return result;
+    }
+    QCBORError error = QCBORDecode_Finish(&decode_context);
+    if (error != QCBOR_SUCCESS) {
+        return TEEP_ERR_FATAL;
+    }
+    return TEEP_SUCCESS;
+}
+

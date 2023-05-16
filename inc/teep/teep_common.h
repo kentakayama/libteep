@@ -8,28 +8,32 @@
 #define TEEP_COMMON_H
 
 #include "qcbor/qcbor.h"
+#include "qcbor/qcbor_spiffy_decode.h"
 
 // Function results
 typedef enum teep_err {
-    TEEP_SUCCESS                        = 0,
-    TEEP_ERR_INVALID_TYPE_OF_ARGUMENT   = 1,
-    TEEP_ERR_INVALID_VALUE              = 2,
-    TEEP_ERR_INVALID_LENGTH             = 3,
-    TEEP_ERR_INVALID_MESSAGE_TYPE       = 4,
+    TEEP_SUCCESS = 0,
+    TEEP_ERR_INVALID_TYPE_OF_VALUE,
+    TEEP_ERR_INVALID_VALUE,
+    TEEP_ERR_INVALID_TYPE_OF_KEY,
+    TEEP_ERR_INVALID_KEY,
+    TEEP_ERR_INVALID_LENGTH,
+    TEEP_ERR_INVALID_MESSAGE_TYPE,
 
-    TEEP_ERR_CBOR_WITHOUT_COSE          = 5,
-    TEEP_ERR_VERIFICATION_FAILED        = 6,
-    TEEP_ERR_SIGNING_FAILED             = 7,
+    TEEP_ERR_CBOR_WITHOUT_COSE,
+    TEEP_ERR_VERIFICATION_FAILED,
+    TEEP_ERR_SIGNING_FAILED,
 
-    TEEP_ERR_NO_SUPPORTED_VERSION       = 8,
-    TEEP_ERR_NO_SUPPORTED_CIPHERSUITE   = 9,
+    TEEP_ERR_NOT_IMPLEMENTED,
+    TEEP_ERR_NO_SUPPORTED_VERSION,
+    TEEP_ERR_NO_SUPPORTED_CIPHERSUITE,
 
-    TEEP_ERR_NO_MEMORY                  = 10,
-    TEEP_ERR_ON_HTTP_POST               = 11,
+    TEEP_ERR_NO_MEMORY,
+    TEEP_ERR_ON_HTTP_POST,
 
-    TEEP_ERR_UNEXPECTED_ERROR           = 29,
-    TEEP_ERR_ABORT                      = 30,
-    TEEP_ERR_FATAL                      = 31,
+    TEEP_ERR_UNEXPECTED_ERROR,
+    TEEP_ERR_ABORT,
+    TEEP_ERR_FATAL,
 } teep_err_t;
 
 typedef struct teep_buf {

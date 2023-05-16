@@ -10,6 +10,7 @@ INC = $(CMD_INC) -I ./inc -I ./examples/inc
 TAM = ./bin/teep_cose_tam
 AGENT = ./bin/teep_cose_agent
 VERIFIER = ./bin/teep_cose_verifier
+TRUST_ANCHOR = ./bin/teep_cose_trust_anchor
 SRCS = \
 	examples/teep_examples_common.c \
 	src/teep_common.c \
@@ -21,6 +22,7 @@ OBJS = $(addprefix $(OBJDIR)/,$(patsubst %.c,%.o,$(SRCS)))
 TAM_OBJ = obj/examples/teep_cose_tam.o
 AGENT_OBJ = obj/examples/teep_cose_agent.o
 VERIFIER_OBJ = obj/examples/teep_cose_verifier.o
+TRUST_ANCHOR_OBJ = obj/examples/teep_cose_trust_anchor.o
 
 ifeq ($(MBEDTLS),1)
     # use MbedTLS
@@ -35,7 +37,7 @@ endif
 
 .PHONY: all clean run
 
-all: $(TAM) $(AGENT) $(VERIFIER)
+all: $(TAM) $(AGENT) $(VERIFIER) $(TRUST_ANCHOR)
 
 $(OBJDIR)/%.o: %.c
 	mkdir -p $(dir $@)
@@ -50,6 +52,9 @@ $(AGENT_OBJ): examples/teep_cose_test_main.c
 $(VERIFIER_OBJ): examples/teep_cose_test_main.c
 	$(CC) $(CFLAGS) $(INC) -DTEEP_ACTOR_VERIFIER=1 -o $@ -c $<
 
+$(TRUST_ANCHOR_OBJ): examples/teep_cose_test_main.c
+	$(CC) $(CFLAGS) $(INC) -DTEEP_ACTOR_TRUST_ANCHOR=1 -o $@ -c $<
+
 $(TAM): $(OBJS) $(TAM_OBJ)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
@@ -57,6 +62,9 @@ $(AGENT): $(OBJS) $(AGENT_OBJ)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 $(VERIFIER): $(OBJS) $(VERIFIER_OBJ)
+	$(CC) -o $@ $^ $(LDFLAGS)
+
+$(TRUST_ANCHOR): $(OBJS) $(TRUST_ANCHOR_OBJ)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 clean:
