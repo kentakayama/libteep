@@ -14,7 +14,7 @@
 #include "suit_examples_common.h"
 #endif
 
-const char *teep_err_to_str(teep_err_t err)
+char *teep_err_to_str(teep_err_t err)
 {
     switch (err) {
     case TEEP_SUCCESS:
@@ -164,7 +164,7 @@ teep_err_t teep_print_hex_within_max(const uint8_t *array,
     return result;
 }
 
-const char *teep_err_code_to_str(int32_t err_code)
+char *teep_err_code_to_str(int32_t err_code)
 {
     switch (err_code) {
     case TEEP_ERR_CODE_PERMANENT_ERROR:
@@ -190,7 +190,7 @@ const char *teep_err_code_to_str(int32_t err_code)
     }
 }
 
-const char *teep_cose_mechanism_key_to_str(int64_t cose_mechanism_key)
+char *teep_cose_mechanism_key_to_str(int64_t cose_mechanism_key)
 {
     switch (cose_mechanism_key) {
     case CBOR_TAG_COSE_SIGN1:
@@ -206,11 +206,11 @@ const char *teep_cose_mechanism_key_to_str(int64_t cose_mechanism_key)
     case CBOR_TAG_ENCRYPT:
         return "COSE_Encrypt";
     default:
-        return "(NULL)";
+        return NULL;
     }
 }
 
-const char *teep_cose_algs_key_to_str(int64_t cose_algs_key)
+char *teep_cose_algs_key_to_str(int64_t cose_algs_key)
 {
     switch (cose_algs_key) {
     case 0:
@@ -889,13 +889,12 @@ teep_err_t teep_print_message(const teep_message_t *msg,
     return result;
 }
 
-const char* teep_position_to_str(const int64_t position, const int64_t type)
+char* teep_position_label_to_str(const int64_t position, const int64_t type)
 {
     switch (position) {
     case 0: return "type";
     case 1: return "options";
     case 2:
-        //printf("{2: %ld}", type);
         if (type == TEEP_TYPE_QUERY_REQUEST) {
             return "supported-teep-cipher-suites";
         }
@@ -916,12 +915,12 @@ const char* teep_position_to_str(const int64_t position, const int64_t type)
     return NULL;
 }
 
-const char* teep_position_to_str_sentinel(const int64_t position, const int64_t type)
+char* teep_position_label_to_str_sentinel(const int64_t position, const int64_t type)
 {
     return NULL;
 }
 
-const char* teep_message_type_to_str(const int64_t type, const int64_t n)
+char* teep_message_type_to_str(const int64_t type, const int64_t n)
 {
     switch (type) {
     case TEEP_TYPE_QUERY_REQUEST: return "TEEP-TYPE-QueryRequest";
@@ -929,11 +928,11 @@ const char* teep_message_type_to_str(const int64_t type, const int64_t n)
     case TEEP_TYPE_UPDATE: return "TEEP-TYPE-Update";
     case TEEP_TYPE_TEEP_SUCCESS: return "TEEP-TYPE-Success";
     case TEEP_TYPE_TEEP_ERROR: return "TEEP-TYPE-Error";
-    default: return "UNKNOWN";
+    default: return NULL;
     }
 }
 
-const char* teep_options_key_to_str(const int64_t label, const int64_t n)
+char* teep_options_key_to_str(const int64_t label, const int64_t n)
 {
     switch (label) {
     case TEEP_OPTIONS_KEY_INVALID: return "invalid";
@@ -958,11 +957,11 @@ const char* teep_options_key_to_str(const int64_t label, const int64_t n)
     case TEEP_OPTIONS_KEY_SUIT_REPORTS: return "suit-reports";
     case TEEP_OPTIONS_KEY_TOKEN: return "token";
     case TEEP_OPTIONS_KEY_SUPPORTED_FRESHNESS_MECHANISMS: return "supported-freshness-mechanisms";
-    default: return "UNKNOWN";
+    default: return NULL;
     }
 }
 
-const char* teep_cose_header_label_to_str(const int64_t label, const int64_t n)
+char* teep_cose_header_label_to_str(const int64_t label, const int64_t n)
 {
     switch (label) {
     case 1: return "alg";
@@ -972,22 +971,22 @@ const char* teep_cose_header_label_to_str(const int64_t label, const int64_t n)
     case 5: return "IV";
     case 6: return "Partial IV";
     case 7: return "counter signature";
-    default: return "UNKNOWN";
+    default: return NULL;
     }
 }
 
 
-const char* teep_eat_cnf_label_to_str(const int64_t label, const int64_t n)
+char* teep_eat_cnf_label_to_str(const int64_t label, const int64_t n)
 {
     switch (label) {
     case 1: return "COSE_Key";
     case 2: return "Encrypted_COSE_Key";
     case 3: return "kid";
-    default: return "UNKNOWN";
+    default: return NULL;
     }
 }
 
-const char* teep_eat_claim_label_to_str(const int64_t label, const int64_t n)
+char* teep_eat_claim_label_to_str(const int64_t label, const int64_t n)
 {
     switch (label) {
     case EAT_CLAIM_ISSUER: return "iss";
@@ -996,7 +995,6 @@ const char* teep_eat_claim_label_to_str(const int64_t label, const int64_t n)
     case EAT_CLAIM_TIMESTAMP: return "iat";
     case EAT_CLAIM_CONFIRMATION: return "cnf";
     case EAT_CLAIM_EAT_NONCE: return "eat_nonce";
-    //case EAT_CLAIM_NONCE: return "nonce";
     case EAT_CLAIM_SECURE_BOOT: return "secboot";
     case EAT_CLAIM_CHIP_VERSION: return "chip_version";
     case EAT_CLAIM_UEID: return "ueid";
@@ -1014,57 +1012,57 @@ const char* teep_eat_claim_label_to_str(const int64_t label, const int64_t n)
     case EAT_CLAIM_MANIFESTS: return "manifests";
     case EAT_CLAIM_MEASUREMENTS: return "measres";
     case EAT_CLAIM_VERIFIER_NONCE: return "verifier_nonce";
-    default: return "UNKNOWN";
+    default: return NULL;
     }
 }
 
-const char* teep_eat_claim_label_to_str_sentinel(const int64_t label, const int64_t n)
+char* teep_eat_claim_label_to_str_sentinel(const int64_t label, const int64_t n)
 {
     return NULL;
 }
 
-const char* teep_position_cipher_suite_items(const int64_t position, const int64_t n)
+char* teep_position_cipher_suite_items(const int64_t position, const int64_t n)
 {
     switch (position) {
     case 0: return "mechanism";
     case 1: return "algorithm-id";
-    default: return "UNKNOWN";
+    default: return NULL;
     }
 }
 
-const char* teep_position_cipher_suite(const int64_t position, const int64_t n)
+char* teep_position_cipher_suite(const int64_t position, const int64_t n)
 {
     return NULL;
 }
 
-const char* teep_position_cipher_suites(const int64_t position, const int64_t n)
+char* teep_position_cipher_suites(const int64_t position, const int64_t n)
 {
     return NULL;
 }
 
-const char* teep_position_tc_list_to_str(const int64_t position, const int64_t n)
+char* teep_position_tc_list_to_str(const int64_t position, const int64_t n)
 {
     return NULL;
 }
 
-const char* suit_system_property_claims_to_str(const int64_t label, const int64_t n)
+char* suit_system_property_claims_to_str(const int64_t label, const int64_t n)
 {
     switch (label) {
     case 0: return "system-component-id";
 #if PARSE_SUIT
-    default: return suit_parameter_key_to_str(label);
+    default: return (char *)suit_parameter_key_to_str(label);
 #else
     default: return NULL;
 #endif
     }
 }
 
-const char* teep_position_requested_tc_list_to_str(const int64_t position, const int64_t n)
+char* teep_position_requested_tc_list_to_str(const int64_t position, const int64_t n)
 {
     return NULL;
 }
 
-const char* teep_debug_to_str(const char* (*from)(int64_t, int64_t))
+char* teep_debug_to_str(TeepLabelToStr from)
 {
     if (teep_position_requested_tc_list_to_str == from) {
         return "position_requested_tc_list";
@@ -1084,18 +1082,18 @@ const char* teep_debug_to_str(const char* (*from)(int64_t, int64_t))
     if (teep_message_type_to_str == from) {
         return "message_type";
     }
-    if (teep_position_to_str == from) {
+    if (teep_position_label_to_str == from) {
         return "position";
     }
-    return "UNKOWN";
+    return NULL;
 }
 
-void* teep_a_to_str(const char* (*from)(int64_t, int64_t), bool is_map, const int64_t label)
+TeepLabelToStr teep_a_to_str(TeepLabelToStr from, bool is_map, const int64_t label)
 {
     if (from == teep_eat_claim_label_to_str_sentinel) {
         return teep_eat_claim_label_to_str;
     }
-    else if (from == teep_position_to_str) {
+    else if (from == teep_position_label_to_str) {
         if (is_map) {
             return teep_options_key_to_str;
         }
@@ -1112,7 +1110,7 @@ void* teep_a_to_str(const char* (*from)(int64_t, int64_t), bool is_map, const in
             return teep_eat_cnf_label_to_str;
         }
     }
-    else if (from == teep_position_to_str) {
+    else if (from == teep_position_label_to_str) {
         return teep_options_key_to_str;
     }
     else if (from == teep_position_tc_list_to_str) {
@@ -1121,8 +1119,8 @@ void* teep_a_to_str(const char* (*from)(int64_t, int64_t), bool is_map, const in
     else if (from == teep_position_requested_tc_list_to_str) {
         return teep_options_key_to_str;
     }
-    else if (from == teep_position_to_str_sentinel) {
-        return teep_position_to_str;
+    else if (from == teep_position_label_to_str_sentinel) {
+        return teep_position_label_to_str;
     }
     else if (from == teep_options_key_to_str) {
         switch (label) {
@@ -1143,11 +1141,97 @@ void* teep_a_to_str(const char* (*from)(int64_t, int64_t), bool is_map, const in
     return NULL;
 }
 
+char* teep_cose_tag_to_str(void *type)
+{
+    return teep_cose_mechanism_key_to_str(*(int64_t *)type);
+}
+
+char* teep_algorithm_id_to_str(void *type)
+{
+    return teep_cose_algs_key_to_str(*(int64_t *)type);
+}
+
+char* teep_message_type_value_to_str(void *type)
+{
+    return teep_message_type_to_str(*(int64_t *)type, 0);
+}
+
+static char buf[32];
+char* teep_data_item_requested_to_str(void *type)
+{
+    size_t len = 0;
+    teep_data_item_requested_t r;
+    r.val = *(int64_t *)type;
+
+    if (r.attestation) {
+        len += sprintf(&buf[len], "attestation|");
+    }
+    if (r.trusted_components) {
+        len += sprintf(&buf[len], "trusted-components|");
+    }
+    if (r.extensions) {
+        len += sprintf(&buf[len], "extensions");
+    }
+    if (len > 0) {
+        buf[len - 1] = '\0';
+        return buf;
+    }
+    return NULL;
+}
+
+char* teep_alg_id_to_str(void *id)
+{
+    return teep_cose_algs_key_to_str(*(int64_t *)id);
+}
+
+TeepPrintValue teep_value_to_str(TeepLabelToStr f, int64_t n)
+{
+    if (teep_position_label_to_str == f) {
+        switch (n) {
+        case 0: return teep_message_type_value_to_str;
+        case 4: return teep_data_item_requested_to_str;
+        }
+    }
+    else if (teep_cose_header_label_to_str == f) {
+        switch (n) {
+        case 1: return teep_alg_id_to_str;
+        }
+    }
+    else if (teep_position_cipher_suite_items == f) {
+        switch (n) {
+        case 0: return teep_cose_tag_to_str;
+        case 1: return teep_algorithm_id_to_str;
+        }
+    }
+
+    return NULL;
+}
+
+char* teep_debug_to_print(TeepPrintValue from)
+{
+    if (teep_message_type_value_to_str == from) {
+        return "message_type";
+    }
+    else if (teep_data_item_requested_to_str == from) {
+        return "data_item_requested";
+    }
+    else if (teep_alg_id_to_str == from) {
+        return "alg_id";
+    }
+    else if (teep_cose_tag_to_str == from) {
+        return "cose_tag";
+    }
+    else if (teep_algorithm_id_to_str == from) {
+        return "algorithm_id";
+    }
+    return NULL;
+}
+
 void teep_print_value(QCBORDecodeContext *context,
                  QCBORItem *item,
                  const uint32_t indent_space,
                  const uint32_t indent_delta,
-                 const char* (*label_to_str)(int64_t, int64_t),
+                 TeepLabelToStr label_to_str,
                  const int64_t label,
                  bool in_header)
 {
@@ -1198,9 +1282,11 @@ void teep_print_value(QCBORDecodeContext *context,
         printf("null");
         break;
     }
-    QCBORError err = QCBORDecode_GetError(context);
-    if (err != QCBOR_SUCCESS) {
-        printf("qcbor_err = %d\n", err);
+
+    TeepPrintValue f = teep_value_to_str(label_to_str, label);
+    if (f != NULL && f(&val) != NULL) {
+        /* there is something to print for the value */
+        printf(" / %s /", f(&val));
     }
 }
 
@@ -1208,7 +1294,7 @@ void teep_print_map(QCBORDecodeContext *context,
                QCBORItem *item,
                const uint32_t indent_space,
                const uint32_t indent_delta,
-               const char* (*label_to_str)(int64_t, int64_t),
+               TeepLabelToStr label_to_str,
                const int64_t label,
                bool in_header)
 {
@@ -1216,7 +1302,7 @@ void teep_print_map(QCBORDecodeContext *context,
     size_t length = item->val.uCount;
     for (size_t i = 0; i < length; i++) {
         QCBORDecode_PeekNext(context, item);
-        const char* (*tmp_label_to_str)(int64_t, int64_t) = label_to_str;
+        TeepLabelToStr tmp_label_to_str = label_to_str;
         if (item->uDataType == QCBOR_TYPE_ARRAY) {
             tmp_label_to_str = teep_a_to_str(label_to_str, false, item->label.int64);
         }
@@ -1243,15 +1329,14 @@ void teep_print_array(QCBORDecodeContext *context,
                  QCBORItem *item,
                  const uint32_t indent_space,
                  const uint32_t indent_delta,
-                 const char* (*position_to_str)(int64_t, int64_t),
+                 TeepLabelToStr position_to_str,
                  const int64_t position,
                  bool in_header)
 {
-    teep_data_item_requested_t r = {0};
     size_t length = item->val.uCount;
 
     int64_t type = 0;
-    bool is_teep_protocol = position_to_str == teep_position_to_str;
+    bool is_teep_protocol = position_to_str == teep_position_label_to_str;
     if (is_teep_protocol) {
         QCBORDecode_PeekNext(context, item);
         type = item->val.int64;
@@ -1263,7 +1348,7 @@ void teep_print_array(QCBORDecodeContext *context,
     int64_t prev_label = item->label.int64;
     for (size_t i = 0; i < length; i++) {
         QCBORDecode_PeekNext(context, item);
-        const char* (*tmp_position_to_str)(int64_t, int64_t) = position_to_str;
+        TeepLabelToStr tmp_position_to_str = position_to_str;
         if (item->uDataType == QCBOR_TYPE_ARRAY) {
             tmp_position_to_str = teep_a_to_str(position_to_str, false, i);
         }
@@ -1279,38 +1364,6 @@ void teep_print_array(QCBORDecodeContext *context,
         }
 
         teep_print_value(context, item, indent_space + indent_delta, indent_delta, tmp_position_to_str, i, in_header);
-
-        if (is_teep_protocol) {
-            if (item->uDataType == QCBOR_TYPE_INT64 && is_teep_protocol && i == 4) {
-                r.val = item->val.uint64;
-                if (r.val) {
-                    printf(" / ");
-                    bool printed = false;
-                    if (r.attestation) {
-                        if (printed) {
-                            printf("|");
-                        }
-                        printed = true;
-                        printf("attestation");
-                    }
-                    if (r.trusted_components) {
-                        if (printed) {
-                            printf("|");
-                        }
-                        printed = true;
-                        printf("trusted-components");
-                    }
-                    if (r.extensions) {
-                        if (printed) {
-                            printf("|");
-                        }
-                        printed = true;
-                        printf("extensions");
-                    }
-                    printf(" /");
-                }
-            }
-        }
 
         if (i + 1 < length) {
             printf(",");
@@ -1340,7 +1393,7 @@ teep_err_t teep_print_cose_header(QCBORDecodeContext *context,
 teep_err_t teep_print_cose(QCBORDecodeContext *context,
                             const uint32_t indent_space,
                             const uint32_t indent_delta,
-                            const char* (*label_to_str)(int64_t, int64_t))
+                            TeepLabelToStr label_to_str)
 {
     QCBORItem item;
 
@@ -1396,7 +1449,7 @@ teep_err_t teep_print_cose(QCBORDecodeContext *context,
 teep_err_t teep_print_cose_usefulbufc(UsefulBufC cose,
                            const uint32_t indent_space,
                            const uint32_t indent_delta,
-                           const char* (*label_to_str)(int64_t, int64_t))
+                           TeepLabelToStr label_to_str)
 {
     QCBORDecodeContext context;
     QCBORDecode_Init(&context, cose, QCBOR_DECODE_MODE_NORMAL);
@@ -1422,5 +1475,5 @@ teep_err_t teep_print_cose_teep_message(UsefulBufC cose_teep_message,
                            const uint32_t indent_space,
                            const uint32_t indent_delta)
 {
-    return teep_print_cose_usefulbufc(cose_teep_message, indent_space, indent_delta, teep_position_to_str);
+    return teep_print_cose_usefulbufc(cose_teep_message, indent_space, indent_delta, teep_position_label_to_str);
 }

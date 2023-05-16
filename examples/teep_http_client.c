@@ -10,7 +10,8 @@
 static size_t write_callback(void *recv_buffer_ptr,
                              size_t size,
                              size_t nitems,
-                             void *user_ptr) {
+                             void *user_ptr)
+{
     UsefulBuf *recv_buffer = (UsefulBuf *)user_ptr;
     printf("\nwrite_callback : start\n");
     size_t recv_size = size * nitems;
@@ -25,7 +26,8 @@ static size_t write_callback(void *recv_buffer_ptr,
 
 teep_err_t teep_send_http_post(const char *url,
                                UsefulBufC send_buffer,
-                               UsefulBuf *recv_buffer) {
+                               UsefulBuf *recv_buffer)
+{
     teep_err_t          result = TEEP_SUCCESS;
     CURL                *curl = NULL;
     CURLcode            curl_result;
