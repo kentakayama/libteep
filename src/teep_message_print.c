@@ -19,10 +19,14 @@ const char *teep_err_to_str(teep_err_t err)
     switch (err) {
     case TEEP_SUCCESS:
         return "SUCCESS";
-    case TEEP_ERR_INVALID_TYPE_OF_ARGUMENT:
-        return "INVALID_TYPE_OF_ARGUMENT";
+    case TEEP_ERR_INVALID_TYPE_OF_VALUE:
+        return "INVALID_TYPE_OF_VALUE";
     case TEEP_ERR_INVALID_VALUE:
         return "INVALID_VALUE";
+    case TEEP_ERR_INVALID_TYPE_OF_KEY:
+        return "INVALID_TYPE_OF_KEY";
+    case TEEP_ERR_INVALID_KEY:
+        return "INVALID_KEY";
     case TEEP_ERR_INVALID_LENGTH:
         return "INVALID_LENGTH";
     case TEEP_ERR_INVALID_MESSAGE_TYPE:
@@ -33,6 +37,8 @@ const char *teep_err_to_str(teep_err_t err)
         return "VERIFICATION_FAILED";
     case TEEP_ERR_SIGNING_FAILED:
         return "SIGNING_FAILED";
+    case TEEP_ERR_NOT_IMPLEMENTED:
+        return "NOT_IMPLEMENTED";
     case TEEP_ERR_NO_SUPPORTED_VERSION:
         return "NO_SUPPORTED_VERSION";
     case TEEP_ERR_NO_SUPPORTED_CIPHERSUITE:
@@ -47,9 +53,8 @@ const char *teep_err_to_str(teep_err_t err)
         return "ABORT";
     case TEEP_ERR_FATAL:
         return "FATAL";
-    default:
-        return "UNKNOWN";
     }
+    return NULL;
 }
 
 teep_err_t teep_print_hex_string(const uint8_t *array, const int size)

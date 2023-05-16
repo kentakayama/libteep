@@ -54,13 +54,14 @@ int main(int argc, const char * argv[]) {
         return EXIT_FAILURE;
     }
 
-    teep_key_t key_pair;
-    result = teep_key_init_es256_key_pair(teep_private_key, teep_public_key, kid, &key_pair);
+    teep_mechanism_t mechanism;
+    result = teep_set_mechanism_from_cose_key(teep_private_key, kid, &mechanism);
     if (result != TEEP_SUCCESS) {
         printf("main : Failed to create key pair. %s(%d)\n", teep_err_to_str(result), result);
         return EXIT_FAILURE;
     }
-    key_pair.cose_usage = CBOR_TAG_COSE_SIGN1;
+    mechanism.cose_tag = CBOR_TAG_COSE_SIGN1;
+    mechanism.use = true;
 
     // Read cbor file.
     printf("main : Read CBOR file.\n");
@@ -88,7 +89,7 @@ int main(int argc, const char * argv[]) {
 #else
     UsefulBuf_MAKE_STACK_UB(signed_cose, MAX_FILE_BUFFER_SIZE);
 #endif
-    result = teep_sign_cose_sign1(UsefulBuf_Const(cbor_buf), &key_pair, &signed_cose);
+    result = teep_sign_cose_sign1(UsefulBuf_Const(cbor_buf), &mechanism.key, &signed_cose);
     if (result != TEEP_SUCCESS) {
         printf("main : Failed to sign. %s(%d)\n", teep_err_to_str(result), result);
         return EXIT_FAILURE;
@@ -99,7 +100,7 @@ int main(int argc, const char * argv[]) {
 
     // Verify cose signed file.
     UsefulBufC returned_payload;
-    result = teep_verify_cose_sign1(UsefulBuf_Const(signed_cose), &key_pair, &returned_payload);
+    result = teep_verify_cose_sign1(UsefulBuf_Const(signed_cose), &mechanism.key, &returned_payload);
     if (result != TEEP_SUCCESS) {
         printf("Failed to verify file. %s(%d)\n", teep_err_to_str(result), result);
         return EXIT_FAILURE;
@@ -117,7 +118,7 @@ int main(int argc, const char * argv[]) {
         printf("main : Succeed to write to \"%s\".\n", argv[2]);
     }
 
-    teep_free_key(&key_pair);
+    teep_free_key(&mechanism.key);
 
 #if MAX_FILE_BUFFER_SIZE > (2 * 1024)
     free(cbor_buf.ptr);
