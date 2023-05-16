@@ -8,6 +8,7 @@
 #define TEEP_COMMON_H
 
 #include "qcbor/qcbor.h"
+#include "qcbor/qcbor_spiffy_decode.h"
 
 // Function results
 typedef enum teep_err {

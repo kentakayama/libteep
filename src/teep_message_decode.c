@@ -20,7 +20,7 @@ teep_err_t teep_qcbor_get_next(QCBORDecodeContext *message,
             return TEEP_ERR_UNEXPECTED_ERROR;
     }
     if (data_type != QCBOR_TYPE_ANY && item->uDataType != data_type) {
-        return TEEP_ERR_INVALID_TYPE_OF_ARGUMENT;
+        return TEEP_ERR_INVALID_TYPE_OF_VALUE;
     }
     return TEEP_SUCCESS;
 }

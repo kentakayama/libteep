@@ -418,7 +418,7 @@ teep_err_t teep_print_component_id(const teep_buf_t *component_id)
     }
     teep_err_t result = TEEP_SUCCESS;
 #ifdef PARSE_SUIT
-    suit_buf_t buf = {.ptr = component_id->ptr, .len = component_id->len};
+    suit_buf_t buf = {.ptr = (uint8_t *)component_id->ptr, .len = component_id->len};
     suit_component_identifier_t identifier;
     suit_err_t suit_result = suit_decode_component_identifiers(SUIT_DECODE_MODE_SKIP_ANY_ERROR, &buf, &identifier);
     if (suit_result != SUIT_SUCCESS) {
@@ -643,7 +643,7 @@ teep_err_t teep_print_update(const teep_update_t *teep_update,
             suit_mechanisms[0].cose_tag = CBOR_TAG_COSE_SIGN1;
             suit_mechanisms[0].use = true;
 
-            suit_buf_t buf = {.ptr = teep_update->manifest_list.items[i].ptr, .len = teep_update->manifest_list.items[i].len};
+            suit_buf_t buf = {.ptr = (uint8_t *)teep_update->manifest_list.items[i].ptr, .len = teep_update->manifest_list.items[i].len};
             suit_envelope_t envelope = {0};
             suit_result = suit_decode_envelope(SUIT_DECODE_MODE_SKIP_ANY_ERROR, &buf, &envelope, suit_mechanisms);
             if (suit_result != SUIT_SUCCESS) {
