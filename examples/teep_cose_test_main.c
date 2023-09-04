@@ -24,8 +24,8 @@ UsefulBufC kid = (UsefulBufC){
     .len = 3,
 };
 #elif TEEP_ACTOR_TAM == 1
-#include "tam_es256_cose_key_private.h"
-UsefulBufC teep_private_key = tam_es256_cose_key_private;
+#include "tam_ed25519_cose_key_private.h"
+UsefulBufC teep_private_key = tam_ed25519_cose_key_private;
 UsefulBufC kid = (UsefulBufC){
     .ptr = "201",
     .len = 3,

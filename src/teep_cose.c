@@ -55,53 +55,86 @@ teep_err_t teep_verify_cose_sign1(const UsefulBufC signed_cose,
 }
 
 #if defined(LIBTEEP_PSA_CRYPTO_C)
+/*
+    \brief      Internal function calls OpenSSL functions to create public key.
+
+    \param[in]  key     Initialized teep_key_t, libteep abstraction structure.
+
+    \return     This returns TEEP_SUCCESS or TEEP_ERR_FAILED_TO_VERIFY.
+ */
 teep_err_t teep_create_es_key(teep_key_t *key)
 {
     psa_key_attributes_t key_attributes = PSA_KEY_ATTRIBUTES_INIT;
     psa_key_handle_t     key_handle = 0;
     psa_status_t         result;
 
-    int nid;
-    int hash;
+    psa_key_type_t type;
+    psa_key_usage_t usage;
+    psa_algorithm_t alg;
     switch (key->cose_algorithm_id) {
     case T_COSE_ALGORITHM_ES256:
-        nid = PSA_ECC_FAMILY_SECP_R1;
-        hash = PSA_ALG_SHA_256;
+        if (key->private_key == NULL) {
+            type = PSA_KEY_TYPE_ECC_PUBLIC_KEY(PSA_ECC_FAMILY_SECP_R1);
+            usage = PSA_KEY_USAGE_VERIFY_HASH | PSA_KEY_USAGE_EXPORT;
+        }
+        else {
+            PSA_KEY_TYPE_ECC_KEY_PAIR(PSA_ECC_FAMILY_SECP_R1);
+            usage = PSA_KEY_USAGE_VERIFY_HASH | PSA_KEY_USAGE_EXPORT | PSA_KEY_USAGE_SIGN_HASH;
+        }
+        alg = PSA_ALG_DETERMINISTIC_ECDSA(PSA_ALG_SHA_256);
         break;
     case T_COSE_ALGORITHM_ES384:
-        nid = PSA_ECC_FAMILY_SECP_R1;
-        hash = PSA_ALG_SHA_384;
+        if (key->private_key == NULL) {
+            type = PSA_KEY_TYPE_ECC_PUBLIC_KEY(PSA_ECC_FAMILY_SECP_R1);
+            usage = PSA_KEY_USAGE_VERIFY_HASH | PSA_KEY_USAGE_EXPORT;
+        }
+        else {
+            PSA_KEY_TYPE_ECC_KEY_PAIR(PSA_ECC_FAMILY_SECP_R1);
+            usage = PSA_KEY_USAGE_VERIFY_HASH | PSA_KEY_USAGE_EXPORT | PSA_KEY_USAGE_SIGN_HASH;
+        }
+        alg = PSA_ALG_DETERMINISTIC_ECDSA(PSA_ALG_SHA_384);
         break;
     case T_COSE_ALGORITHM_ES512:
-        nid = PSA_ECC_FAMILY_SECP_R1;
-        hash = PSA_ALG_SHA_512;
+        if (key->private_key == NULL) {
+            type = PSA_KEY_TYPE_ECC_PUBLIC_KEY(PSA_ECC_FAMILY_SECP_R1);
+            usage = PSA_KEY_USAGE_VERIFY_HASH | PSA_KEY_USAGE_EXPORT;
+        }
+        else {
+            PSA_KEY_TYPE_ECC_KEY_PAIR(PSA_ECC_FAMILY_SECP_R1);
+            usage = PSA_KEY_USAGE_VERIFY_HASH | PSA_KEY_USAGE_EXPORT | PSA_KEY_USAGE_SIGN_HASH;
+        }
+        alg = PSA_ALG_DETERMINISTIC_ECDSA(PSA_ALG_SHA_512);
+        break;
+    case T_COSE_ALGORITHM_EDDSA:
+        if (key->private_key == NULL) {
+            type = PSA_KEY_TYPE_ECC_PUBLIC_KEY(PSA_ECC_FAMILY_TWISTED_EDWARDS);
+            usage = PSA_KEY_USAGE_VERIFY_MESSAGE | PSA_KEY_USAGE_EXPORT;
+        }
+        else {
+            type = PSA_KEY_TYPE_ECC_KEY_PAIR(PSA_ECC_FAMILY_SECP_R1);
+            usage = PSA_KEY_USAGE_SIGN_MESSAGE | PSA_KEY_USAGE_EXPORT;
+        }
+        alg = PSA_ALG_PURE_EDDSA;
         break;
     default:
         return TEEP_ERR_INVALID_VALUE;
     }
 
     result = psa_crypto_init();
-
     if (result != PSA_SUCCESS) {
         return TEEP_ERR_VERIFICATION_FAILED;
     }
 
-    psa_key_usage_t usage = PSA_KEY_USAGE_VERIFY_HASH | PSA_KEY_USAGE_EXPORT;
-    if (key->private_key != NULL) {
-        usage |= PSA_KEY_USAGE_SIGN_HASH;
-    }
-
     psa_set_key_usage_flags(&key_attributes, usage);
-    psa_set_key_algorithm(&key_attributes, PSA_ALG_DETERMINISTIC_ECDSA(hash));
+    psa_set_key_algorithm(&key_attributes, alg);
+    psa_set_key_type(&key_attributes, type);
     if (key->private_key == NULL) {
-        psa_set_key_type(&key_attributes, PSA_KEY_TYPE_ECC_PUBLIC_KEY(nid));
         result = psa_import_key(&key_attributes,
                                 (const unsigned char*)key->public_key,
                                 key->public_key_len,
                                 &key_handle);
     }
     else {
-        psa_set_key_type(&key_attributes, PSA_KEY_TYPE_ECC_KEY_PAIR(nid));
         result = psa_import_key(&key_attributes,
                                 (const unsigned char*)key->private_key,
                                 key->private_key_len,
@@ -121,9 +154,7 @@ teep_err_t teep_create_es_key(teep_key_t *key)
 /*
     \brief      Internal function calls OpenSSL functions to create public key.
 
-    \param[in]  nid                 EC network id.
-    \param[in]  public_key          Pointer of char array type of public key.
-    \param[out] cose_public_key     Pointer and length of the resulting key.
+    \param[in]  key     Initialized teep_key_t, libteep abstraction structure.
 
     \return     This returns TEEP_SUCCESS or TEEP_ERR_FAILED_TO_VERIFY.
  */
@@ -200,6 +231,13 @@ out:
     return result;
 }
 #else /* OPENSSL_VERSION_NUMBER < OPENSSL_VERSION_300 */
+/*
+    \brief      Internal function calls OpenSSL functions to create public key.
+
+    \param[in]  key     Initialized teep_key_t, libteep abstraction structure.
+
+    \return     This returns TEEP_SUCCESS or TEEP_ERR_FAILED_TO_VERIFY.
+ */
 teep_err_t teep_create_es_key(teep_key_t *key)
 {
     /* ****************************************** */
@@ -308,6 +346,20 @@ teep_err_t teep_key_init_es521_key_pair(const unsigned char *private_key,
     return teep_create_es_key(cose_key_pair);
 }
 
+teep_err_t teep_key_init_ed25519_key_pair(const unsigned char *private_key,
+                                          const unsigned char *public_key,
+                                          UsefulBufC kid,
+                                          teep_key_t *cose_key_pair)
+{
+    cose_key_pair->private_key = private_key;
+    cose_key_pair->private_key_len = ED25519_PRIVATE_KEY_LENGTH;
+    cose_key_pair->public_key = public_key;
+    cose_key_pair->public_key_len = ED25519_PUBLIC_KEY_LENGTH;
+    cose_key_pair->cose_algorithm_id = T_COSE_ALGORITHM_EDDSA;
+    cose_key_pair->kid = kid;
+    return teep_create_es_key(cose_key_pair);
+}
+
 teep_err_t teep_key_init_es256_public_key(const unsigned char *public_key,
                                           UsefulBufC kid,
                                           teep_key_t *cose_public_key)
@@ -343,6 +395,19 @@ teep_err_t teep_key_init_es521_public_key(const unsigned char *public_key,
     cose_public_key->public_key = public_key;
     cose_public_key->public_key_len = SECP521R1_PUBLIC_KEY_LENGTH;
     cose_public_key->cose_algorithm_id = T_COSE_ALGORITHM_ES512;
+    cose_public_key->kid = kid;
+    return teep_create_es_key(cose_public_key);
+}
+
+teep_err_t teep_key_init_ed25519_public_key(const unsigned char *public_key,
+                                            UsefulBufC kid,
+                                            teep_key_t *cose_public_key)
+{
+    cose_public_key->private_key = NULL;
+    cose_public_key->private_key_len = 0;
+    cose_public_key->public_key = public_key;
+    cose_public_key->public_key_len = ED25519_PUBLIC_KEY_LENGTH;
+    cose_public_key->cose_algorithm_id = T_COSE_ALGORITHM_EDDSA;
     cose_public_key->kid = kid;
     return teep_create_es_key(cose_public_key);
 }
@@ -458,6 +523,42 @@ teep_err_t teep_set_mechanism_from_cose_key_from_item(QCBORDecodeContext *contex
             return TEEP_ERR_NOT_IMPLEMENTED;
         }
         break; /* TEEP_COSE_KTY_EC2 */
+
+    case TEEP_COSE_KTY_OKP:
+        switch (crv) {
+        case TEEP_COSE_CRV_X25519:
+            if ((x.len == 32) &&
+                (y.len == 32)) {
+                /* POINT_CONVERSION_UNCOMPRESSED */
+                ((uint8_t *)public_key.ptr)[0] = 0x04;
+                memcpy(&((uint8_t *)public_key.ptr)[1], x.ptr, 32);
+                memcpy(&((uint8_t *)public_key.ptr)[33], y.ptr, 32);
+                public_key.len = PRIME256V1_PUBLIC_KEY_LENGTH;
+            }
+            else {
+                return TEEP_ERR_INVALID_VALUE;
+            }
+            if (d.len == 32) {
+                memcpy(private_key.ptr, d.ptr, 32);
+                private_key.len = PRIME256V1_PRIVATE_KEY_LENGTH;
+                result = teep_key_init_es256_key_pair(private_key.ptr, public_key.ptr, kid, &mechanism->key);
+            }
+            else if (d.len == 0) {
+                result = teep_key_init_es256_public_key(public_key.ptr, kid, &mechanism->key);
+            }
+            else {
+                return TEEP_ERR_INVALID_VALUE;
+            }
+            if (result != TEEP_SUCCESS) {
+                return result;
+            }
+            break; /* COSE_KEY_CRV_P256 */
+
+        default:
+            return TEEP_ERR_NOT_IMPLEMENTED;
+        }
+        break; /* TEEP_COSE_KTY_EC2 */
+
 
     default:
         return TEEP_ERR_INVALID_TYPE_OF_VALUE;
