@@ -17,34 +17,55 @@
 #endif
 
 #if TEEP_ACTOR_AGENT == 1
-#include "teep_agent_es256_cose_key_private.h"
-UsefulBufC teep_private_key = teep_agent_es256_cose_key_private;
-UsefulBufC kid = (UsefulBufC){
-    .ptr = "101",
-    .len = 3,
-};
-#elif TEEP_ACTOR_TAM == 1
-#include "tam_ed25519_cose_key_private.h"
-UsefulBufC teep_private_key = tam_ed25519_cose_key_private;
-//#include "tam_es256_cose_key_private.h"
-//UsefulBufC teep_private_key = tam_es256_cose_key_private;
-UsefulBufC kid = (UsefulBufC){
-    .ptr = "201",
-    .len = 3,
-};
+  #include "teep_agent_es256_cose_key_private.h"
+  #define NUM_TEEP_PRIVATE_KEY 1
+  UsefulBufC teep_private_keys[NUM_TEEP_PRIVATE_KEY] = {
+      teep_agent_es256_cose_key_private,
+  };
+  UsefulBufC kids[NUM_TEEP_PRIVATE_KEY] = {
+      UsefulBuf_FROM_SZ_LITERAL("101"),
+  };
+#elif TEEP_ACTOR_TAM0 == 1
+  #include "tam_es256_cose_key_private.h"
+  #include "tam_ed25519_cose_key_private.h"
+  #define NUM_TEEP_PRIVATE_KEY 2
+  UsefulBufC teep_private_keys[NUM_TEEP_PRIVATE_KEY] = {
+      tam_es256_cose_key_private,
+      tam_ed25519_cose_key_private
+  };
+  UsefulBufC kids[NUM_TEEP_PRIVATE_KEY] = {
+      UsefulBuf_FROM_SZ_LITERAL("201"),
+      UsefulBuf_FROM_SZ_LITERAL("202")
+  };
+#elif TEEP_ACTOR_TAM1 == 1
+  #include "tam_es256_cose_key_private.h"
+  #define NUM_TEEP_PRIVATE_KEY 1
+  UsefulBufC teep_private_keys[NUM_TEEP_PRIVATE_KEY] = {
+      tam_es256_cose_key_private,
+  };
+  UsefulBufC kids[NUM_TEEP_PRIVATE_KEY] = {
+      UsefulBuf_FROM_SZ_LITERAL("201"),
+  };
 #elif TEEP_ACTOR_VERIFIER == 1
-#include "verifier_es256_cose_key_private.h"
-UsefulBufC teep_private_key = verifier_es256_cose_key_private;
-UsefulBufC kid = (UsefulBufC){
-    .ptr = "301",
-    .len = 3,
-};
+  #include "verifier_es256_cose_key_private.h"
+  #define NUM_TEEP_PRIVATE_KEY 1
+  UsefulBufC teep_private_keys[NUM_TEEP_PRIVATE_KEY] = {
+      verifier_es256_cose_key_private
+  };
+  UsefulBufC kids[NUM_TEEP_PRIVATE_KEY] = {
+      UsefulBuf_FROM_SZ_LITERAL("301")
+  };
 #elif TEEP_ACTOR_TRUST_ANCHOR == 1
-#include "trust_anchor_prime256v1_cose_key_private.h"
-UsefulBufC teep_private_key = trust_anchor_prime256v1_cose_key_private;
-UsefulBufC kid = NULLUsefulBufC;
+  #include "trust_anchor_prime256v1_cose_key_private.h"
+  #define NUM_TEEP_PRIVATE_KEY 1
+  UsefulBufC teep_private_keys[NUM_TEEP_PRIVATE_KEY] = {
+      trust_anchor_prime256v1_cose_key_private
+  };
+  UsefulBufC kids[NUM_TEEP_PRIVATE_KEY] = {
+      NULLUsefulBufC
+  };
 #else
-#error Signing key is not specified
+  #error Signing key is not specified
 #endif
 
 int main(int argc, const char * argv[]) {
@@ -56,14 +77,16 @@ int main(int argc, const char * argv[]) {
         return EXIT_FAILURE;
     }
 
-    teep_mechanism_t mechanism;
-    result = teep_set_mechanism_from_cose_key(teep_private_key, kid, &mechanism);
-    if (result != TEEP_SUCCESS) {
-        printf("main : Failed to create key pair. %s(%d)\n", teep_err_to_str(result), result);
-        return EXIT_FAILURE;
+    teep_mechanism_t mechanisms[NUM_TEEP_PRIVATE_KEY];
+    for (size_t i = 0; i < NUM_TEEP_PRIVATE_KEY; i++) {
+        result = teep_set_mechanism_from_cose_key(teep_private_keys[i], kids[i], &mechanisms[i]);
+        if (result != TEEP_SUCCESS) {
+            printf("main : Failed to create key pair. %s(%d)\n", teep_err_to_str(result), result);
+            return EXIT_FAILURE;
+        }
+        mechanisms[i].cose_tag = (NUM_TEEP_PRIVATE_KEY > 1) ? CBOR_TAG_COSE_SIGN : CBOR_TAG_COSE_SIGN1;
+        mechanisms[i].use = true;
     }
-    mechanism.cose_tag = CBOR_TAG_COSE_SIGN1;
-    mechanism.use = true;
 
     // Read cbor file.
     printf("main : Read CBOR file.\n");
@@ -91,7 +114,13 @@ int main(int argc, const char * argv[]) {
 #else
     UsefulBuf_MAKE_STACK_UB(signed_cose, MAX_FILE_BUFFER_SIZE);
 #endif
-    result = teep_sign_cose_sign1(UsefulBuf_Const(cbor_buf), &mechanism.key, &signed_cose);
+
+#if NUM_TEEP_PRIVATE_KEY > 1
+    result = teep_sign_cose_sign(UsefulBuf_Const(cbor_buf), mechanisms, NUM_TEEP_PRIVATE_KEY, &signed_cose);
+#else
+    result = teep_sign_cose_sign1(UsefulBuf_Const(cbor_buf), &mechanisms[0], &signed_cose);
+#endif
+
     if (result != TEEP_SUCCESS) {
         printf("main : Failed to sign. %s(%d)\n", teep_err_to_str(result), result);
         return EXIT_FAILURE;
@@ -102,7 +131,11 @@ int main(int argc, const char * argv[]) {
 
     // Verify cose signed file.
     UsefulBufC returned_payload;
-    result = teep_verify_cose_sign1(UsefulBuf_Const(signed_cose), &mechanism.key, &returned_payload);
+#if NUM_TEEP_PRIVATE_KEY > 1
+    result = teep_verify_cose_sign(UsefulBuf_Const(signed_cose), mechanisms, NUM_TEEP_PRIVATE_KEY, &returned_payload);
+#else
+    result = teep_verify_cose_sign1(UsefulBuf_Const(signed_cose), &mechanisms[0], &returned_payload);
+#endif
     if (result != TEEP_SUCCESS) {
         printf("Failed to verify file. %s(%d)\n", teep_err_to_str(result), result);
         return EXIT_FAILURE;
@@ -120,7 +153,9 @@ int main(int argc, const char * argv[]) {
         printf("main : Succeed to write to \"%s\".\n", argv[2]);
     }
 
-    teep_free_key(&mechanism.key);
+    for (size_t i = 0; i < NUM_TEEP_PRIVATE_KEY; i++) {
+        teep_free_key(&mechanisms[i].key);
+    }
 
 #if MAX_FILE_BUFFER_SIZE > (2 * 1024)
     free(cbor_buf.ptr);

@@ -7,7 +7,8 @@
 CFLAGS = -Wall -g
 LDFLAGS = $(CMD_LD) -lt_cose -lqcbor -lm
 INC = $(CMD_INC) -I ./inc -I ./examples/inc
-TAM = ./bin/teep_cose_tam
+TAM0 = ./bin/teep_cose_tam0
+TAM1 = ./bin/teep_cose_tam1
 AGENT = ./bin/teep_cose_agent
 VERIFIER = ./bin/teep_cose_verifier
 TRUST_ANCHOR = ./bin/teep_cose_trust_anchor
@@ -19,7 +20,8 @@ SRCS = \
 	src/teep_cose.c
 OBJDIR = ./obj
 OBJS = $(addprefix $(OBJDIR)/,$(patsubst %.c,%.o,$(SRCS)))
-TAM_OBJ = obj/examples/teep_cose_tam.o
+TAM0_OBJ = obj/examples/teep_cose_tam0.o
+TAM1_OBJ = obj/examples/teep_cose_tam0.o
 AGENT_OBJ = obj/examples/teep_cose_agent.o
 VERIFIER_OBJ = obj/examples/teep_cose_verifier.o
 TRUST_ANCHOR_OBJ = obj/examples/teep_cose_trust_anchor.o
@@ -37,14 +39,17 @@ endif
 
 .PHONY: all clean run
 
-all: $(TAM) $(AGENT) $(VERIFIER) $(TRUST_ANCHOR)
+all: $(TAM0) $(TAM1) $(AGENT) $(VERIFIER) $(TRUST_ANCHOR)
 
 $(OBJDIR)/%.o: %.c
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(INC) -o $@ -c $<
 
-$(TAM_OBJ): examples/teep_cose_test_main.c
-	$(CC) $(CFLAGS) $(INC) -DTEEP_ACTOR_TAM=1 -o $@ -c $<
+$(TAM0_OBJ): examples/teep_cose_test_main.c
+	$(CC) $(CFLAGS) $(INC) -DTEEP_ACTOR_TAM0=1 -o $@ -c $<
+
+$(TAM1_OBJ): examples/teep_cose_test_main.c
+	$(CC) $(CFLAGS) $(INC) -DTEEP_ACTOR_TAM1=1 -o $@ -c $<
 
 $(AGENT_OBJ): examples/teep_cose_test_main.c
 	$(CC) $(CFLAGS) $(INC) -DTEEP_ACTOR_AGENT=1 -o $@ -c $<
@@ -55,7 +60,10 @@ $(VERIFIER_OBJ): examples/teep_cose_test_main.c
 $(TRUST_ANCHOR_OBJ): examples/teep_cose_test_main.c
 	$(CC) $(CFLAGS) $(INC) -DTEEP_ACTOR_TRUST_ANCHOR=1 -o $@ -c $<
 
-$(TAM): $(OBJS) $(TAM_OBJ)
+$(TAM0): $(OBJS) $(TAM0_OBJ)
+	$(CC) -o $@ $^ $(LDFLAGS)
+
+$(TAM1): $(OBJS) $(TAM1_OBJ)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 $(AGENT): $(OBJS) $(AGENT_OBJ)
@@ -68,7 +76,7 @@ $(TRUST_ANCHOR): $(OBJS) $(TRUST_ANCHOR_OBJ)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 clean:
-	$(RM) $(OBJS) $(TAM_OBJ) $(AGENT_OBJ) $(VERIFIER_OBJ) $(TAM) $(AGENT) $(VERIFIER)
+	$(RM) $(OBJS) $(TAM0_OBJ) $(TAM1_OBJ) $(AGENT_OBJ) $(VERIFIER_OBJ) $(TAM0) $(TAM1) $(AGENT) $(VERIFIER)
 
 
 SOURCES := \
@@ -83,10 +91,10 @@ SOURCES := \
 $(SOURCES):
 	$(MAKE) -C testfiles $@
 
-run: $(TAM) $(AGENT) $(VERIFIER) $(SOURCES)
-	$(TAM)   ./testfiles/query_request.cbor  ./testfiles/query_request_cose.cbor  || exit 1
+run: $(TAM0) $(TAM1) $(AGENT) $(VERIFIER) $(SOURCES)
+	$(TAM0)  ./testfiles/query_request.cbor  ./testfiles/query_request_cose.cbor  || exit 1
 	$(AGENT) ./testfiles/query_response.cbor ./testfiles/query_response_cose.cbor || exit 1
-	$(TAM)   ./testfiles/update.cbor         ./testfiles/update_cose.cbor         || exit 1
+	$(TAM1)  ./testfiles/update.cbor         ./testfiles/update_cose.cbor         || exit 1
 	$(AGENT) ./testfiles/teep_success.cbor   ./testfiles/teep_success_cose.cbor   || exit 1
 	$(AGENT) ./testfiles/teep_error.cbor     ./testfiles/teep_error_cose.cbor     || exit 1
 	$(AGENT) ./testfiles/evidence.cbor       ./testfiles/evidence_cose.cbor       || exit 1

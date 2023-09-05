@@ -7,10 +7,12 @@
 #include "teep/teep_cose.h"
 #include "t_cose/t_cose_sign1_sign.h"
 #include "t_cose/t_cose_sign1_verify.h"
+//#include "t_cose/t_cose_sign_sign.h"
+//#include "t_cose/t_cose_sign_verify.h"
 #include "t_cose/q_useful_buf.h"
 
 teep_err_t teep_sign_cose_sign1(const UsefulBufC raw_cbor,
-                                const teep_key_t *key_pair,
+                                const teep_mechanism_t *mechanism,
                                 UsefulBuf *returned_payload)
 {
     // Create cose signed buffer.
@@ -19,11 +21,16 @@ teep_err_t teep_sign_cose_sign1(const UsefulBufC raw_cbor,
     UsefulBuf_MAKE_STACK_UB(auxiliary_buffer, TEEP_AUXILIARY_BUFFER_SIZE); // for EdDSA
     UsefulBufC tmp_signed_cose;
 
-    t_cose_sign1_sign_init(&sign_ctx, 0, key_pair->cose_algorithm_id);
-    t_cose_sign1_set_signing_key(&sign_ctx, key_pair->cose_key, key_pair->kid);
+    if (mechanism->cose_tag != CBOR_TAG_COSE_SIGN1) {
+        return TEEP_ERR_INVALID_KEY;
+    }
+
+    t_cose_sign1_sign_init(&sign_ctx, 0, mechanism->key.cose_algorithm_id);
+    t_cose_sign1_set_signing_key(&sign_ctx, mechanism->key.cose_key, mechanism->key.kid);
     if (auxiliary_buffer.len > 0) {
         t_cose_sign1_sign_set_auxiliary_buffer(&sign_ctx, auxiliary_buffer);
     }
+
     cose_result = t_cose_sign1_sign(&sign_ctx, raw_cbor, *returned_payload, &tmp_signed_cose);
     if (cose_result != T_COSE_SUCCESS) {
         returned_payload->len = 0;
@@ -33,8 +40,56 @@ teep_err_t teep_sign_cose_sign1(const UsefulBufC raw_cbor,
     return TEEP_SUCCESS;
 }
 
+teep_err_t teep_sign_cose_sign(const UsefulBufC raw_cbor,
+                               const teep_mechanism_t mechanisms[],
+                               const size_t num_mechanism,
+                               UsefulBuf *returned_payload)
+{
+    // Create cose signed buffer.
+    struct t_cose_sign_sign_ctx sign_ctx;
+    enum t_cose_err_t cose_result;
+    UsefulBuf_MAKE_STACK_UB(auxiliary_buffer, TEEP_AUXILIARY_BUFFER_SIZE); // for EdDSA
+    UsefulBufC tmp_signed_cose;
+
+    t_cose_sign_sign_init(&sign_ctx, T_COSE_OPT_MESSAGE_TYPE_SIGN);
+    for (size_t i = 0; i < num_mechanism; i++) {
+        teep_mechanism_t *mechanism = (teep_mechanism_t *)&mechanisms[i];
+        if (mechanism->cose_tag != CBOR_TAG_COSE_SIGN) {
+            return TEEP_ERR_INVALID_KEY;
+        }
+
+        if (mechanism->key.cose_algorithm_id == T_COSE_ALGORITHM_EDDSA) {
+            t_cose_signature_sign_eddsa_init(&mechanism->key.signer_eddsa);
+            t_cose_signature_sign_eddsa_set_signing_key(&mechanism->key.signer_eddsa, mechanism->key.cose_key, mechanism->key.kid);
+            t_cose_signature_sign_eddsa_set_auxiliary_buffer(&mechanism->key.signer_eddsa, auxiliary_buffer);
+            t_cose_sign_add_signer(&sign_ctx, t_cose_signature_sign_from_eddsa(&mechanism->key.signer_eddsa));
+
+        }
+        else {
+            /* ECDSA */
+            t_cose_signature_sign_main_init(&mechanism->key.signer_ecdsa, mechanism->key.cose_algorithm_id);
+            t_cose_signature_sign_main_set_signing_key(&mechanism->key.signer_ecdsa, mechanism->key.cose_key, mechanisms[i].key.kid);
+
+            t_cose_sign_add_signer(&sign_ctx, t_cose_signature_sign_from_main(&mechanism->key.signer_ecdsa));
+        }
+    }
+
+    cose_result = t_cose_sign_sign(&sign_ctx,
+                                   NULLUsefulBufC,
+                                   raw_cbor,
+                                   *returned_payload,
+                                   &tmp_signed_cose);
+    if (cose_result != T_COSE_SUCCESS) {
+        returned_payload->len = 0;
+        return TEEP_ERR_SIGNING_FAILED;
+    }
+    *returned_payload = UsefulBuf_Unconst(tmp_signed_cose);
+
+    return TEEP_SUCCESS;
+}
+
 teep_err_t teep_verify_cose_sign1(const UsefulBufC signed_cose,
-                                  const teep_key_t *public_key,
+                                  const teep_mechanism_t *mechanism,
                                   UsefulBufC *returned_payload)
 {
     teep_err_t result = TEEP_SUCCESS;
@@ -42,19 +97,70 @@ teep_err_t teep_verify_cose_sign1(const UsefulBufC signed_cose,
     enum t_cose_err_t cose_result;
     UsefulBuf_MAKE_STACK_UB(auxiliary_buffer, TEEP_AUXILIARY_BUFFER_SIZE); // for EdDSA
 
-    if (public_key == NULL) {
+    if (mechanism == NULL || mechanism->cose_tag != CBOR_TAG_COSE_SIGN1) {
         return TEEP_ERR_VERIFICATION_FAILED;
     }
 
     t_cose_sign1_verify_init(&verify_ctx, 0);
-    t_cose_sign1_set_verification_key(&verify_ctx, public_key->cose_key);
+    t_cose_sign1_set_verification_key(&verify_ctx, mechanism->key.cose_key);
     if (auxiliary_buffer.len > 0) {
         t_cose_sign1_verify_set_auxiliary_buffer(&verify_ctx, auxiliary_buffer);
     }
+
     cose_result = t_cose_sign1_verify(&verify_ctx,
                                       signed_cose,
                                       returned_payload,
                                       NULL);
+    if (cose_result != T_COSE_SUCCESS) {
+        result = TEEP_ERR_VERIFICATION_FAILED;
+    }
+    return result;
+}
+
+teep_err_t teep_verify_cose_sign(const UsefulBufC signed_cose,
+                                 const teep_mechanism_t mechanisms[],
+                                 const size_t num_mechanism,
+                                 UsefulBufC *returned_payload)
+{
+    teep_err_t result = TEEP_SUCCESS;
+    struct t_cose_sign_verify_ctx verify_ctx;
+    enum t_cose_err_t cose_result;
+    UsefulBuf_MAKE_STACK_UB(auxiliary_buffer, TEEP_AUXILIARY_BUFFER_SIZE); // for EdDSA
+
+    if (mechanisms[0].cose_tag != CBOR_TAG_COSE_SIGN1
+        && mechanisms[0].cose_tag != CBOR_TAG_COSE_SIGN) {
+        return TEEP_ERR_VERIFICATION_FAILED;
+    }
+
+    t_cose_sign_verify_init(&verify_ctx, T_COSE_OPT_MESSAGE_TYPE_SIGN);
+
+    for (size_t i = 0; i < num_mechanism; i++) {
+        teep_mechanism_t *mechanism = (teep_mechanism_t *)&mechanisms[i];
+        if (mechanism->cose_tag != CBOR_TAG_COSE_SIGN) {
+            return TEEP_ERR_INVALID_KEY;
+        }
+
+        if (mechanism->key.cose_algorithm_id == T_COSE_ALGORITHM_EDDSA) {
+            t_cose_signature_verify_eddsa_init(&mechanism->key.verifier_eddsa, T_COSE_OPT_DECODE_ONLY);
+            t_cose_signature_verify_eddsa_set_key(&mechanism->key.verifier_eddsa, mechanism->key.cose_key, mechanism->key.kid);
+            t_cose_signature_verify_eddsa_set_auxiliary_buffer(&mechanism->key.verifier_eddsa, auxiliary_buffer);
+            t_cose_sign_add_verifier(&verify_ctx, t_cose_signature_verify_from_eddsa(&mechanism->key.verifier_eddsa));
+
+        }
+        else {
+            /* ECDSA */
+            t_cose_signature_verify_main_init(&mechanism->key.verifier_ecdsa);
+            t_cose_signature_verify_main_set_key(&mechanism->key.verifier_ecdsa, mechanism->key.cose_key, mechanisms[i].key.kid);
+
+            t_cose_sign_add_verifier(&verify_ctx, t_cose_signature_verify_from_main(&mechanism->key.verifier_ecdsa));
+        }
+    }
+
+    cose_result = t_cose_sign_verify(&verify_ctx,
+                                     signed_cose,
+                                     NULLUsefulBufC,
+                                     returned_payload,
+                                     NULL);
     if (cose_result != T_COSE_SUCCESS) {
         result = TEEP_ERR_VERIFICATION_FAILED;
     }

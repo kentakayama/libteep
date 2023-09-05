@@ -70,6 +70,12 @@ typedef struct teep_key {
     int cose_algorithm_id;
     struct t_cose_key cose_key;
     UsefulBufC kid;
+    union {
+        struct t_cose_signature_sign_main signer_ecdsa;
+        struct t_cose_signature_sign_eddsa signer_eddsa;
+        struct t_cose_signature_verify_main verifier_ecdsa;
+        struct t_cose_signature_verify_eddsa verifier_eddsa;
+    };
 } teep_key_t;
 
 typedef struct teep_mechanism {
@@ -78,8 +84,20 @@ typedef struct teep_mechanism {
     bool use;
 } teep_mechanism_t;
 
-teep_err_t teep_sign_cose_sign1(const UsefulBufC raw_cbor, const teep_key_t *key_pair, UsefulBuf *returned_payload);
-teep_err_t teep_verify_cose_sign1(const UsefulBufC signed_cose, const teep_key_t *public_key, UsefulBufC *returned_payload);
+teep_err_t teep_sign_cose_sign1(const UsefulBufC raw_cbor,
+                                const teep_mechanism_t *mechanism,
+                                UsefulBuf *returned_payload);
+teep_err_t teep_sign_cose_sign(const UsefulBufC raw_cbor,
+                               const teep_mechanism_t mechanisms[],
+                               const size_t num_mechanism,
+                               UsefulBuf *returned_payload);
+teep_err_t teep_verify_cose_sign1(const UsefulBufC signed_cose,
+                                  const teep_mechanism_t *mechanism,
+                                  UsefulBufC *returned_payload);
+teep_err_t teep_verify_cose_sign(const UsefulBufC signed_cose,
+                                 const teep_mechanism_t mechanisms[],
+                                 const size_t num_mechanism,
+                                 UsefulBufC *returned_payload);
 
 /*!
     \brief  Create ES256 key pair
