@@ -119,7 +119,7 @@ teep_err_t teep_create_es_key(teep_key_t *key)
         }
         else {
             type = PSA_KEY_TYPE_ECC_KEY_PAIR(PSA_ECC_FAMILY_TWISTED_EDWARDS);
-            usage = PSA_KEY_USAGE_SIGN_MESSAGE | PSA_KEY_USAGE_EXPORT;
+            usage = PSA_KEY_USAGE_VERIFY_MESSAGE | PSA_KEY_USAGE_EXPORT | PSA_KEY_USAGE_SIGN_MESSAGE;
         }
         alg = PSA_ALG_PURE_EDDSA;
         break;
@@ -175,6 +175,7 @@ teep_err_t teep_create_es_key(teep_key_t *key)
     EVP_PKEY_CTX    *ctx = NULL;
     OSSL_PARAM_BLD  *param_bld = NULL;
     OSSL_PARAM      *params = NULL;
+    BIGNUM          *priv = NULL;
 
     int id;
     char *group_name;
@@ -210,7 +211,24 @@ teep_err_t teep_create_es_key(teep_key_t *key)
         goto free_param_bld;
     }
     if (key->private_key != NULL) {
-        if (!OSSL_PARAM_BLD_push_octet_string(param_bld, OSSL_PKEY_PARAM_PRIV_KEY, key->private_key, key->private_key_len)) {
+        /* XXX: Why do we need to convert private key to BN only for EcDSA? */
+        switch (id) {
+        case EVP_PKEY_EC:
+            priv = BN_bin2bn(key->private_key, key->private_key_len, NULL);
+            if (priv == NULL) {
+                goto free_param_bld;
+            }
+            if (!OSSL_PARAM_BLD_push_BN(param_bld, OSSL_PKEY_PARAM_PRIV_KEY, priv)) {
+                goto free_param_bld;
+            }
+            break;
+
+        case EVP_PKEY_ED25519:
+            if (!OSSL_PARAM_BLD_push_octet_string(param_bld, OSSL_PKEY_PARAM_PRIV_KEY, key->private_key, key->private_key_len)) {
+                goto free_param_bld;
+            }
+            break;
+        default:
             goto free_param_bld;
         }
     }
@@ -229,12 +247,15 @@ teep_err_t teep_create_es_key(teep_key_t *key)
     }
 
     key->cose_key.key.ptr = pkey;
-    return TEEP_SUCCESS;
+    result = TEEP_SUCCESS;
 
 free_ctx:
     EVP_PKEY_CTX_free(ctx);
 free_params:
     OSSL_PARAM_free(params);
+    if (priv != NULL) {
+        BN_free(priv);
+    }
 free_param_bld:
     OSSL_PARAM_BLD_free(param_bld);
     return result;
