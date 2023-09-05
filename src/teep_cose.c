@@ -16,10 +16,14 @@ teep_err_t teep_sign_cose_sign1(const UsefulBufC raw_cbor,
     // Create cose signed buffer.
     struct t_cose_sign1_sign_ctx sign_ctx;
     enum t_cose_err_t cose_result;
+    UsefulBuf_MAKE_STACK_UB(auxiliary_buffer, TEEP_AUXILIARY_BUFFER_SIZE); // for EdDSA
     UsefulBufC tmp_signed_cose;
 
     t_cose_sign1_sign_init(&sign_ctx, 0, key_pair->cose_algorithm_id);
     t_cose_sign1_set_signing_key(&sign_ctx, key_pair->cose_key, key_pair->kid);
+    if (auxiliary_buffer.len > 0) {
+        t_cose_sign1_sign_set_auxiliary_buffer(&sign_ctx, auxiliary_buffer);
+    }
     cose_result = t_cose_sign1_sign(&sign_ctx, raw_cbor, *returned_payload, &tmp_signed_cose);
     if (cose_result != T_COSE_SUCCESS) {
         returned_payload->len = 0;
@@ -35,8 +39,8 @@ teep_err_t teep_verify_cose_sign1(const UsefulBufC signed_cose,
 {
     teep_err_t result = TEEP_SUCCESS;
     struct t_cose_sign1_verify_ctx verify_ctx;
-    //struct t_cose_parameters parameters;
     enum t_cose_err_t cose_result;
+    UsefulBuf_MAKE_STACK_UB(auxiliary_buffer, TEEP_AUXILIARY_BUFFER_SIZE); // for EdDSA
 
     if (public_key == NULL) {
         return TEEP_ERR_VERIFICATION_FAILED;
@@ -44,6 +48,9 @@ teep_err_t teep_verify_cose_sign1(const UsefulBufC signed_cose,
 
     t_cose_sign1_verify_init(&verify_ctx, 0);
     t_cose_sign1_set_verification_key(&verify_ctx, public_key->cose_key);
+    if (auxiliary_buffer.len > 0) {
+        t_cose_sign1_verify_set_auxiliary_buffer(&verify_ctx, auxiliary_buffer);
+    }
     cose_result = t_cose_sign1_verify(&verify_ctx,
                                       signed_cose,
                                       returned_payload,
@@ -78,7 +85,7 @@ teep_err_t teep_create_es_key(teep_key_t *key)
             usage = PSA_KEY_USAGE_VERIFY_HASH | PSA_KEY_USAGE_EXPORT;
         }
         else {
-            PSA_KEY_TYPE_ECC_KEY_PAIR(PSA_ECC_FAMILY_SECP_R1);
+            type = PSA_KEY_TYPE_ECC_KEY_PAIR(PSA_ECC_FAMILY_SECP_R1);
             usage = PSA_KEY_USAGE_VERIFY_HASH | PSA_KEY_USAGE_EXPORT | PSA_KEY_USAGE_SIGN_HASH;
         }
         alg = PSA_ALG_DETERMINISTIC_ECDSA(PSA_ALG_SHA_256);
@@ -89,7 +96,7 @@ teep_err_t teep_create_es_key(teep_key_t *key)
             usage = PSA_KEY_USAGE_VERIFY_HASH | PSA_KEY_USAGE_EXPORT;
         }
         else {
-            PSA_KEY_TYPE_ECC_KEY_PAIR(PSA_ECC_FAMILY_SECP_R1);
+            type = PSA_KEY_TYPE_ECC_KEY_PAIR(PSA_ECC_FAMILY_SECP_R1);
             usage = PSA_KEY_USAGE_VERIFY_HASH | PSA_KEY_USAGE_EXPORT | PSA_KEY_USAGE_SIGN_HASH;
         }
         alg = PSA_ALG_DETERMINISTIC_ECDSA(PSA_ALG_SHA_384);
@@ -100,7 +107,7 @@ teep_err_t teep_create_es_key(teep_key_t *key)
             usage = PSA_KEY_USAGE_VERIFY_HASH | PSA_KEY_USAGE_EXPORT;
         }
         else {
-            PSA_KEY_TYPE_ECC_KEY_PAIR(PSA_ECC_FAMILY_SECP_R1);
+            type = PSA_KEY_TYPE_ECC_KEY_PAIR(PSA_ECC_FAMILY_SECP_R1);
             usage = PSA_KEY_USAGE_VERIFY_HASH | PSA_KEY_USAGE_EXPORT | PSA_KEY_USAGE_SIGN_HASH;
         }
         alg = PSA_ALG_DETERMINISTIC_ECDSA(PSA_ALG_SHA_512);
@@ -111,7 +118,7 @@ teep_err_t teep_create_es_key(teep_key_t *key)
             usage = PSA_KEY_USAGE_VERIFY_MESSAGE | PSA_KEY_USAGE_EXPORT;
         }
         else {
-            type = PSA_KEY_TYPE_ECC_KEY_PAIR(PSA_ECC_FAMILY_SECP_R1);
+            type = PSA_KEY_TYPE_ECC_KEY_PAIR(PSA_ECC_FAMILY_TWISTED_EDWARDS);
             usage = PSA_KEY_USAGE_SIGN_MESSAGE | PSA_KEY_USAGE_EXPORT;
         }
         alg = PSA_ALG_PURE_EDDSA;
@@ -133,15 +140,18 @@ teep_err_t teep_create_es_key(teep_key_t *key)
                                 (const unsigned char*)key->public_key,
                                 key->public_key_len,
                                 &key_handle);
+        if (result != PSA_SUCCESS) {
+            return TEEP_ERR_VERIFICATION_FAILED;
+        }
     }
     else {
         result = psa_import_key(&key_attributes,
                                 (const unsigned char*)key->private_key,
                                 key->private_key_len,
                                 &key_handle);
-    }
-    if (result != PSA_SUCCESS) {
-        return TEEP_ERR_VERIFICATION_FAILED;
+        if (result != PSA_SUCCESS) {
+            return TEEP_ERR_SIGNING_FAILED;
+        }
     }
 
     key->cose_key.key.handle    = key_handle;
@@ -160,23 +170,30 @@ teep_err_t teep_create_es_key(teep_key_t *key)
  */
 teep_err_t teep_create_es_key(teep_key_t *key)
 {
-    teep_err_t      result = TEEP_SUCCESS;
+    teep_err_t      result = TEEP_ERR_FATAL;
     EVP_PKEY        *pkey = NULL;
     EVP_PKEY_CTX    *ctx = NULL;
     OSSL_PARAM_BLD  *param_bld = NULL;
     OSSL_PARAM      *params = NULL;
-    BIGNUM *priv;
 
-    const char *group_name;
+    int id;
+    char *group_name;
     switch (key->cose_algorithm_id) {
     case T_COSE_ALGORITHM_ES256:
-        group_name = "prime256v1";
+        id = EVP_PKEY_EC;
+        group_name = SN_X9_62_prime256v1;
         break;
     case T_COSE_ALGORITHM_ES384:
-        group_name = "secp384r1";
+        id = EVP_PKEY_EC;
+        group_name = SN_secp384r1;
         break;
     case T_COSE_ALGORITHM_ES512:
-        group_name = "secp521r1";
+        id = EVP_PKEY_EC;
+        group_name = SN_secp521r1;
+        break;
+    case T_COSE_ALGORITHM_EDDSA:
+        id = EVP_PKEY_ED25519;
+        group_name = SN_ED25519;
         break;
     default:
         return TEEP_ERR_INVALID_VALUE;
@@ -186,47 +203,39 @@ teep_err_t teep_create_es_key(teep_key_t *key)
     if (param_bld == NULL) {
         return TEEP_ERR_FATAL;
     }
-    if (!OSSL_PARAM_BLD_push_utf8_string(param_bld, "group", group_name, 0)
-        || !OSSL_PARAM_BLD_push_octet_string(param_bld, "pub", key->public_key, key->public_key_len)) {
-        result = TEEP_ERR_FATAL;
-        goto out;
+    if (!OSSL_PARAM_BLD_push_utf8_string(param_bld, OSSL_PKEY_PARAM_GROUP_NAME, group_name, 0)) {
+        goto free_param_bld;
+    }
+    if (!OSSL_PARAM_BLD_push_octet_string(param_bld, OSSL_PKEY_PARAM_PUB_KEY, key->public_key, key->public_key_len)) {
+        goto free_param_bld;
     }
     if (key->private_key != NULL) {
-        priv = BN_bin2bn(key->private_key, key->private_key_len, NULL);
-        if (priv == NULL) {
-            result = TEEP_ERR_FATAL;
-            goto out;
-        }
-        if (!OSSL_PARAM_BLD_push_BN(param_bld, "priv", priv)) {
-            result = TEEP_ERR_FATAL;
-            goto out;
+        if (!OSSL_PARAM_BLD_push_octet_string(param_bld, OSSL_PKEY_PARAM_PRIV_KEY, key->private_key, key->private_key_len)) {
+            goto free_param_bld;
         }
     }
     params = OSSL_PARAM_BLD_to_param(param_bld);
 
     if (params == NULL) {
-        result = TEEP_ERR_FATAL;
-        goto out;
+        goto free_param_bld;
     }
-    ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_EC, NULL);
+    ctx = EVP_PKEY_CTX_new_id(id, NULL);
     if (ctx == NULL) {
-        result = TEEP_ERR_FATAL;
-        goto out;
+        goto free_params;
     }
-    if (ctx == NULL
-        || EVP_PKEY_fromdata_init(ctx) <= 0
-        || EVP_PKEY_fromdata(ctx, &pkey, EVP_PKEY_KEYPAIR, params) <= 0) {
-        result = TEEP_ERR_FATAL;
-        goto out;
+    if (EVP_PKEY_fromdata_init(ctx) <= 0
+        || EVP_PKEY_fromdata(ctx, &pkey, (key->private_key == NULL) ? EVP_PKEY_PUBLIC_KEY : EVP_PKEY_KEYPAIR, params) <= 0) {
+        goto free_ctx;
     }
 
     key->cose_key.key.ptr = pkey;
     return TEEP_SUCCESS;
 
-out:
+free_ctx:
     EVP_PKEY_CTX_free(ctx);
+free_params:
     OSSL_PARAM_free(params);
-    BN_free(priv);
+free_param_bld:
     OSSL_PARAM_BLD_free(param_bld);
     return result;
 }
@@ -310,7 +319,7 @@ teep_err_t teep_key_init_es256_key_pair(const unsigned char *private_key,
                                         teep_key_t *cose_key_pair)
 {
     cose_key_pair->private_key = private_key;
-    cose_key_pair->private_key_len = PRIME256V1_PRIVATE_KEY_LENGTH;
+    cose_key_pair->private_key_len = (private_key == NULL) ? 0 : PRIME256V1_PRIVATE_KEY_LENGTH;
     cose_key_pair->public_key = public_key;
     cose_key_pair->public_key_len = PRIME256V1_PUBLIC_KEY_LENGTH;
     cose_key_pair->cose_algorithm_id = T_COSE_ALGORITHM_ES256;
@@ -324,7 +333,7 @@ teep_err_t teep_key_init_es384_key_pair(const unsigned char *private_key,
                                         teep_key_t *cose_key_pair)
 {
     cose_key_pair->private_key = private_key;
-    cose_key_pair->private_key_len = SECP384R1_PRIVATE_KEY_LENGTH;
+    cose_key_pair->private_key_len = (private_key == NULL) ? 0 : SECP384R1_PRIVATE_KEY_LENGTH;
     cose_key_pair->public_key = public_key;
     cose_key_pair->public_key_len = SECP384R1_PUBLIC_KEY_LENGTH;
     cose_key_pair->cose_algorithm_id = T_COSE_ALGORITHM_ES384;
@@ -338,7 +347,7 @@ teep_err_t teep_key_init_es521_key_pair(const unsigned char *private_key,
                                         teep_key_t *cose_key_pair)
 {
     cose_key_pair->private_key = private_key;
-    cose_key_pair->private_key_len = SECP521R1_PRIVATE_KEY_LENGTH;
+    cose_key_pair->private_key_len = (private_key == NULL) ? 0 : SECP521R1_PRIVATE_KEY_LENGTH;
     cose_key_pair->public_key = public_key;
     cose_key_pair->public_key_len = SECP521R1_PUBLIC_KEY_LENGTH;
     cose_key_pair->cose_algorithm_id = T_COSE_ALGORITHM_ES512;
@@ -352,7 +361,7 @@ teep_err_t teep_key_init_ed25519_key_pair(const unsigned char *private_key,
                                           teep_key_t *cose_key_pair)
 {
     cose_key_pair->private_key = private_key;
-    cose_key_pair->private_key_len = ED25519_PRIVATE_KEY_LENGTH;
+    cose_key_pair->private_key_len = (private_key == NULL) ? 0 : ED25519_PRIVATE_KEY_LENGTH;
     cose_key_pair->public_key = public_key;
     cose_key_pair->public_key_len = ED25519_PUBLIC_KEY_LENGTH;
     cose_key_pair->cose_algorithm_id = T_COSE_ALGORITHM_EDDSA;
@@ -364,52 +373,28 @@ teep_err_t teep_key_init_es256_public_key(const unsigned char *public_key,
                                           UsefulBufC kid,
                                           teep_key_t *cose_public_key)
 {
-    cose_public_key->private_key = NULL;
-    cose_public_key->private_key_len = 0;
-    cose_public_key->public_key = public_key;
-    cose_public_key->public_key_len = PRIME256V1_PUBLIC_KEY_LENGTH;
-    cose_public_key->cose_algorithm_id = T_COSE_ALGORITHM_ES256;
-    cose_public_key->kid = kid;
-    return teep_create_es_key(cose_public_key);
+    return teep_key_init_es256_key_pair(NULL, public_key, kid, cose_public_key);
 }
 
 teep_err_t teep_key_init_es384_public_key(const unsigned char *public_key,
                                           UsefulBufC kid,
                                           teep_key_t *cose_public_key)
 {
-    cose_public_key->private_key = NULL;
-    cose_public_key->private_key_len = 0;
-    cose_public_key->public_key = public_key;
-    cose_public_key->public_key_len = SECP384R1_PUBLIC_KEY_LENGTH;
-    cose_public_key->cose_algorithm_id = T_COSE_ALGORITHM_ES384;
-    cose_public_key->kid = kid;
-    return teep_create_es_key(cose_public_key);
+    return teep_key_init_es384_key_pair(NULL, public_key, kid, cose_public_key);
 }
 
 teep_err_t teep_key_init_es521_public_key(const unsigned char *public_key,
                                           UsefulBufC kid,
                                           teep_key_t *cose_public_key)
 {
-    cose_public_key->private_key = NULL;
-    cose_public_key->private_key_len = 0;
-    cose_public_key->public_key = public_key;
-    cose_public_key->public_key_len = SECP521R1_PUBLIC_KEY_LENGTH;
-    cose_public_key->cose_algorithm_id = T_COSE_ALGORITHM_ES512;
-    cose_public_key->kid = kid;
-    return teep_create_es_key(cose_public_key);
+    return teep_key_init_es521_key_pair(NULL, public_key, kid, cose_public_key);
 }
 
 teep_err_t teep_key_init_ed25519_public_key(const unsigned char *public_key,
                                             UsefulBufC kid,
                                             teep_key_t *cose_public_key)
 {
-    cose_public_key->private_key = NULL;
-    cose_public_key->private_key_len = 0;
-    cose_public_key->public_key = public_key;
-    cose_public_key->public_key_len = ED25519_PUBLIC_KEY_LENGTH;
-    cose_public_key->cose_algorithm_id = T_COSE_ALGORITHM_EDDSA;
-    cose_public_key->kid = kid;
-    return teep_create_es_key(cose_public_key);
+    return teep_key_init_ed25519_key_pair(NULL, public_key, kid, cose_public_key);
 }
 
 teep_err_t teep_free_key(const teep_key_t *key) {
@@ -431,8 +416,7 @@ teep_err_t teep_set_mechanism_from_cose_key_from_item(QCBORDecodeContext *contex
     if (item->uDataType != QCBOR_TYPE_MAP) {
         return TEEP_ERR_INVALID_TYPE_OF_VALUE;
     }
-    UsefulBuf_MAKE_STACK_UB(private_key, TEEP_MAX_PRIVATE_KEY_LEN);
-    UsefulBuf_MAKE_STACK_UB(public_key, TEEP_MAX_PUBLIC_KEY_LEN);
+    UsefulBuf_MAKE_STACK_UB(public_key, TEEP_MAX_PUBLIC_KEY_LEN); // for ECDSA (x, y) parameters
     int64_t crv = 0;
     int64_t kty = 0;
 
@@ -503,10 +487,8 @@ teep_err_t teep_set_mechanism_from_cose_key_from_item(QCBORDecodeContext *contex
             else {
                 return TEEP_ERR_INVALID_VALUE;
             }
-            if (d.len == 32) {
-                memcpy(private_key.ptr, d.ptr, 32);
-                private_key.len = PRIME256V1_PRIVATE_KEY_LENGTH;
-                result = teep_key_init_es256_key_pair(private_key.ptr, public_key.ptr, kid, &mechanism->key);
+            if (d.len == PRIME256V1_PRIVATE_KEY_LENGTH) {
+                result = teep_key_init_es256_key_pair(d.ptr, public_key.ptr, kid, &mechanism->key);
             }
             else if (d.len == 0) {
                 result = teep_key_init_es256_public_key(public_key.ptr, kid, &mechanism->key);
@@ -526,25 +508,15 @@ teep_err_t teep_set_mechanism_from_cose_key_from_item(QCBORDecodeContext *contex
 
     case TEEP_COSE_KTY_OKP:
         switch (crv) {
-        case TEEP_COSE_CRV_X25519:
-            if ((x.len == 32) &&
-                (y.len == 32)) {
-                /* POINT_CONVERSION_UNCOMPRESSED */
-                ((uint8_t *)public_key.ptr)[0] = 0x04;
-                memcpy(&((uint8_t *)public_key.ptr)[1], x.ptr, 32);
-                memcpy(&((uint8_t *)public_key.ptr)[33], y.ptr, 32);
-                public_key.len = PRIME256V1_PUBLIC_KEY_LENGTH;
-            }
-            else {
+        case TEEP_COSE_CRV_ED25519:
+            if (x.len != ED25519_PUBLIC_KEY_LENGTH) {
                 return TEEP_ERR_INVALID_VALUE;
             }
-            if (d.len == 32) {
-                memcpy(private_key.ptr, d.ptr, 32);
-                private_key.len = PRIME256V1_PRIVATE_KEY_LENGTH;
-                result = teep_key_init_es256_key_pair(private_key.ptr, public_key.ptr, kid, &mechanism->key);
+            if (d.len == ED25519_PRIVATE_KEY_LENGTH) {
+                result = teep_key_init_ed25519_key_pair(d.ptr, x.ptr, kid, &mechanism->key);
             }
             else if (d.len == 0) {
-                result = teep_key_init_es256_public_key(public_key.ptr, kid, &mechanism->key);
+                result = teep_key_init_ed25519_public_key(public_key.ptr, kid, &mechanism->key);
             }
             else {
                 return TEEP_ERR_INVALID_VALUE;

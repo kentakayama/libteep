@@ -13,6 +13,11 @@
 #include "t_cose/t_cose_sign1_verify.h"
 #include "t_cose/t_cose_sign1_sign.h"
 
+/* for EdDSA aux buffer */
+#ifndef TEEP_AUXILIARY_BUFFER_SIZE
+  #define TEEP_AUXILIARY_BUFFER_SIZE            100
+#endif
+
 #if defined(LIBTEEP_PSA_CRYPTO_C)
 #include "psa/crypto.h"
 #else
@@ -23,6 +28,7 @@
 #define OPENSSL_VERSION_111 0x10101000L
 #define OPENSSL_VERSION_300 0x30000000L
 #if OPENSSL_VERSION_NUMBER >= OPENSSL_VERSION_300
+#include "openssl/core_names.h"
 #include "openssl/param_build.h"
 #endif
 
@@ -40,6 +46,7 @@
 #define TEEP_COSE_CRV_ED25519           (6)
 #define TEEP_COSE_CRV_ED448             (7)
 #define TEEP_COSE_KTY                   (1)
+#define TEEP_COSE_KTY_OKP               (1)
 #define TEEP_COSE_KTY_EC2               (2)
 
 #define PRIME256V1_PRIVATE_KEY_LENGTH       32
@@ -48,6 +55,8 @@
 #define SECP384R1_PUBLIC_KEY_LENGTH         97
 #define SECP521R1_PRIVATE_KEY_LENGTH        66
 #define SECP521R1_PUBLIC_KEY_LENGTH         133
+#define ED25519_PRIVATE_KEY_LENGTH          32
+#define ED25519_PUBLIC_KEY_LENGTH           32
 
 #define TEEP_MAX_PRIVATE_KEY_LEN            SECP521R1_PRIVATE_KEY_LENGTH
 #define TEEP_MAX_PUBLIC_KEY_LEN             SECP521R1_PUBLIC_KEY_LENGTH
