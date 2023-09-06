@@ -82,7 +82,7 @@ teep_err_t teep_encode_error(const teep_error_t *teep_error, QCBOREncodeContext 
     if (teep_error->contains & TEEP_MESSAGE_CONTAINS_SUIT_REPORTS) {
         QCBOREncode_OpenArrayInMapN(context, TEEP_OPTIONS_KEY_SUIT_REPORTS);
         for (size_t i = 0; i < teep_error->suit_reports.len; i++) {
-            QCBOREncode_AddText(context, (UsefulBufC){teep_error->suit_reports.items[i].ptr, teep_error->suit_reports.items[i].len});
+            QCBOREncode_AddBytes(context, (UsefulBufC){teep_error->suit_reports.items[i].ptr, teep_error->suit_reports.items[i].len});
         }
         QCBOREncode_CloseArray(context);
     }
@@ -103,7 +103,7 @@ teep_err_t teep_encode_success(const teep_success_t *teep_success, QCBOREncodeCo
     if (teep_success->contains & TEEP_MESSAGE_CONTAINS_SUIT_REPORTS) {
         QCBOREncode_OpenArrayInMapN(context, TEEP_OPTIONS_KEY_SUIT_REPORTS);
         for (size_t i = 0; i < teep_success->suit_reports.len; i++) {
-            QCBOREncode_AddText(context, (UsefulBufC){teep_success->suit_reports.items[i].ptr, teep_success->suit_reports.items[i].len});
+            QCBOREncode_AddBytes(context, (UsefulBufC){teep_success->suit_reports.items[i].ptr, teep_success->suit_reports.items[i].len});
         }
         QCBOREncode_CloseArray(context);
     }
@@ -167,7 +167,7 @@ teep_err_t teep_encode_query_response(const teep_query_response_t *query_respons
     if (query_response->contains & TEEP_MESSAGE_CONTAINS_SUIT_REPORTS) {
         QCBOREncode_OpenArrayInMapN(context, TEEP_OPTIONS_KEY_SUIT_REPORTS);
         for (size_t i = 0; i < query_response->suit_reports.len; i++) {
-            QCBOREncode_AddText(context, (UsefulBufC){query_response->suit_reports.items[i].ptr, query_response->suit_reports.items[i].len});
+            QCBOREncode_AddBytes(context, (UsefulBufC){query_response->suit_reports.items[i].ptr, query_response->suit_reports.items[i].len});
         }
         QCBOREncode_CloseArray(context);
     }
