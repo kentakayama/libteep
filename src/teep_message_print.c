@@ -213,14 +213,27 @@ char *teep_cose_mechanism_key_to_str(int64_t cose_mechanism_key)
 char *teep_cose_algs_key_to_str(int64_t cose_algs_key)
 {
     switch (cose_algs_key) {
-    case 0:
-        return "NONE";
+    /* hash */
+    case TEEP_COSE_SHA256:
+        return "SHA-256";
+
+    /* authentication algorithms */
+    case TEEP_COSE_MAC_HMAC256:
+        return "HMAC-256";
     case TEEP_COSE_SIGN_ES256:
         return "ES256";
     case TEEP_COSE_SIGN_EDDSA:
         return "EdDSA";
     case TEEP_COSE_SIGN_HSS_LMS:
         return "HSS-LMS";
+
+    /* key_exchange algorithms */
+    case TEEP_COSE_A128KW:
+        return "A128KW";
+    case TEEP_COSE_ECDHES_HKDF256:
+        return "ECDH-ES+HKDF-256";
+
+    /* encryption algorithms */
     case TEEP_COSE_ENCRYPT_A128_GCM:
         return "AES-GCM-128";
     case TEEP_COSE_ENCRYPT_A192_GCM:
@@ -229,10 +242,17 @@ char *teep_cose_algs_key_to_str(int64_t cose_algs_key)
         return "AES-GCM-256";
     case TEEP_COSE_ENCRYPT_ACCM_16_64_128:
         return "AES-CCM-16-64-128";
-    case TEEP_COSE_MAC_HMAC256:
-        return "HMAC 256/256";
+    case TEEP_COSE_ENCRYPT_CHACHA20_POLY1305:
+        return "ChaCha20/Poly1305";
+    case TEEP_COSE_ENCRYPT_A128CTR:
+        return "A128CTR";
+    case TEEP_COSE_ENCRYPT_A192CTR:
+        return "A192CTR";
+    case TEEP_COSE_ENCRYPT_A256CTR:
+        return "A256CTR";
+
     default:
-        return "UNKNOWN";
+        return NULL;
     }
 }
 
@@ -261,14 +281,18 @@ void teep_debug_print(QCBORDecodeContext *message,
     }
 }
 
-teep_err_t teep_print_profile(const teep_profile_t *profile)
+teep_err_t teep_print_suit_cose_profile(const teep_suit_cose_profile_t *profile)
 {
     if (profile == NULL) {
         return TEEP_ERR_UNEXPECTED_ERROR;
     }
-    printf("[ %d / (%s) /, %d / (%s) / ]",
-        profile->signing,
-        teep_cose_algs_key_to_str(profile->signing),
+    printf("[ %ld / %s /, %ld / %s /, %ld / %s /, %ld / %s / ]",
+        profile->hash,
+        teep_cose_algs_key_to_str(profile->hash),
+        profile->authentication,
+        teep_cose_algs_key_to_str(profile->authentication),
+        profile->key_exchange,
+        teep_cose_algs_key_to_str(profile->key_exchange),
         profile->encryption,
         teep_cose_algs_key_to_str(profile->encryption)
     );
@@ -399,7 +423,7 @@ teep_err_t teep_print_query_request(const teep_query_request_t *query_request,
     printf("%*s/ supported-suit-cose-profiles : / [\n", indent_space + indent_delta, "");
     for (size_t i = 0; i < query_request->supported_suit_cose_profiles.len; i++) {
         printf("%*s", indent_space + 2 * indent_delta, "");
-        result = teep_print_profile(&query_request->supported_suit_cose_profiles.items[i]);
+        result = teep_print_suit_cose_profile(&query_request->supported_suit_cose_profiles.items[i]);
         if (result != TEEP_SUCCESS) {
             return result;
         }

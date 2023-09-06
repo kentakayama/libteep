@@ -24,9 +24,11 @@ void teep_QCBOREncode_AddUsefulBufCToMapN(QCBOREncodeContext *pMe, int64_t uLabe
     teep_QCBOREncode_AddUsefulBufC(pMe, buf);
 }
 
-void teep_encode_add_profile(QCBOREncodeContext *pMe, teep_profile_t profile) {
+void teep_encode_add_suit_cose_profile(QCBOREncodeContext *pMe, teep_suit_cose_profile_t profile) {
     QCBOREncode_OpenArray(pMe);
-    QCBOREncode_AddInt64(pMe, profile.signing);
+    QCBOREncode_AddInt64(pMe, profile.hash);
+    QCBOREncode_AddInt64(pMe, profile.authentication);
+    QCBOREncode_AddInt64(pMe, profile.key_exchange);
     QCBOREncode_AddInt64(pMe, profile.encryption);
     QCBOREncode_CloseArray(pMe);
 }
@@ -230,7 +232,7 @@ teep_err_t teep_encode_query_request(const teep_query_request_t *query_request, 
     /* supported-suit-cose-profiles */
     QCBOREncode_OpenArray(context);
     for (size_t i = 0; i < query_request->supported_suit_cose_profiles.len; i++) {
-        teep_encode_add_profile(context, query_request->supported_suit_cose_profiles.items[i]);
+        teep_encode_add_suit_cose_profile(context, query_request->supported_suit_cose_profiles.items[i]);
     }
     QCBOREncode_CloseArray(context);
 

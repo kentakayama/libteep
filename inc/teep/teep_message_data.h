@@ -78,16 +78,28 @@ typedef enum teep_options_key {
 typedef enum teep_cose_algs {
     TEEP_COSE_NONE                      = 0,
 
-    TEEP_COSE_SIGN_ES256                = -7,   // cose-alg-es256
-    TEEP_COSE_SIGN_EDDSA                = -8,   // cose-alg-eddsa
-    TEEP_COSE_SIGN_HSS_LMS              = -46,  // cose-alg-hss-lms
+    /* hash algorithms */
+    TEEP_COSE_SHA256                    = -16,      // cose-alg-sha256
 
-    TEEP_COSE_ENCRYPT_A128_GCM          = 1,    // cose-alg-aes-gcm-128
-    TEEP_COSE_ENCRYPT_A192_GCM          = 2,    // cose-alg-aes-gcm-192
-    TEEP_COSE_ENCRYPT_A256_GCM          = 3,    // cose-alg-aes-gcm-256
-    TEEP_COSE_ENCRYPT_ACCM_16_64_128    = 10,   // cose-alg-aes-ccm-16-64-128
+    /* authentication algorithms */
+    TEEP_COSE_MAC_HMAC256               = 5,        // cose-alg-hmac-256-256
+    TEEP_COSE_SIGN_ES256                = -7,       // cose-alg-es256
+    TEEP_COSE_SIGN_EDDSA                = -8,       // cose-alg-eddsa
+    TEEP_COSE_SIGN_HSS_LMS              = -46,      // cose-alg-hss-lms
 
-    TEEP_COSE_MAC_HMAC256               = 5,    // cose-alg-hmac-256-256
+    /* key_exchange algorithms */
+    TEEP_COSE_A128KW                    = -3,       // cose-alg-aeskw-128
+    TEEP_COSE_ECDHES_HKDF256            = -25,      // cose-alg-ecdh-es-hkdf-256
+
+    /* encryption algorithms */
+    TEEP_COSE_ENCRYPT_A128_GCM          = 1,        // cose-alg-aes-gcm-128
+    TEEP_COSE_ENCRYPT_A192_GCM          = 2,        // cose-alg-aes-gcm-192
+    TEEP_COSE_ENCRYPT_A256_GCM          = 3,        // cose-alg-aes-gcm-256
+    TEEP_COSE_ENCRYPT_ACCM_16_64_128    = 10,       // cose-alg-aes-ccm-16-64-128
+    TEEP_COSE_ENCRYPT_CHACHA20_POLY1305 = 24,       // cose-alg-chacha20-poly1305
+    TEEP_COSE_ENCRYPT_A128CTR           = -65534,   // cose-alg-aes-ctr-128
+    TEEP_COSE_ENCRYPT_A192CTR           = -65533,   // cose-alg-aes-ctr-192
+    TEEP_COSE_ENCRYPT_A256CTR           = -65532,   // cose-alg-aes-ctr-256
 } teep_cose_algs_t;
 
 /*
@@ -123,19 +135,20 @@ typedef struct teep_cipher_suite_array {
 /*
  * $suit-cose-profile
  */
-typedef struct teep_profile {
-    int signing;
-    int encryption;
-} teep_profile_t;
+typedef struct teep_suit_cose_profile {
+    int64_t hash; // e.g. SHA-256 = -16
+    int64_t authentication; // e.g. ES256 = -7 and EdDSA = -8
+    int64_t key_exchange; // e.g. ECDH-ES + HKDF-256 = -25
+    int64_t encryption; // e.g. A128CTR = -65534 <TBD>
+} teep_suit_cose_profile_t;
 
 /*
  * [ + $suit-cose-profile ]
  */
-#define TEEP_MAX_PROFILES_LENGTH        2
-typedef struct teep_profile_array {
-    size_t              len;
-    teep_profile_t      items[TEEP_MAX_ARRAY_LENGTH];
-} teep_profile_array_t;
+typedef struct teep_suit_cose_profile_array {
+    size_t                  len;
+    teep_suit_cose_profile_t     items[TEEP_MAX_ARRAY_LENGTH];
+} teep_suit_cose_profile_array_t;
 
 /*
  * TEEP-err-code
@@ -278,27 +291,30 @@ struct teep_message {
 typedef union {
     uint64_t  val;
     struct {
-        uint8_t  attestation : 1;
-        uint8_t  trusted_components : 1;
-        uint8_t  extensions : 1;
+        uint8_t attestation : 1;
+        uint8_t trusted_components : 1;
+        uint8_t extensions : 1;
+        uint8_t suit_reports : 1;
     };
 } teep_data_item_requested_t;
 /*
  * query-request
  */
 typedef struct teep_query_request {
-    teep_type_t                 type;
+    teep_type_t                     type;
 
-    uint64_t                    contains;
-    teep_buf_t                  token;
-    teep_uint32_array_t         supported_freshness_mechanisms;
-    teep_buf_t                  challenge;
-    teep_uint32_array_t         versions;
-    // TODO :                   query-request-extensions
-    // TODO :                   teep-option-extensions
+    uint64_t                        contains;
+    teep_buf_t                      token;
+    teep_uint32_array_t             supported_freshness_mechanisms;
+    teep_buf_t                      challenge;
+    teep_uint32_array_t             versions;
+    teep_buf_t                      attestation_payload_format;
+    teep_buf_t                      attestation_payload;
+    // TODO :                       suit-reports
+    // TODO :                       teep-option-extensions
 
-    teep_cipher_suite_array_t   supported_teep_cipher_suites;
-    teep_profile_array_t        supported_suit_cose_profiles;
+    teep_cipher_suite_array_t       supported_teep_cipher_suites;
+    teep_suit_cose_profile_array_t  supported_suit_cose_profiles;
     teep_data_item_requested_t  data_item_requested;
 } teep_query_request_t;
 

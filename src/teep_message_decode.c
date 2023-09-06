@@ -381,30 +381,41 @@ teep_err_t teep_set_cipher_suite(QCBORDecodeContext *message,
     return TEEP_SUCCESS;
 }
 
-teep_err_t teep_set_profile(QCBORDecodeContext *message,
-                            QCBORItem *item,
-                            teep_profile_t *profile)
+teep_err_t teep_set_suit_cose_profile(QCBORDecodeContext *message,
+                                      QCBORItem *item,
+                                      teep_suit_cose_profile_t *profile)
 {
     teep_err_t result;
 
     if (item->uDataType != QCBOR_TYPE_ARRAY) {
         return TEEP_ERR_INVALID_TYPE_OF_VALUE;
     }
-    if (item->val.uCount > TEEP_MAX_CIPHER_SUITES_LENGTH) {
-        return TEEP_ERR_NO_MEMORY;
-    }
 
-    size_t array_length = item->val.uCount;
-    if (array_length != 2) {
+    /* 4 = hash, sign, key_exchange, encrypt */
+    if (item->val.uCount != 4) {
         return TEEP_ERR_INVALID_LENGTH;
     }
 
-    /* get signing algorithm */
+    /* get hash algorithm */
     result = teep_qcbor_get_next(message, item, QCBOR_TYPE_INT64);
     if (result != TEEP_SUCCESS) {
         return result;
     }
-    profile->signing = item->val.int64;
+    profile->hash = item->val.int64;
+
+    /* get authentication algorithm */
+    result = teep_qcbor_get_next(message, item, QCBOR_TYPE_INT64);
+    if (result != TEEP_SUCCESS) {
+        return result;
+    }
+    profile->authentication = item->val.int64;
+
+    /* get key_exchange algorithm */
+    result = teep_qcbor_get_next(message, item, QCBOR_TYPE_INT64);
+    if (result != TEEP_SUCCESS) {
+        return result;
+    }
+    profile->key_exchange = item->val.int64;
 
     /* get encryption algorithm */
     result = teep_qcbor_get_next(message, item, QCBOR_TYPE_INT64);
@@ -416,9 +427,9 @@ teep_err_t teep_set_profile(QCBORDecodeContext *message,
     return TEEP_SUCCESS;
 }
 
-teep_err_t teep_set_profile_array(QCBORDecodeContext *message,
-                                  QCBORItem *item,
-                                  teep_profile_array_t *profiles)
+teep_err_t teep_set_suit_cose_profile_array(QCBORDecodeContext *message,
+                                            QCBORItem *item,
+                                            teep_suit_cose_profile_array_t *profiles)
 {
     teep_err_t result = teep_qcbor_get_next(message, item, QCBOR_TYPE_ARRAY);
     if (result != TEEP_SUCCESS) {
@@ -434,7 +445,7 @@ teep_err_t teep_set_profile_array(QCBORDecodeContext *message,
             return result;
         }
 
-        result = teep_set_profile(message, item, &profiles->items[i]);
+        result = teep_set_suit_cose_profile(message, item, &profiles->items[i]);
         if (result != TEEP_SUCCESS) {
             return result;
         }
@@ -665,7 +676,7 @@ teep_err_t teep_set_query_request(QCBORDecodeContext *message,
         return result;
     }
 
-    result = teep_set_profile_array(message, item, &query_request->supported_suit_cose_profiles);
+    result = teep_set_suit_cose_profile_array(message, item, &query_request->supported_suit_cose_profiles);
     if (result != TEEP_SUCCESS) {
         return result;
     }
