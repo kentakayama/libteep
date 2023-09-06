@@ -179,6 +179,8 @@ char *teep_err_code_to_str(int32_t err_code)
         return "ERR_UNSUPPORTED_CIPHER_SUITES";
     case TEEP_ERR_CODE_BAD_CERTIFICATE:
         return "ERR_BAD_CERTIFICATE";
+    case TEEP_ERR_CODE_ATTESTATION_REQUIRED:
+        return "ERR_ATTESTATION_REQUIRED";
     case TEEP_ERR_CODE_CERTIFICATE_EXPIRED:
         return "ERR_CERTIFICATE_EXPIRED";
     case TEEP_ERR_CODE_TEMPORARY_ERROR:
@@ -186,7 +188,7 @@ char *teep_err_code_to_str(int32_t err_code)
     case TEEP_ERR_CODE_MANIFEST_PROCESSING_FAILED:
         return "ERR_MANIFEST_PROCESSING_FAILED";
     default:
-        return "ERR_UNKNOWN";
+        return NULL;
     }
 }
 
@@ -981,6 +983,7 @@ char* teep_options_key_to_str(const int64_t label, const int64_t n)
     case TEEP_OPTIONS_KEY_SUIT_REPORTS: return "suit-reports";
     case TEEP_OPTIONS_KEY_TOKEN: return "token";
     case TEEP_OPTIONS_KEY_SUPPORTED_FRESHNESS_MECHANISMS: return "supported-freshness-mechanisms";
+    case TEEP_OPTIONS_KEY_ERR_CODE: return "err-code";
     default: return NULL;
     }
 }
