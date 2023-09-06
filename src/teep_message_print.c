@@ -869,6 +869,18 @@ teep_err_t teep_print_error(const teep_error_t *teep_error,
         }
         printf("]");
     }
+    if (teep_error->contains & TEEP_MESSAGE_CONTAINS_CHALLENGE) {
+        if (printed) {
+            printf(",\n");
+        }
+        printed = true;
+
+        printf("%*s/ challenge / %d :", indent_space + 2 * indent_delta, "", TEEP_OPTIONS_KEY_CHALLENGE);
+        result = teep_print_hex(teep_error->challenge.ptr, teep_error->challenge.len);
+        if (result != TEEP_SUCCESS) {
+            return result;
+        }
+    }
     if (teep_error->contains & TEEP_MESSAGE_CONTAINS_VERSIONS) {
         if (printed) {
             printf(",\n");

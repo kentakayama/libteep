@@ -960,6 +960,13 @@ teep_err_t teep_set_error(QCBORDecodeContext *message,
                 }
                 teep_error->contains |= TEEP_MESSAGE_CONTAINS_SUPPORTED_FRESHNESS_MECHANISMS;
                 break;
+            case TEEP_OPTIONS_KEY_CHALLENGE:
+                result = teep_set_byte_string(QCBOR_TYPE_BYTE_STRING, item, &teep_error->challenge);
+                if (result != TEEP_SUCCESS) {
+                    return result;
+                }
+                teep_error->contains |= TEEP_MESSAGE_CONTAINS_CHALLENGE;
+                break;
             case TEEP_OPTIONS_KEY_VERSIONS:
                 result = teep_set_any_array(message, item, QCBOR_TYPE_UINT32, &teep_error->versions);
                 if (result != TEEP_SUCCESS) {

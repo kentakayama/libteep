@@ -69,6 +69,9 @@ teep_err_t teep_encode_error(const teep_error_t *teep_error, QCBOREncodeContext 
         }
         QCBOREncode_CloseArray(context);
     }
+    if (teep_error->contains & TEEP_MESSAGE_CONTAINS_CHALLENGE) {
+        QCBOREncode_AddBytesToMapN(context, TEEP_OPTIONS_KEY_CHALLENGE, (UsefulBufC){teep_error->challenge.ptr, teep_error->challenge.len});
+    }
     if (teep_error->contains & TEEP_MESSAGE_CONTAINS_VERSIONS) {
         QCBOREncode_OpenArrayInMapN(context, TEEP_OPTIONS_KEY_VERSIONS);
         for (size_t i = 0; i < teep_error->versions.len; i++) {
