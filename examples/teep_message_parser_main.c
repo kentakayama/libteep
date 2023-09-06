@@ -7,13 +7,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
-#include "qcbor/qcbor.h"
+#include "teep/teep_cose.h"
 #include "teep/teep_message_data.h"
 #include "teep/teep_message_print.h"
 #include "teep_examples_common.h"
-#include "t_cose/t_cose_sign1_sign.h"
-#include "t_cose/t_cose_sign1_verify.h"
-#include "t_cose/q_useful_buf.h"
 
 
 #define MAX_FILE_BUFFER_SIZE                ( 4 * 1024 * 1024)
@@ -49,11 +46,12 @@ int main(int argc, const char * argv[])
     }
     cbor_file_name = argv[1];
 
-    teep_key_t public_key;
-    result = teep_key_init_es256_public_key(teep_public_key, NULLUsefulBufC, &public_key);
+    teep_mechanism_t mechanism;
+    result = teep_key_init_es256_public_key(teep_public_key, NULLUsefulBufC, &mechanism.key);
     if (result != TEEP_SUCCESS) {
         printf("main : Failed to parse t_cose_key. (%d)\n", result);
     }
+    mechanism.use = true;
     printf("public_key : ");
     teep_print_hex(teep_public_key, PRIME256V1_PUBLIC_KEY_LENGTH);
     printf("\n");
@@ -81,7 +79,16 @@ int main(int argc, const char * argv[])
     printf("main : Verify CBOR file.\n");
     UsefulBufC signed_cose = UsefulBuf_Const(cbor_buf);
     UsefulBufC returned_payload;
-    result = teep_verify_cose_sign1(signed_cose, &public_key, &returned_payload);
+
+    printf("main : Try to parse as COSE_Sign1.\n");
+    mechanism.cose_tag = CBOR_TAG_COSE_SIGN1;
+    result = teep_verify_cose_sign1(signed_cose, &mechanism, &returned_payload);
+
+    if (result != TEEP_SUCCESS) {
+        printf("main : Try to parse as COSE_Sign.\n");
+        mechanism.cose_tag = CBOR_TAG_COSE_SIGN;
+        result = teep_verify_cose_sign(signed_cose, &mechanism, 1, &returned_payload);
+    }
 
     if (result != TEEP_SUCCESS) {
 #ifdef ALLOW_CBOR_WITHOUT_SIGN1
@@ -123,7 +130,7 @@ int main(int argc, const char * argv[])
     printf("\nmain : EAT data.\n");
     teep_print_cose_eat(signed_cose, 0, 2);
 #endif
-    teep_free_key(&public_key);
+    teep_free_key(&mechanism.key);
     free(cbor_buf.ptr);
 
     return EXIT_SUCCESS;

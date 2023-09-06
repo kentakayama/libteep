@@ -53,20 +53,21 @@ int main(int argc, const char * argv[])
     teep_print_hex(cbor_buf.ptr, cbor_buf.len);
     printf("\n\n");
 
-    teep_key_t signing_key;
-    result = teep_key_init_es256_key_pair(teep_agent_es256_private_key, teep_agent_es256_public_key, NULLUsefulBufC, &signing_key);
+    teep_mechanism_t mechanism;
+    result = teep_key_init_es256_key_pair(teep_agent_es256_private_key, teep_agent_es256_public_key, NULLUsefulBufC, &mechanism.key);
     if (result != TEEP_SUCCESS) {
         return EXIT_FAILURE;
     }
+    mechanism.cose_tag = CBOR_TAG_COSE_SIGN1;
 
-    result = teep_sign_cose_sign1(UsefulBuf_Const(cbor_buf), &signing_key, &cose_buf);
+    result = teep_sign_cose_sign1(UsefulBuf_Const(cbor_buf), &mechanism, &cose_buf);
     if (result != TEEP_SUCCESS) {
         return EXIT_FAILURE;
     }
     teep_print_hex(cose_buf.ptr, cose_buf.len);
     printf("\n\n");
 
-    result = teep_encode_signed_message((teep_message_t *)&teep_message, &signing_key, &cose_one_step_buf.ptr, &cose_one_step_buf.len);
+    result = teep_encode_signed_message((teep_message_t *)&teep_message, &mechanism.key, &cose_one_step_buf.ptr, &cose_one_step_buf.len);
     if (result != TEEP_SUCCESS) {
         return EXIT_FAILURE;
     }
@@ -76,6 +77,8 @@ int main(int argc, const char * argv[])
     if (memcmp(cose_buf.ptr, cose_one_step_buf.ptr, cose_buf.len - 64) != 0) {
         return EXIT_FAILURE;
     }
+
+    teep_free_key(&mechanism.key);
 
     return EXIT_SUCCESS;
 }
