@@ -231,7 +231,7 @@ error: /* would be unneeded if the err-code becomes bit field */
  */
 teep_err_t get_teep_message(const char *tam_url,
                             UsefulBufC send_buf,
-                            const teep_key_t *verifying_key,
+                            teep_mechanism_t *verifying_key,
                             UsefulBuf recv_buf,
                             teep_message_t *message)
 {
@@ -248,7 +248,12 @@ teep_err_t get_teep_message(const char *tam_url,
 
     // Verify and print QueryRequest cose.
     UsefulBufC payload;
+    verifying_key->cose_tag = CBOR_TAG_COSE_SIGN1;
     result = teep_verify_cose_sign1(UsefulBuf_Const(recv_buf), verifying_key, &payload);
+    if (result != TEEP_SUCCESS) {
+        verifying_key->cose_tag = CBOR_TAG_COSE_SIGN;
+        result = teep_verify_cose_sign(UsefulBuf_Const(recv_buf), verifying_key, 1, &payload);
+    }
     if (result != TEEP_SUCCESS) {
         printf("main : Failed to verify TEEP message. %s(%d)\n", teep_err_to_str(result), result);
         return result;
@@ -273,19 +278,20 @@ int main(int argc, const char * argv[])
     UsefulBuf_MAKE_STACK_UB(cbor_send_buf, MAX_SEND_BUFFER_SIZE);
     UsefulBuf_MAKE_STACK_UB(cose_send_buf, MAX_SEND_BUFFER_SIZE);
 
-    teep_key_t signing_key;
-    result = teep_key_init_es256_key_pair(teep_agent_es256_private_key, teep_agent_es256_public_key, NULLUsefulBufC, &signing_key);
+    teep_mechanism_t mechanism_sign;
+    result = teep_key_init_es256_key_pair(teep_agent_es256_private_key, teep_agent_es256_public_key, NULLUsefulBufC, &mechanism_sign.key);
     if (result != TEEP_SUCCESS) {
         printf("main : Failed to create t_cose key pair. %s(%d)\n", teep_err_to_str(result), result);
         return EXIT_FAILURE;
     }
 
-    teep_key_t verifying_key;
-    result = teep_key_init_es256_public_key(tam_es256_public_key, NULLUsefulBufC, &verifying_key);
+    teep_mechanism_t mechanism_verify;
+    result = teep_key_init_es256_public_key(tam_es256_public_key, NULLUsefulBufC, &mechanism_verify.key);
     if (result != TEEP_SUCCESS) {
         printf("main : Failed to parse t_cose public key. %s(%d)\n", teep_err_to_str(result), result);
         return EXIT_FAILURE;
     }
+    mechanism_verify.cose_tag = CBOR_TAG_COSE_SIGN1;
     printf("main : Verifying key = ");
     teep_print_hex(tam_es256_public_key, sizeof(tam_es256_public_key));
     printf("\n");
@@ -299,7 +305,7 @@ int main(int argc, const char * argv[])
     cose_send_buf.len = 0;
 
     while (1) {
-        result = get_teep_message(tam_url, UsefulBuf_Const(cose_send_buf), &verifying_key, cbor_recv_buf, &recv_message);
+        result = get_teep_message(tam_url, UsefulBuf_Const(cose_send_buf), &mechanism_verify, cbor_recv_buf, &recv_message);
         if (result != TEEP_SUCCESS) {
             if (result == TEEP_ERR_ABORT) {
                 /* just the TAM terminated the connection */
@@ -355,7 +361,8 @@ int main(int argc, const char * argv[])
             return EXIT_FAILURE;
         }
         cose_send_buf.len = MAX_SEND_BUFFER_SIZE;
-        result = teep_sign_cose_sign1(UsefulBuf_Const(cbor_send_buf), &signing_key, &cose_send_buf);
+        mechanism_sign.cose_tag = CBOR_TAG_COSE_SIGN1;
+        result = teep_sign_cose_sign1(UsefulBuf_Const(cbor_send_buf), &mechanism_sign, &cose_send_buf);
         if (result != TEEP_SUCCESS) {
             printf("main : Failed to sign to query_response message. %s(%d)\n", teep_err_to_str(result), result);
             return EXIT_FAILURE;
@@ -364,7 +371,7 @@ interval:
         sleep(1);
     }
 
-    teep_free_key(&verifying_key);
-    teep_free_key(&signing_key);
+    teep_free_key(&mechanism_verify.key);
+    teep_free_key(&mechanism_sign.key);
     return EXIT_SUCCESS;
 }
