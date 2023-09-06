@@ -846,6 +846,21 @@ teep_err_t teep_set_update(QCBORDecodeContext *message,
                 }
                 teep_update->contains |= TEEP_MESSAGE_CONTAINS_ATTESTATION_PAYLOAD;
                 break;
+            case TEEP_OPTIONS_KEY_ERR_CODE:
+                result = teep_qcbor_get_next_uint64(message, item);
+                if (result != TEEP_SUCCESS) {
+                    return result;
+                }
+                teep_update->err_code = item->val.uint64;
+                teep_update->contains |= TEEP_MESSAGE_CONTAINS_ERR_CODE;
+                break;
+            case TEEP_OPTIONS_KEY_ERR_MSG:
+                result = teep_set_byte_string(QCBOR_TYPE_TEXT_STRING, item, &teep_update->attestation_payload_format);
+                if (result != TEEP_SUCCESS) {
+                    return result;
+                }
+                teep_update->contains |= TEEP_MESSAGE_CONTAINS_ERR_MSG;
+                break;
             default:
                 return TEEP_ERR_UNEXPECTED_ERROR;
         }

@@ -133,6 +133,12 @@ teep_err_t teep_encode_update(const teep_update_t *teep_update, QCBOREncodeConte
     if (teep_update->contains & TEEP_MESSAGE_CONTAINS_ATTESTATION_PAYLOAD) {
         QCBOREncode_AddBytesToMapN(context, TEEP_OPTIONS_KEY_ATTESTATION_PAYLOAD, (UsefulBufC){teep_update->attestation_payload.ptr, teep_update->attestation_payload.len});
     }
+    if (teep_update->contains & TEEP_MESSAGE_CONTAINS_ERR_CODE) {
+        QCBOREncode_AddUInt64ToMapN(context, TEEP_OPTIONS_KEY_ERR_CODE, teep_error->err_code);
+    }
+    if (teep_update->contains & TEEP_MESSAGE_CONTAINS_ERR_MSG) {
+        QCBOREncode_AddTextToMapN(context, TEEP_OPTIONS_KEY_ERR_MSG, (UsefulBufC){teep_update->err_msg.ptr, teep_update->err_msg.len});
+    }
     QCBOREncode_CloseMap(context);
     return TEEP_SUCCESS;
 }

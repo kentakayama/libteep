@@ -764,6 +764,26 @@ teep_err_t teep_print_update(const teep_update_t *teep_update,
             return result;
         }
     }
+    if (teep_update->contains & TEEP_MESSAGE_CONTAINS_ERR_CODE) {
+        if (printed) {
+            printf(",\n");
+        }
+        printed = true;
+
+        printf("%*s/ err-code / %d : %u / %s /", indent_space + 2 * indent_delta, "", TEEP_OPTIONS_KEY_ERR_CODE, teep_update->err_code, teep_err_code_to_str(teep_update->err_code));
+    }
+    if (teep_update->contains & TEEP_MESSAGE_CONTAINS_ERR_MSG) {
+        if (printed) {
+            printf(",\n");
+        }
+        printed = true;
+
+        printf("%*s/ err-msg / %d : ", indent_space + 2 * indent_delta, "", TEEP_OPTIONS_KEY_ERR_MSG);
+        result = teep_print_string(&teep_update->attestation_payload_format);
+        if (result != TEEP_SUCCESS) {
+            return result;
+        }
+    }
     printf("\n%*s}\n%*s]\n", indent_space + indent_delta, "", indent_space, "");
     return TEEP_SUCCESS;
 }
