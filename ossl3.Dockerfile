@@ -16,7 +16,7 @@ RUN git clone --depth 1 https://github.com/laurencelundblade/QCBOR.git /root/QCB
 WORKDIR /root/QCBOR
 RUN make libqcbor.a install
 
-RUN git clone --branch dev --depth 1 https://github.com/kentakayama/t_cose.git /root/t_cose
+RUN git clone --branch dev-deterministic-ecdsa --depth 1 https://github.com/kentakayama/t_cose.git /root/t_cose
 WORKDIR /root/t_cose
 RUN make -f Makefile.ossl libt_cose.a install
 

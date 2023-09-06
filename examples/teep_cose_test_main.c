@@ -26,17 +26,29 @@
       UsefulBuf_FROM_SZ_LITERAL("101"),
   };
 #elif TEEP_ACTOR_TAM0 == 1
-  #include "tam_es256_cose_key_private.h"
-  #include "tam_ed25519_cose_key_private.h"
-  #define NUM_TEEP_PRIVATE_KEY 2
-  UsefulBufC teep_private_keys[NUM_TEEP_PRIVATE_KEY] = {
-      tam_es256_cose_key_private,
-      tam_ed25519_cose_key_private
-  };
-  UsefulBufC kids[NUM_TEEP_PRIVATE_KEY] = {
-      UsefulBuf_FROM_SZ_LITERAL("201"),
-      UsefulBuf_FROM_SZ_LITERAL("202")
-  };
+  #if defined(LIBTEEP_PSA_CRYPTO_C)
+    /* MbedTLS does not support EdDSA well, so ignore it */
+    #include "tam_es256_cose_key_private.h"
+    #define NUM_TEEP_PRIVATE_KEY 1
+    UsefulBufC teep_private_keys[NUM_TEEP_PRIVATE_KEY] = {
+        tam_es256_cose_key_private,
+    };
+    UsefulBufC kids[NUM_TEEP_PRIVATE_KEY] = {
+        UsefulBuf_FROM_SZ_LITERAL("201"),
+    };
+  #else
+    #include "tam_es256_cose_key_private.h"
+    #include "tam_ed25519_cose_key_private.h"
+    #define NUM_TEEP_PRIVATE_KEY 2
+    UsefulBufC teep_private_keys[NUM_TEEP_PRIVATE_KEY] = {
+        tam_es256_cose_key_private,
+        tam_ed25519_cose_key_private
+    };
+    UsefulBufC kids[NUM_TEEP_PRIVATE_KEY] = {
+        UsefulBuf_FROM_SZ_LITERAL("201"),
+        UsefulBuf_FROM_SZ_LITERAL("202")
+    };
+  #endif
 #elif TEEP_ACTOR_TAM1 == 1
   #include "tam_es256_cose_key_private.h"
   #define NUM_TEEP_PRIVATE_KEY 1
