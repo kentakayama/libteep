@@ -354,7 +354,7 @@ teep_err_t teep_print_query_request(const teep_query_request_t *query_request,
         return TEEP_ERR_UNEXPECTED_ERROR;
     }
     teep_err_t result = TEEP_SUCCESS;
-    printf("%*s/ QueryRequest(signed by \n = / [\n", indent_space, "");
+    printf("%*s/ QueryRequest = / [\n", indent_space, "");
     printf("%*s/ type : / %u,\n", indent_space + indent_delta, "", query_request->type);
 
     printf("%*s/ options : / {\n", indent_space + indent_delta, "");
@@ -1528,10 +1528,50 @@ teep_err_t teep_print_cose(QCBORDecodeContext *context,
     QCBORDecode_ExitBstrWrapped(context);
     printf(" >>,\n");
 
-    printf("%*s/ signature: / ", indent_space + indent_delta, "");
-    UsefulBufC signature;
-    QCBORDecode_GetByteString(context, &signature);
-    teep_print_hex(signature.ptr, signature.len);
+    QCBORDecode_PeekNext(context, &item);
+    if (item.uDataType == QCBOR_TYPE_BYTE_STRING) {
+        /* COSE_Sign1 */
+        printf("%*s/ signature: / ", indent_space + indent_delta, "");
+        UsefulBufC signature;
+        QCBORDecode_GetByteString(context, &signature);
+        teep_print_hex(signature.ptr, signature.len);
+    }
+    else if (item.uDataType == QCBOR_TYPE_ARRAY) {
+        /* COSE_Sign */
+        QCBORDecode_EnterArray(context, &item);
+        size_t array_len = item.val.uCount;
+        printf("%*s/ signatures: / [\n", indent_space + indent_delta, "");
+        for (size_t i = 0; i < array_len; i++) {
+            QCBORDecode_EnterArray(context, &item);
+            if (item.val.uCount != 3) {
+                return TEEP_ERR_INVALID_LENGTH;
+            }
+            printf("%*s[\n", indent_space + 2 * indent_delta, "");
+            QCBORDecode_EnterBstrWrapped(context, QCBOR_TAG_REQUIREMENT_NOT_A_TAG, NULL);
+            printf("%*s/ protected: / << ", indent_space + 3 * indent_delta, "");
+            teep_print_cose_header(context, indent_space + 3 * indent_delta, indent_delta);
+            printf(" >>,\n");
+            QCBORDecode_ExitBstrWrapped(context);
+            printf("%*s/ unprotected: / ", indent_space + 3 * indent_delta, "");
+            teep_print_cose_header(context, indent_space + 3 * indent_delta, indent_delta);
+            printf(",\n");
+            printf("%*s/ signature: / ", indent_space + 3 * indent_delta, "");
+            UsefulBufC signature;
+            QCBORDecode_GetByteString(context, &signature);
+            teep_print_hex(signature.ptr, signature.len);
+            printf("\n%*s]", indent_space + 2 * indent_delta, "");
+            QCBORDecode_ExitArray(context);
+            if (i + 1 < array_len) {
+                printf(",");
+            }
+            printf("\n");
+        }
+        printf("%*s]", indent_space + indent_delta, "");
+        QCBORDecode_ExitArray(context);
+    }
+    else {
+        return TEEP_ERR_INVALID_TYPE_OF_VALUE;
+    }
 
     QCBORDecode_ExitArray(context);
     printf("\n]");
