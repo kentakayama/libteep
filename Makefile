@@ -24,7 +24,7 @@ OBJS = $(addprefix $(OBJDIR)/,$(patsubst %.c,%.o,$(SRCS)))
 
 ifeq ($(MBEDTLS),1)
     # use MbedTLS
-    CFLAGS	+= -DLIBTEEP_PSA_CRYPTO_C=1
+    CFLAGS += -DLIBTEEP_PSA_CRYPTO_C=1
 else
     # use OpenSSL
     MBEDTLS=0
@@ -41,14 +41,15 @@ all: $(NAME).a
 
 so: $(NAME).so
 
+include Makefile.common
+
 $(NAME).a: $(OBJS)
 	$(AR) -r $@ $^
 
 $(NAME).so: $(OBJS)
 	$(CC) -shared $^ $(CFLAGS) $(INC) -o $@
 
-$(OBJDIR)/%.o: %.c
-	mkdir -p $(dir $@)
+$(OBJDIR)/%.o: %.c | $(OBJDIR) $(OBJDIR)/src
 	$(CC) $(CFLAGS) $(INC) -o $@ -c $<
 
 ifeq ($(PREFIX),)

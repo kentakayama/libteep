@@ -29,7 +29,6 @@ TRUST_ANCHOR_OBJ = obj/examples/teep_cose_trust_anchor.o
 ifeq ($(MBEDTLS),1)
     # use MbedTLS
     CFLAGS += -DLIBTEEP_PSA_CRYPTO_C=1
-    #LDFLAGS += -lmbedtls -lmbedx509
     LDFLAGS += -lmbedcrypto
 else
     # use OpenSSL
@@ -41,23 +40,24 @@ endif
 
 all: $(TAM0) $(TAM1) $(AGENT) $(VERIFIER) $(TRUST_ANCHOR)
 
-$(OBJDIR)/%.o: %.c
-	mkdir -p $(dir $@)
+include Makefile.common
+
+$(OBJDIR)/%.o: %.c | $(OBJDIR) $(OBJDIR)/examples $(OBJDIR)/src
 	$(CC) $(CFLAGS) $(INC) -o $@ -c $<
 
-$(TAM0_OBJ): examples/teep_cose_test_main.c
+$(TAM0_OBJ): examples/teep_cose_test_main.c | $(OBJDIR)/examples
 	$(CC) $(CFLAGS) $(INC) -DTEEP_ACTOR_TAM0=1 -o $@ -c $<
 
-$(TAM1_OBJ): examples/teep_cose_test_main.c
+$(TAM1_OBJ): examples/teep_cose_test_main.c | $(OBJDIR)/examples
 	$(CC) $(CFLAGS) $(INC) -DTEEP_ACTOR_TAM1=1 -o $@ -c $<
 
-$(AGENT_OBJ): examples/teep_cose_test_main.c
+$(AGENT_OBJ): examples/teep_cose_test_main.c | $(OBJDIR)/examples
 	$(CC) $(CFLAGS) $(INC) -DTEEP_ACTOR_AGENT=1 -o $@ -c $<
 
-$(VERIFIER_OBJ): examples/teep_cose_test_main.c
+$(VERIFIER_OBJ): examples/teep_cose_test_main.c | $(OBJDIR)/examples
 	$(CC) $(CFLAGS) $(INC) -DTEEP_ACTOR_VERIFIER=1 -o $@ -c $<
 
-$(TRUST_ANCHOR_OBJ): examples/teep_cose_test_main.c
+$(TRUST_ANCHOR_OBJ): examples/teep_cose_test_main.c | $(OBJDIR)/examples
 	$(CC) $(CFLAGS) $(INC) -DTEEP_ACTOR_TRUST_ANCHOR=1 -o $@ -c $<
 
 $(TAM0): $(OBJS) $(TAM0_OBJ)

@@ -1,0 +1,2 @@
+./obj ./obj/src ./obj/examples:
+	@if [ ! -d "$@" ]; then mkdir -p $@; fi
