@@ -220,6 +220,19 @@ teep_err_t teep_encode_query_request(const teep_query_request_t *query_request, 
         }
         QCBOREncode_CloseArray(context);
     }
+    if (query_request->contains & TEEP_MESSAGE_CONTAINS_ATTESTATION_PAYLOAD_FORMAT) {
+        QCBOREncode_AddTextToMapN(context, TEEP_OPTIONS_KEY_ATTESTATION_PAYLOAD_FORMAT, (UsefulBufC){query_request->attestation_payload_format.ptr, query_request->attestation_payload_format.len});
+    }
+    if (query_request->contains & TEEP_MESSAGE_CONTAINS_ATTESTATION_PAYLOAD) {
+        QCBOREncode_AddBytesToMapN(context, TEEP_OPTIONS_KEY_ATTESTATION_PAYLOAD, (UsefulBufC){query_request->attestation_payload.ptr, query_request->attestation_payload.len});
+    }
+    if (query_request->contains & TEEP_MESSAGE_CONTAINS_SUIT_REPORTS) {
+        QCBOREncode_OpenArrayInMapN(context, TEEP_OPTIONS_KEY_SUIT_REPORTS);
+        for (size_t i = 0; i < query_request->suit_reports.len; i++) {
+            QCBOREncode_AddBytes(context, (UsefulBufC){query_request->suit_reports.items[i].ptr, query_request->suit_reports.items[i].len});
+        }
+        QCBOREncode_CloseArray(context);
+    }
     QCBOREncode_CloseMap(context);
 
     /* supported-teep-cipher-suited */

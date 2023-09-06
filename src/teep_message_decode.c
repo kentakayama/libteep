@@ -638,6 +638,13 @@ teep_err_t teep_set_query_request(QCBORDecodeContext *message,
                 }
                 query_request->contains |= TEEP_MESSAGE_CONTAINS_TOKEN;
                 break;
+            case TEEP_OPTIONS_KEY_SUPPORTED_FRESHNESS_MECHANISMS:
+                result = teep_set_any_array(message, item, QCBOR_TYPE_UINT32, &query_request->supported_freshness_mechanisms);
+                if (result != TEEP_SUCCESS) {
+                    return result;
+                }
+                query_request->contains |= TEEP_MESSAGE_CONTAINS_SUPPORTED_FRESHNESS_MECHANISMS;
+                break;
             case TEEP_OPTIONS_KEY_CHALLENGE:
                 result = teep_set_byte_string(QCBOR_TYPE_BYTE_STRING, item, &query_request->challenge);
                 if (result != TEEP_SUCCESS) {
@@ -652,12 +659,26 @@ teep_err_t teep_set_query_request(QCBORDecodeContext *message,
                 }
                 query_request->contains |= TEEP_MESSAGE_CONTAINS_VERSIONS;
                 break;
-            case TEEP_OPTIONS_KEY_SUPPORTED_FRESHNESS_MECHANISMS:
-                result = teep_set_any_array(message, item, QCBOR_TYPE_UINT32, &query_request->supported_freshness_mechanisms);
+            case TEEP_OPTIONS_KEY_ATTESTATION_PAYLOAD_FORMAT:
+                result = teep_set_byte_string(QCBOR_TYPE_TEXT_STRING, item, &query_request->attestation_payload_format);
                 if (result != TEEP_SUCCESS) {
                     return result;
                 }
-                query_request->contains |= TEEP_MESSAGE_CONTAINS_SUPPORTED_FRESHNESS_MECHANISMS;
+                query_request->contains |= TEEP_MESSAGE_CONTAINS_ATTESTATION_PAYLOAD_FORMAT;
+                break;
+            case TEEP_OPTIONS_KEY_ATTESTATION_PAYLOAD:
+                result = teep_set_byte_string(QCBOR_TYPE_BYTE_STRING, item, &query_request->attestation_payload);
+                if (result != TEEP_SUCCESS) {
+                    return result;
+                }
+                query_request->contains |= TEEP_MESSAGE_CONTAINS_ATTESTATION_PAYLOAD;
+                break;
+            case TEEP_OPTIONS_KEY_SUIT_REPORTS:
+                result = teep_set_any_array(message, item, QCBOR_TYPE_ANY, &query_request->suit_reports);
+                if (result != TEEP_SUCCESS) {
+                    return result;
+                }
+                query_request->contains |= TEEP_MESSAGE_CONTAINS_SUIT_REPORTS;
                 break;
             default:
                 return TEEP_ERR_UNEXPECTED_ERROR;

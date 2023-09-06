@@ -407,6 +407,45 @@ teep_err_t teep_print_query_request(const teep_query_request_t *query_request,
         }
         printf(" ]");
     }
+    if (query_request->contains & TEEP_MESSAGE_CONTAINS_ATTESTATION_PAYLOAD_FORMAT) {
+        if (printed) {
+            printf(",\n");
+        }
+        printed = true;
+
+        printf("%*s/ attestation-payload-format / %d : ", indent_space + 2 * indent_delta, "", TEEP_OPTIONS_KEY_ATTESTATION_PAYLOAD_FORMAT);
+        result = teep_print_string(&query_request->attestation_payload_format);
+        if (result != TEEP_SUCCESS) {
+            return result;
+        }
+    }
+    if (query_request->contains & TEEP_MESSAGE_CONTAINS_ATTESTATION_PAYLOAD) {
+        if (printed) {
+            printf(",\n");
+        }
+        printed = true;
+
+        printf("%*s/ attestation-payload / %d : ", indent_space + 2 * indent_delta, "", TEEP_OPTIONS_KEY_ATTESTATION_PAYLOAD);
+        result = teep_print_hex(query_request->attestation_payload.ptr, query_request->attestation_payload.len);
+        if (result != TEEP_SUCCESS) {
+            return result;
+        }
+    }
+    if (query_request->contains & TEEP_MESSAGE_CONTAINS_SUIT_REPORTS) {
+        if (printed) {
+            printf(",\n");
+        }
+        printed = true;
+
+        printf("%*s/ suit-reports / %d : [\n", indent_space + 2 * indent_delta, "", TEEP_OPTIONS_KEY_SUIT_REPORTS);
+        for (size_t i = 0; i < query_request->suit_reports.len; i++) {
+            printf("%*s", indent_space + 3 * indent_delta, "");
+            teep_print_hex(query_request->suit_reports.items[i].ptr, query_request->suit_reports.items[i].len);
+            if (i + 1 < query_request->suit_reports.len) {
+                printf(",\n");
+            }
+        }
+    }
     printf("\n%*s},\n", indent_space + indent_delta, "");
 
     printf("%*s/ supported-teep-cipher-suites : / [\n", indent_space + indent_delta, "");
