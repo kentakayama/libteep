@@ -313,12 +313,12 @@ typedef struct teep_query_request {
     teep_uint32_array_t             versions;
     teep_buf_t                      attestation_payload_format;
     teep_buf_t                      attestation_payload;
-    // TODO :                       suit-reports
+    teep_buf_array_t                suit_reports;
     // TODO :                       teep-option-extensions
 
     teep_cipher_suite_array_t       supported_teep_cipher_suites;
     teep_suit_cose_profile_array_t  supported_suit_cose_profiles;
-    teep_data_item_requested_t  data_item_requested;
+    teep_data_item_requested_t      data_item_requested;
 } teep_query_request_t;
 
 /*
@@ -355,6 +355,9 @@ typedef struct teep_update {
     teep_buf_array_t        manifest_list;
     teep_buf_t              attestation_payload_format;
     teep_buf_t              attestation_payload;
+    teep_err_code_t         err_code;
+    teep_buf_t              err_msg;
+
     // TODO :               update-extensions
     // TODO :               teep-option-extensions
 } teep_update_t;
@@ -384,6 +387,7 @@ typedef struct teep_error {
     teep_buf_t                  err_msg;
     teep_cipher_suite_array_t   supported_teep_cipher_suites;
     teep_uint32_array_t         supported_freshness_mechanisms;
+    teep_buf_t                  challenge;
     teep_uint32_array_t         versions;
     teep_buf_array_t            suit_reports;
     // TODO :                   $$teep-error--extensions

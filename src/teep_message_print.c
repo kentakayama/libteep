@@ -841,7 +841,7 @@ teep_err_t teep_print_error(const teep_error_t *teep_error,
         }
     }
     printf("\n%*s},\n", indent_space + indent_delta, "");
-    printf("%*s/ err-code : / %u / (%s) /\n", indent_space + indent_delta, "", teep_error->err_code, teep_err_code_to_str(teep_error->err_code));
+    printf("%*s/ err-code : / %u / %s /\n", indent_space + indent_delta, "", teep_error->err_code, teep_err_code_to_str(teep_error->err_code));
     printf("%*s]\n", indent_space, "");
     return TEEP_SUCCESS;
 }

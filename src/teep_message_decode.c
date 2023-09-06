@@ -618,14 +618,7 @@ teep_err_t teep_set_query_request(QCBORDecodeContext *message,
                                  teep_query_request_t *query_request)
 {
     teep_err_t result = TEEP_SUCCESS;
-
-    INITIALIZE_TEEP_BUF(query_request->token);
-    INITIALIZE_TEEP_ARRAY(query_request->supported_freshness_mechanisms);
-    INITIALIZE_TEEP_BUF(query_request->challenge);
-    INITIALIZE_TEEP_ARRAY(query_request->versions);
-    INITIALIZE_TEEP_ARRAY(query_request->supported_teep_cipher_suites);
-    INITIALIZE_TEEP_ARRAY(query_request->supported_suit_cose_profiles);
-    query_request->data_item_requested.val = 0;
+    memset(query_request, 0, sizeof(teep_query_request_t));
 
     result = teep_qcbor_get_next(message, item, QCBOR_TYPE_MAP);
     if (result != TEEP_SUCCESS) {
@@ -694,16 +687,7 @@ teep_err_t teep_set_query_response(QCBORDecodeContext *message,
                                   teep_query_response_t *query_response)
 {
     teep_err_t result = TEEP_SUCCESS;
-
-    INITIALIZE_TEEP_BUF(query_response->token);
-    query_response->selected_teep_cipher_suite = TEEP_CIPHER_SUITE_INVALID;
-    query_response->selected_version = 0U;
-    INITIALIZE_TEEP_BUF(query_response->attestation_payload_format);
-    INITIALIZE_TEEP_BUF(query_response->attestation_payload);
-    INITIALIZE_TEEP_ARRAY(query_response->tc_list);
-    INITIALIZE_TEEP_ARRAY(query_response->requested_tc_list);
-    INITIALIZE_TEEP_ARRAY(query_response->unneeded_tc_list);
-    INITIALIZE_TEEP_ARRAY(query_response->ext_list);
+    memset(query_response, 0, sizeof(teep_query_response_t));
 
     result = teep_qcbor_get_next(message, item, QCBOR_TYPE_MAP);
     if (result != TEEP_SUCCESS) {
@@ -793,12 +777,7 @@ teep_err_t teep_set_update(QCBORDecodeContext *message,
                            teep_update_t *teep_update)
 {
     teep_err_t result = TEEP_SUCCESS;
-
-    INITIALIZE_TEEP_BUF(teep_update->token);
-    INITIALIZE_TEEP_BUF(teep_update->attestation_payload_format);
-    INITIALIZE_TEEP_BUF(teep_update->attestation_payload);
-    INITIALIZE_TEEP_ARRAY(teep_update->unneeded_tc_list);
-    INITIALIZE_TEEP_ARRAY(teep_update->manifest_list);
+    memset(teep_update, 0, sizeof(teep_update_t));
 
     result = teep_qcbor_get_next(message, item, QCBOR_TYPE_MAP);
     if (result != TEEP_SUCCESS) {
@@ -858,10 +837,7 @@ teep_err_t teep_set_success(QCBORDecodeContext *message,
                             teep_success_t *teep_success)
 {
     teep_err_t result = TEEP_SUCCESS;
-
-    INITIALIZE_TEEP_BUF(teep_success->token);
-    INITIALIZE_TEEP_BUF(teep_success->msg);
-    INITIALIZE_TEEP_ARRAY(teep_success->suit_reports);
+    memset(teep_success, 0, sizeof(teep_success_t));
 
     result = teep_qcbor_get_next(message, item, QCBOR_TYPE_MAP);
     if (result != TEEP_SUCCESS) {
@@ -907,13 +883,7 @@ teep_err_t teep_set_error(QCBORDecodeContext *message,
                           teep_error_t *teep_error)
 {
     teep_err_t result = TEEP_SUCCESS;
-    INITIALIZE_TEEP_BUF(teep_error->token);
-    INITIALIZE_TEEP_BUF(teep_error->err_msg);
-    INITIALIZE_TEEP_ARRAY(teep_error->supported_teep_cipher_suites);
-    INITIALIZE_TEEP_ARRAY(teep_error->supported_freshness_mechanisms);
-    INITIALIZE_TEEP_ARRAY(teep_error->versions);
-    INITIALIZE_TEEP_ARRAY(teep_error->suit_reports);
-    teep_error->err_code = TEEP_ERR_CODE_INVALID;
+    memset(teep_error, 0, sizeof(teep_error_t));
 
     result = teep_qcbor_get_next(message, item, QCBOR_TYPE_MAP);
     if (result != TEEP_SUCCESS) {
