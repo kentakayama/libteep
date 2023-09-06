@@ -1447,9 +1447,9 @@ teep_err_t teep_print_cose(QCBORDecodeContext *context,
 }
 
 teep_err_t teep_print_cose_usefulbufc(UsefulBufC cose,
-                           const uint32_t indent_space,
-                           const uint32_t indent_delta,
-                           TeepLabelToStr label_to_str)
+                                      const uint32_t indent_space,
+                                      const uint32_t indent_delta,
+                                      TeepLabelToStr label_to_str)
 {
     QCBORDecodeContext context;
     QCBORDecode_Init(&context, cose, QCBOR_DECODE_MODE_NORMAL);
@@ -1465,15 +1465,15 @@ teep_err_t teep_print_cose_usefulbufc(UsefulBufC cose,
 }
 
 teep_err_t teep_print_cose_eat(UsefulBufC cose_eat,
-                           const uint32_t indent_space,
-                           const uint32_t indent_delta)
+                               const uint32_t indent_space,
+                               const uint32_t indent_delta)
 {
     return teep_print_cose_usefulbufc(cose_eat, indent_space, indent_delta, teep_eat_claim_label_to_str);
 }
 
 teep_err_t teep_print_cose_teep_message(UsefulBufC cose_teep_message,
-                           const uint32_t indent_space,
-                           const uint32_t indent_delta)
+                                        const uint32_t indent_space,
+                                        const uint32_t indent_delta)
 {
     return teep_print_cose_usefulbufc(cose_teep_message, indent_space, indent_delta, teep_position_label_to_str);
 }

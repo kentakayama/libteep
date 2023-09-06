@@ -13,6 +13,11 @@
 #include "t_cose/t_cose_sign1_verify.h"
 #include "t_cose/t_cose_sign1_sign.h"
 
+/* for EdDSA aux buffer */
+#ifndef TEEP_AUXILIARY_BUFFER_SIZE
+  #define TEEP_AUXILIARY_BUFFER_SIZE            100
+#endif
+
 #if defined(LIBTEEP_PSA_CRYPTO_C)
 #include "psa/crypto.h"
 #else
@@ -23,6 +28,7 @@
 #define OPENSSL_VERSION_111 0x10101000L
 #define OPENSSL_VERSION_300 0x30000000L
 #if OPENSSL_VERSION_NUMBER >= OPENSSL_VERSION_300
+#include "openssl/core_names.h"
 #include "openssl/param_build.h"
 #endif
 
@@ -40,6 +46,7 @@
 #define TEEP_COSE_CRV_ED25519           (6)
 #define TEEP_COSE_CRV_ED448             (7)
 #define TEEP_COSE_KTY                   (1)
+#define TEEP_COSE_KTY_OKP               (1)
 #define TEEP_COSE_KTY_EC2               (2)
 
 #define PRIME256V1_PRIVATE_KEY_LENGTH       32
@@ -48,6 +55,8 @@
 #define SECP384R1_PUBLIC_KEY_LENGTH         97
 #define SECP521R1_PRIVATE_KEY_LENGTH        66
 #define SECP521R1_PUBLIC_KEY_LENGTH         133
+#define ED25519_PRIVATE_KEY_LENGTH          32
+#define ED25519_PUBLIC_KEY_LENGTH           32
 
 #define TEEP_MAX_PRIVATE_KEY_LEN            SECP521R1_PRIVATE_KEY_LENGTH
 #define TEEP_MAX_PUBLIC_KEY_LEN             SECP521R1_PUBLIC_KEY_LENGTH
@@ -61,6 +70,12 @@ typedef struct teep_key {
     int cose_algorithm_id;
     struct t_cose_key cose_key;
     UsefulBufC kid;
+    union {
+        struct t_cose_signature_sign_main signer_ecdsa;
+        struct t_cose_signature_sign_eddsa signer_eddsa;
+        struct t_cose_signature_verify_main verifier_ecdsa;
+        struct t_cose_signature_verify_eddsa verifier_eddsa;
+    };
 } teep_key_t;
 
 typedef struct teep_mechanism {
@@ -69,8 +84,20 @@ typedef struct teep_mechanism {
     bool use;
 } teep_mechanism_t;
 
-teep_err_t teep_sign_cose_sign1(const UsefulBufC raw_cbor, const teep_key_t *key_pair, UsefulBuf *returned_payload);
-teep_err_t teep_verify_cose_sign1(const UsefulBufC signed_cose, const teep_key_t *public_key, UsefulBufC *returned_payload);
+teep_err_t teep_sign_cose_sign1(const UsefulBufC raw_cbor,
+                                const teep_mechanism_t *mechanism,
+                                UsefulBuf *returned_payload);
+teep_err_t teep_sign_cose_sign(const UsefulBufC raw_cbor,
+                               const teep_mechanism_t mechanisms[],
+                               const size_t num_mechanism,
+                               UsefulBuf *returned_payload);
+teep_err_t teep_verify_cose_sign1(const UsefulBufC signed_cose,
+                                  const teep_mechanism_t *mechanism,
+                                  UsefulBufC *returned_payload);
+teep_err_t teep_verify_cose_sign(const UsefulBufC signed_cose,
+                                 const teep_mechanism_t mechanisms[],
+                                 const size_t num_mechanism,
+                                 UsefulBufC *returned_payload);
 
 /*!
     \brief  Create ES256 key pair

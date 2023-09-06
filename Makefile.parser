@@ -32,7 +32,6 @@ endif
 ifeq ($(MBEDTLS),1)
     # use MbedTLS
     CFLAGS += -DLIBTEEP_PSA_CRYPTO_C=1
-    #LDFLAGS += -lmbedtls -lmbedx509
     LDFLAGS += -lmbedcrypto
 else
     # use OpenSSL
@@ -44,8 +43,9 @@ endif
 
 all: $(TAM) $(AGENT) $(VERIFIER)
 
-$(OBJDIR)/%.o: %.c
-	mkdir -p $(dir $@)
+include Makefile.common
+
+$(OBJDIR)/%.o: %.c | $(OBJDIR)
 	$(CC) $(CFLAGS) $(INC) -o $@ -c $<
 
 $(TAM_OBJ): examples/teep_message_parser_main.c

@@ -13,7 +13,7 @@
 #include "teep_cose.h"
 
 #ifndef TEEP_MAX_ARRAY_LENGTH
-  #define TEEP_MAX_ARRAY_LENGTH               20
+  #define TEEP_MAX_ARRAY_LENGTH                 20
 #endif
 
 #define INITIALIZE_TEEP_ARRAY(array) ( array.len = 0 )
