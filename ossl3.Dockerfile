@@ -5,14 +5,18 @@ FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update
-RUN apt-get -y install curl git gcc make libcunit1-dev libssl-dev ruby
+RUN apt-get -y install curl git gcc make libcunit1-dev ruby
 RUN gem install cbor-diag
+
+RUN git clone --depth 1 https://github.com/openssl/openssl.git /root/openssl
+WORKDIR /root/openssl
+RUN ./Configure && make -j`nproc` && make install
 
 RUN git clone --depth 1 https://github.com/laurencelundblade/QCBOR.git /root/QCBOR
 WORKDIR /root/QCBOR
 RUN make libqcbor.a install
 
-RUN git clone --branch dev --depth 1 https://github.com/laurencelundblade/t_cose.git /root/t_cose
+RUN git clone --branch dev --depth 1 https://github.com/kentakayama/t_cose.git /root/t_cose
 WORKDIR /root/t_cose
 RUN make -f Makefile.ossl libt_cose.a install
 

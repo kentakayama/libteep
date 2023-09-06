@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2020 SECOM CO., LTD. All Rights reserved.
+# Copyright (c) 2020-2023 SECOM CO., LTD. All Rights reserved.
 #
 # SPDX-License-Identifier: BSD-2-Clause
 #
@@ -21,7 +21,7 @@ SRCS = \
 OBJDIR = ./obj
 OBJS = $(addprefix $(OBJDIR)/,$(patsubst %.c,%.o,$(SRCS)))
 TAM0_OBJ = obj/examples/teep_cose_tam0.o
-TAM1_OBJ = obj/examples/teep_cose_tam0.o
+TAM1_OBJ = obj/examples/teep_cose_tam1.o
 AGENT_OBJ = obj/examples/teep_cose_agent.o
 VERIFIER_OBJ = obj/examples/teep_cose_verifier.o
 TRUST_ANCHOR_OBJ = obj/examples/teep_cose_trust_anchor.o
