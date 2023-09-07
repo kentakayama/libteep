@@ -676,3 +676,290 @@ teep_err_t teep_set_mechanism_from_cose_key(UsefulBufC buf,
     return TEEP_SUCCESS;
 }
 
+#if defined(LIBTEEP_PSA_CRYPTO_C)
+teep_err_t teep_generate_sha256(UsefulBufC target,
+                                UsefulBuf hash)
+{
+    if(hash.len != SHA256_DIGEST_LENGTH)
+        return( TEEP_ERR_NO_MEMORY );
+
+    psa_status_t status;
+    size_t real_hash_size;
+    psa_hash_operation_t sha256_psa = PSA_HASH_OPERATION_INIT;
+
+    status = psa_crypto_init( );
+    if( status != PSA_SUCCESS )
+        return( TEEP_ERR_FATAL );
+
+    status = psa_hash_setup( &sha256_psa, PSA_ALG_SHA_256 );
+    if( status != PSA_SUCCESS )
+        return( TEEP_ERR_FATAL );
+
+    status = psa_hash_update( &sha256_psa, target.ptr, target.len );
+    if( status != PSA_SUCCESS )
+        return( TEEP_ERR_FATAL );
+
+    status = psa_hash_finish( &sha256_psa, hash.ptr, hash.len, &real_hash_size );
+    if( status != PSA_SUCCESS )
+        return( TEEP_ERR_FATAL );
+
+    if(real_hash_size != SHA256_DIGEST_LENGTH)
+        return( SUIT_ERR_NO_MEMORY );
+
+    return TEEP_SUCCESS;
+}
+#else
+teep_err_t teep_generate_sha256(UsefulBufC target,
+                                UsefulBuf hash)
+{
+    if (hash.len != SHA256_DIGEST_LENGTH) {
+        return TEEP_ERR_NO_MEMORY;
+    }
+
+    teep_err_t result = TEEP_ERR_FATAL;
+    unsigned int generated_size;
+    EVP_MD_CTX *ctx = EVP_MD_CTX_new();
+    if (ctx != NULL
+        && EVP_DigestInit(ctx, EVP_sha256())
+        && EVP_DigestUpdate(ctx, target.ptr, target.len)
+        && EVP_DigestFinal(ctx, hash.ptr, &generated_size)
+        && hash.len == generated_size) {
+        result = TEEP_SUCCESS;
+    }
+    if (ctx != NULL) {
+        EVP_MD_CTX_free(ctx);
+    }
+    return result;
+}
+#endif /* LIBTEEP_PSA_CRYPTO_C */
+
+/* maximum temporary buffer is for ES512 + P-521
+ * 0xA4
+ *    0x01      # 1     = kty
+ *    0x02      # 2     = EC2
+ *    0x20      # -1    = crv
+ *    0x03      # 3     = P521
+ *    0x21      # -2    = x
+ *    0x58 42   # bytes(66)
+ *       XXXX...
+ *    0x22      # -3    = y
+ *    0x58 42   # bytes(66)
+ *       XXXX...
+ *
+ * NOTE: Currently this does NOT support HSS-LMS
+ */
+#define COSE_KEY_THUMBPRINT_BUFFER_SIZE (11+66+66)
+teep_err_t teep_calc_cose_key_thumbprint(UsefulBufC cose_key,
+                                         UsefulBuf thumbprint)
+{
+    if (thumbprint.len != 32) {
+        /* not SHA-256 size */
+        return TEEP_ERR_NO_MEMORY;
+    }
+
+    int64_t kty = 0;
+    int64_t crv = 0;
+    UsefulBufC x = NULLUsefulBufC; // for OKP and EC2
+    UsefulBufC y = NULLUsefulBufC; // for EC2
+    UsefulBufC k = NULLUsefulBufC; // for Symmetric
+    bool try = true;
+    QCBORError error;
+    QCBORDecodeContext decode_context;
+    QCBORItem item;
+    UsefulBuf_MAKE_STACK_UB(buf, COSE_KEY_THUMBPRINT_BUFFER_SIZE);
+
+retry:
+    /* extract necessary values in COSE_Key struct */
+    QCBORDecode_Init(&decode_context, cose_key, QCBOR_DECODE_MODE_NORMAL);
+
+    QCBORDecode_EnterMap(&decode_context, &item);
+    const size_t cose_key_map_len = item.val.uCount;
+    for (size_t i = 0; i < cose_key_map_len; i++) {
+        QCBORDecode_GetNext(&decode_context, &item);
+        if (item.uLabelType != QCBOR_TYPE_INT64) {
+            return TEEP_ERR_INVALID_TYPE_OF_KEY;
+        }
+        switch (item.label.int64) {
+        case TEEP_COSE_KTY:
+            if (item.uDataType != QCBOR_TYPE_INT64) {
+                return TEEP_ERR_INVALID_TYPE_OF_VALUE;
+            }
+            kty = item.val.int64;
+            break;
+
+        case -1:
+            /* crv for OKP and EC2, k for Symmetric */
+            switch (kty) {
+            case TEEP_COSE_KTY_OKP:
+            case TEEP_COSE_KTY_EC2:
+                if (item.uDataType != QCBOR_TYPE_INT64) {
+                    return TEEP_ERR_INVALID_TYPE_OF_VALUE;
+                }
+                crv = item.val.int64;
+                break;
+            case TEEP_COSE_KTY_SYMMETRIC:
+                if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
+                    return TEEP_ERR_INVALID_TYPE_OF_VALUE;
+                }
+                k = item.val.string;
+                break;
+            default:
+                if (try) {
+                    try = false;
+                    goto retry;
+                }
+                else {
+                    return TEEP_ERR_INVALID_VALUE;
+                }
+            }
+            break;
+
+        case -2:
+            /* x for OKP and EC2 */
+            switch (kty) {
+            case TEEP_COSE_KTY_OKP:
+            case TEEP_COSE_KTY_EC2:
+                if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
+                    return TEEP_ERR_INVALID_TYPE_OF_VALUE;
+                }
+                x = item.val.string;
+                break;
+            default:
+                if (try) {
+                    try = false;
+                    goto retry;
+                }
+                else {
+                    return TEEP_ERR_INVALID_VALUE;
+                }
+            }
+            break;
+
+        case -3:
+            /* y for EC2 */
+            switch (kty) {
+            case TEEP_COSE_KTY_EC2:
+                if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
+                    return TEEP_ERR_INVALID_TYPE_OF_VALUE;
+                }
+                y = item.val.string;
+                break;
+            default:
+                if (try) {
+                    try = false;
+                    goto retry;
+                }
+                else {
+                    return TEEP_ERR_INVALID_VALUE;
+                }
+            }
+            break;
+
+        default:
+            /* ignore */
+            break;
+        }
+    }
+    QCBORDecode_ExitMap(&decode_context);
+
+    error = QCBORDecode_Finish(&decode_context);
+    if (error != QCBOR_SUCCESS) {
+        return TEEP_ERR_DECODING_FAILED;
+    }
+
+    /* calculate thumbprint */
+    UsefulBufC tmp;
+    QCBOREncodeContext encode_context;
+    QCBOREncode_Init(&encode_context, buf);
+
+    switch (kty) {
+    case TEEP_COSE_KTY_OKP:
+        /* check curve and public key size */
+        switch (crv) {
+        case TEEP_COSE_CRV_X25519:
+            if (x.len != 32) {
+                return TEEP_ERR_INVALID_VALUE;
+            }
+            break;
+        case TEEP_COSE_CRV_X448:
+            if (x.len != 57) {
+                return TEEP_ERR_INVALID_VALUE;
+            }
+            break;
+        case TEEP_COSE_CRV_ED25519:
+            if (x.len != 32) {
+                return TEEP_ERR_INVALID_VALUE;
+            }
+            break;
+        case TEEP_COSE_CRV_ED448:
+            if (x.len != 57) {
+                return TEEP_ERR_INVALID_VALUE;
+            }
+            break;
+        default:
+            return TEEP_ERR_INVALID_VALUE;
+        }
+
+        /* deterministicly encode it */
+        QCBOREncode_OpenMap(&encode_context);
+        QCBOREncode_AddInt64ToMapN(&encode_context, TEEP_COSE_KTY, TEEP_COSE_KTY_OKP);
+        QCBOREncode_AddInt64ToMapN(&encode_context, TEEP_COSE_CRV, crv);
+        QCBOREncode_AddBytesToMapN(&encode_context, TEEP_COSE_X, x);
+        QCBOREncode_CloseMap(&encode_context);
+        break;
+
+    case TEEP_COSE_KTY_EC2:
+        /* check curve and public key size */
+        switch (crv) {
+        case TEEP_COSE_CRV_P256:
+            if (x.len != 32 || y.len != 32) {
+                return TEEP_ERR_INVALID_VALUE;
+            }
+            break;
+        case TEEP_COSE_CRV_P384:
+            if (x.len != 48 || y.len != 48) {
+                return TEEP_ERR_INVALID_VALUE;
+            }
+            break;
+        case TEEP_COSE_CRV_P521:
+            if (x.len != 66 || y.len != 66) {
+                return TEEP_ERR_INVALID_VALUE;
+            }
+            break;
+        default:
+            return TEEP_ERR_INVALID_VALUE;
+        }
+
+        /* deterministicly encode it */
+        QCBOREncode_OpenMap(&encode_context);
+        QCBOREncode_AddInt64ToMapN(&encode_context, TEEP_COSE_KTY, TEEP_COSE_KTY_EC2);
+        QCBOREncode_AddInt64ToMapN(&encode_context, TEEP_COSE_CRV, crv);
+        QCBOREncode_AddBytesToMapN(&encode_context, TEEP_COSE_X, x);
+        QCBOREncode_AddBytesToMapN(&encode_context, TEEP_COSE_Y, y);
+        QCBOREncode_CloseMap(&encode_context);
+        break;
+
+    case TEEP_COSE_KTY_SYMMETRIC:
+        if (k.len == 0) {
+            return TEEP_ERR_INVALID_VALUE;
+        }
+
+        /* deterministicly encode it */
+        QCBOREncode_OpenMap(&encode_context);
+        QCBOREncode_AddInt64ToMapN(&encode_context, TEEP_COSE_KTY, TEEP_COSE_KTY_SYMMETRIC);
+        QCBOREncode_AddBytesToMapN(&encode_context, TEEP_COSE_K, k);
+        QCBOREncode_CloseMap(&encode_context);
+        break;
+
+    default:
+        return TEEP_ERR_INVALID_VALUE;
+    }
+
+    error = QCBOREncode_Finish(&encode_context, &tmp);
+    if (error != QCBOR_SUCCESS) {
+        return TEEP_ERR_ENCODING_FAILED;
+    }
+
+    /* now generate the thumbprint using SHA-256 */
+    return teep_generate_sha256(tmp, thumbprint);
+}
