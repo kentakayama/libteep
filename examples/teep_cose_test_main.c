@@ -22,8 +22,8 @@
   UsefulBufC teep_private_keys[NUM_TEEP_PRIVATE_KEY] = {
       teep_agent_es256_cose_key_private,
   };
-  UsefulBufC kids[NUM_TEEP_PRIVATE_KEY] = {
-      UsefulBuf_FROM_SZ_LITERAL("101"),
+  UsefulBuf kids[NUM_TEEP_PRIVATE_KEY] = {
+      {NULL, SHA256_DIGEST_LENGTH},
   };
 #elif TEEP_ACTOR_TAM0 == 1
   #if defined(LIBTEEP_PSA_CRYPTO_C)
@@ -33,8 +33,8 @@
     UsefulBufC teep_private_keys[NUM_TEEP_PRIVATE_KEY] = {
         tam_es256_cose_key_private,
     };
-    UsefulBufC kids[NUM_TEEP_PRIVATE_KEY] = {
-        UsefulBuf_FROM_SZ_LITERAL("201"),
+    UsefulBuf kids[NUM_TEEP_PRIVATE_KEY] = {
+        {NULL, SHA256_DIGEST_LENGTH},
     };
   #else
     #include "tam_es256_cose_key_private.h"
@@ -44,9 +44,9 @@
         tam_es256_cose_key_private,
         tam_ed25519_cose_key_private
     };
-    UsefulBufC kids[NUM_TEEP_PRIVATE_KEY] = {
-        UsefulBuf_FROM_SZ_LITERAL("201"),
-        UsefulBuf_FROM_SZ_LITERAL("202")
+    UsefulBuf kids[NUM_TEEP_PRIVATE_KEY] = {
+        {NULL, SHA256_DIGEST_LENGTH},
+        {NULL, SHA256_DIGEST_LENGTH},
     };
   #endif
 #elif TEEP_ACTOR_TAM1 == 1
@@ -55,8 +55,8 @@
   UsefulBufC teep_private_keys[NUM_TEEP_PRIVATE_KEY] = {
       tam_es256_cose_key_private,
   };
-  UsefulBufC kids[NUM_TEEP_PRIVATE_KEY] = {
-      UsefulBuf_FROM_SZ_LITERAL("201"),
+  UsefulBuf kids[NUM_TEEP_PRIVATE_KEY] = {
+      {NULL, SHA256_DIGEST_LENGTH},
   };
 #elif TEEP_ACTOR_VERIFIER == 1
   #include "verifier_es256_cose_key_private.h"
@@ -64,8 +64,8 @@
   UsefulBufC teep_private_keys[NUM_TEEP_PRIVATE_KEY] = {
       verifier_es256_cose_key_private
   };
-  UsefulBufC kids[NUM_TEEP_PRIVATE_KEY] = {
-      UsefulBuf_FROM_SZ_LITERAL("301")
+  UsefulBuf kids[NUM_TEEP_PRIVATE_KEY] = {
+      {NULL, SHA256_DIGEST_LENGTH},
   };
 #elif TEEP_ACTOR_TRUST_ANCHOR == 1
   #include "trust_anchor_prime256v1_cose_key_private.h"
@@ -73,15 +73,15 @@
   UsefulBufC teep_private_keys[NUM_TEEP_PRIVATE_KEY] = {
       trust_anchor_prime256v1_cose_key_private
   };
-  UsefulBufC kids[NUM_TEEP_PRIVATE_KEY] = {
-      NULLUsefulBufC
+  UsefulBuf kids[NUM_TEEP_PRIVATE_KEY] = {
+      NULLUsefulBuf
   };
 #else
   #error Signing key is not specified
 #endif
 
 int main(int argc, const char * argv[]) {
-    int32_t result;
+    teep_err_t result;
 
     // Check arguments.
     if (argc < 2) {
@@ -91,7 +91,15 @@ int main(int argc, const char * argv[]) {
 
     teep_mechanism_t mechanisms[NUM_TEEP_PRIVATE_KEY];
     for (size_t i = 0; i < NUM_TEEP_PRIVATE_KEY; i++) {
-        result = teep_set_mechanism_from_cose_key(teep_private_keys[i], kids[i], &mechanisms[i]);
+        if (UsefulBuf_IsNULL(kids[i]) && !UsefulBuf_IsEmpty(kids[i])) {
+            kids[i].ptr = malloc(kids[i].len);
+            result = teep_calc_cose_key_thumbprint(teep_private_keys[i], kids[i]);
+            if (result != TEEP_SUCCESS) {
+                printf("main : Failed to calculate COSE_Key thumbprint. %s(%d)\n", teep_err_to_str(result), result);
+                return EXIT_FAILURE;
+            }
+        }
+        result = teep_set_mechanism_from_cose_key(teep_private_keys[i], UsefulBuf_Const(kids[i]), &mechanisms[i]);
         if (result != TEEP_SUCCESS) {
             printf("main : Failed to create key pair. %s(%d)\n", teep_err_to_str(result), result);
             return EXIT_FAILURE;
@@ -166,6 +174,9 @@ int main(int argc, const char * argv[]) {
     }
 
     for (size_t i = 0; i < NUM_TEEP_PRIVATE_KEY; i++) {
+        if (kids[i].ptr != NULL) {
+            free(kids[i].ptr);
+        }
         teep_free_key(&mechanisms[i].key);
     }
 
