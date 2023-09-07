@@ -31,6 +31,10 @@ char *teep_err_to_str(teep_err_t err)
         return "INVALID_LENGTH";
     case TEEP_ERR_INVALID_MESSAGE_TYPE:
         return "INVALID_MESSAGE_TYPE";
+    case TEEP_ERR_ENCODING_FAILED:
+        return "TEEP_ERR_ENCODING_FAILED";
+    case TEEP_ERR_DECODING_FAILED:
+        return "TEEP_ERR_DECODING_FAILED";
     case TEEP_ERR_CBOR_WITHOUT_COSE:
         return "CBOR_WITHOUT_COSE";
     case TEEP_ERR_VERIFICATION_FAILED:
