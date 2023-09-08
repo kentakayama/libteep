@@ -24,9 +24,11 @@ void teep_QCBOREncode_AddUsefulBufCToMapN(QCBOREncodeContext *pMe, int64_t uLabe
     teep_QCBOREncode_AddUsefulBufC(pMe, buf);
 }
 
-void teep_encode_add_profile(QCBOREncodeContext *pMe, teep_profile_t profile) {
+void teep_encode_add_suit_cose_profile(QCBOREncodeContext *pMe, teep_suit_cose_profile_t profile) {
     QCBOREncode_OpenArray(pMe);
-    QCBOREncode_AddInt64(pMe, profile.signing);
+    QCBOREncode_AddInt64(pMe, profile.hash);
+    QCBOREncode_AddInt64(pMe, profile.authentication);
+    QCBOREncode_AddInt64(pMe, profile.key_exchange);
     QCBOREncode_AddInt64(pMe, profile.encryption);
     QCBOREncode_CloseArray(pMe);
 }
@@ -67,6 +69,9 @@ teep_err_t teep_encode_error(const teep_error_t *teep_error, QCBOREncodeContext 
         }
         QCBOREncode_CloseArray(context);
     }
+    if (teep_error->contains & TEEP_MESSAGE_CONTAINS_CHALLENGE) {
+        QCBOREncode_AddBytesToMapN(context, TEEP_OPTIONS_KEY_CHALLENGE, (UsefulBufC){teep_error->challenge.ptr, teep_error->challenge.len});
+    }
     if (teep_error->contains & TEEP_MESSAGE_CONTAINS_VERSIONS) {
         QCBOREncode_OpenArrayInMapN(context, TEEP_OPTIONS_KEY_VERSIONS);
         for (size_t i = 0; i < teep_error->versions.len; i++) {
@@ -77,7 +82,7 @@ teep_err_t teep_encode_error(const teep_error_t *teep_error, QCBOREncodeContext 
     if (teep_error->contains & TEEP_MESSAGE_CONTAINS_SUIT_REPORTS) {
         QCBOREncode_OpenArrayInMapN(context, TEEP_OPTIONS_KEY_SUIT_REPORTS);
         for (size_t i = 0; i < teep_error->suit_reports.len; i++) {
-            QCBOREncode_AddText(context, (UsefulBufC){teep_error->suit_reports.items[i].ptr, teep_error->suit_reports.items[i].len});
+            QCBOREncode_AddBytes(context, (UsefulBufC){teep_error->suit_reports.items[i].ptr, teep_error->suit_reports.items[i].len});
         }
         QCBOREncode_CloseArray(context);
     }
@@ -98,7 +103,7 @@ teep_err_t teep_encode_success(const teep_success_t *teep_success, QCBOREncodeCo
     if (teep_success->contains & TEEP_MESSAGE_CONTAINS_SUIT_REPORTS) {
         QCBOREncode_OpenArrayInMapN(context, TEEP_OPTIONS_KEY_SUIT_REPORTS);
         for (size_t i = 0; i < teep_success->suit_reports.len; i++) {
-            QCBOREncode_AddText(context, (UsefulBufC){teep_success->suit_reports.items[i].ptr, teep_success->suit_reports.items[i].len});
+            QCBOREncode_AddBytes(context, (UsefulBufC){teep_success->suit_reports.items[i].ptr, teep_success->suit_reports.items[i].len});
         }
         QCBOREncode_CloseArray(context);
     }
@@ -131,6 +136,12 @@ teep_err_t teep_encode_update(const teep_update_t *teep_update, QCBOREncodeConte
     if (teep_update->contains & TEEP_MESSAGE_CONTAINS_ATTESTATION_PAYLOAD) {
         QCBOREncode_AddBytesToMapN(context, TEEP_OPTIONS_KEY_ATTESTATION_PAYLOAD, (UsefulBufC){teep_update->attestation_payload.ptr, teep_update->attestation_payload.len});
     }
+    if (teep_update->contains & TEEP_MESSAGE_CONTAINS_ERR_CODE) {
+        QCBOREncode_AddUInt64ToMapN(context, TEEP_OPTIONS_KEY_ERR_CODE, teep_update->err_code);
+    }
+    if (teep_update->contains & TEEP_MESSAGE_CONTAINS_ERR_MSG) {
+        QCBOREncode_AddTextToMapN(context, TEEP_OPTIONS_KEY_ERR_MSG, (UsefulBufC){teep_update->err_msg.ptr, teep_update->err_msg.len});
+    }
     QCBOREncode_CloseMap(context);
     return TEEP_SUCCESS;
 }
@@ -156,7 +167,7 @@ teep_err_t teep_encode_query_response(const teep_query_response_t *query_respons
     if (query_response->contains & TEEP_MESSAGE_CONTAINS_SUIT_REPORTS) {
         QCBOREncode_OpenArrayInMapN(context, TEEP_OPTIONS_KEY_SUIT_REPORTS);
         for (size_t i = 0; i < query_response->suit_reports.len; i++) {
-            QCBOREncode_AddText(context, (UsefulBufC){query_response->suit_reports.items[i].ptr, query_response->suit_reports.items[i].len});
+            QCBOREncode_AddBytes(context, (UsefulBufC){query_response->suit_reports.items[i].ptr, query_response->suit_reports.items[i].len});
         }
         QCBOREncode_CloseArray(context);
     }
@@ -218,6 +229,19 @@ teep_err_t teep_encode_query_request(const teep_query_request_t *query_request, 
         }
         QCBOREncode_CloseArray(context);
     }
+    if (query_request->contains & TEEP_MESSAGE_CONTAINS_ATTESTATION_PAYLOAD_FORMAT) {
+        QCBOREncode_AddTextToMapN(context, TEEP_OPTIONS_KEY_ATTESTATION_PAYLOAD_FORMAT, (UsefulBufC){query_request->attestation_payload_format.ptr, query_request->attestation_payload_format.len});
+    }
+    if (query_request->contains & TEEP_MESSAGE_CONTAINS_ATTESTATION_PAYLOAD) {
+        QCBOREncode_AddBytesToMapN(context, TEEP_OPTIONS_KEY_ATTESTATION_PAYLOAD, (UsefulBufC){query_request->attestation_payload.ptr, query_request->attestation_payload.len});
+    }
+    if (query_request->contains & TEEP_MESSAGE_CONTAINS_SUIT_REPORTS) {
+        QCBOREncode_OpenArrayInMapN(context, TEEP_OPTIONS_KEY_SUIT_REPORTS);
+        for (size_t i = 0; i < query_request->suit_reports.len; i++) {
+            QCBOREncode_AddBytes(context, (UsefulBufC){query_request->suit_reports.items[i].ptr, query_request->suit_reports.items[i].len});
+        }
+        QCBOREncode_CloseArray(context);
+    }
     QCBOREncode_CloseMap(context);
 
     /* supported-teep-cipher-suited */
@@ -230,7 +254,7 @@ teep_err_t teep_encode_query_request(const teep_query_request_t *query_request, 
     /* supported-suit-cose-profiles */
     QCBOREncode_OpenArray(context);
     for (size_t i = 0; i < query_request->supported_suit_cose_profiles.len; i++) {
-        teep_encode_add_profile(context, query_request->supported_suit_cose_profiles.items[i]);
+        teep_encode_add_suit_cose_profile(context, query_request->supported_suit_cose_profiles.items[i]);
     }
     QCBOREncode_CloseArray(context);
 

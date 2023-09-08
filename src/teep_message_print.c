@@ -31,6 +31,10 @@ char *teep_err_to_str(teep_err_t err)
         return "INVALID_LENGTH";
     case TEEP_ERR_INVALID_MESSAGE_TYPE:
         return "INVALID_MESSAGE_TYPE";
+    case TEEP_ERR_ENCODING_FAILED:
+        return "TEEP_ERR_ENCODING_FAILED";
+    case TEEP_ERR_DECODING_FAILED:
+        return "TEEP_ERR_DECODING_FAILED";
     case TEEP_ERR_CBOR_WITHOUT_COSE:
         return "CBOR_WITHOUT_COSE";
     case TEEP_ERR_VERIFICATION_FAILED:
@@ -179,6 +183,8 @@ char *teep_err_code_to_str(int32_t err_code)
         return "ERR_UNSUPPORTED_CIPHER_SUITES";
     case TEEP_ERR_CODE_BAD_CERTIFICATE:
         return "ERR_BAD_CERTIFICATE";
+    case TEEP_ERR_CODE_ATTESTATION_REQUIRED:
+        return "ERR_ATTESTATION_REQUIRED";
     case TEEP_ERR_CODE_CERTIFICATE_EXPIRED:
         return "ERR_CERTIFICATE_EXPIRED";
     case TEEP_ERR_CODE_TEMPORARY_ERROR:
@@ -186,7 +192,7 @@ char *teep_err_code_to_str(int32_t err_code)
     case TEEP_ERR_CODE_MANIFEST_PROCESSING_FAILED:
         return "ERR_MANIFEST_PROCESSING_FAILED";
     default:
-        return "ERR_UNKNOWN";
+        return NULL;
     }
 }
 
@@ -213,14 +219,27 @@ char *teep_cose_mechanism_key_to_str(int64_t cose_mechanism_key)
 char *teep_cose_algs_key_to_str(int64_t cose_algs_key)
 {
     switch (cose_algs_key) {
-    case 0:
-        return "NONE";
+    /* hash */
+    case TEEP_COSE_SHA256:
+        return "SHA-256";
+
+    /* authentication algorithms */
+    case TEEP_COSE_MAC_HMAC256:
+        return "HMAC-256";
     case TEEP_COSE_SIGN_ES256:
         return "ES256";
     case TEEP_COSE_SIGN_EDDSA:
         return "EdDSA";
     case TEEP_COSE_SIGN_HSS_LMS:
         return "HSS-LMS";
+
+    /* key_exchange algorithms */
+    case TEEP_COSE_A128KW:
+        return "A128KW";
+    case TEEP_COSE_ECDHES_HKDF256:
+        return "ECDH-ES+HKDF-256";
+
+    /* encryption algorithms */
     case TEEP_COSE_ENCRYPT_A128_GCM:
         return "AES-GCM-128";
     case TEEP_COSE_ENCRYPT_A192_GCM:
@@ -229,10 +248,17 @@ char *teep_cose_algs_key_to_str(int64_t cose_algs_key)
         return "AES-GCM-256";
     case TEEP_COSE_ENCRYPT_ACCM_16_64_128:
         return "AES-CCM-16-64-128";
-    case TEEP_COSE_MAC_HMAC256:
-        return "HMAC 256/256";
+    case TEEP_COSE_ENCRYPT_CHACHA20_POLY1305:
+        return "ChaCha20/Poly1305";
+    case TEEP_COSE_ENCRYPT_A128CTR:
+        return "A128CTR";
+    case TEEP_COSE_ENCRYPT_A192CTR:
+        return "A192CTR";
+    case TEEP_COSE_ENCRYPT_A256CTR:
+        return "A256CTR";
+
     default:
-        return "UNKNOWN";
+        return NULL;
     }
 }
 
@@ -261,14 +287,18 @@ void teep_debug_print(QCBORDecodeContext *message,
     }
 }
 
-teep_err_t teep_print_profile(const teep_profile_t *profile)
+teep_err_t teep_print_suit_cose_profile(const teep_suit_cose_profile_t *profile)
 {
     if (profile == NULL) {
         return TEEP_ERR_UNEXPECTED_ERROR;
     }
-    printf("[ %d / (%s) /, %d / (%s) / ]",
-        profile->signing,
-        teep_cose_algs_key_to_str(profile->signing),
+    printf("[ %ld / %s /, %ld / %s /, %ld / %s /, %ld / %s / ]",
+        profile->hash,
+        teep_cose_algs_key_to_str(profile->hash),
+        profile->authentication,
+        teep_cose_algs_key_to_str(profile->authentication),
+        profile->key_exchange,
+        teep_cose_algs_key_to_str(profile->key_exchange),
         profile->encryption,
         teep_cose_algs_key_to_str(profile->encryption)
     );
@@ -328,7 +358,7 @@ teep_err_t teep_print_query_request(const teep_query_request_t *query_request,
         return TEEP_ERR_UNEXPECTED_ERROR;
     }
     teep_err_t result = TEEP_SUCCESS;
-    printf("%*s/ QueryRequest(signed by \n = / [\n", indent_space, "");
+    printf("%*s/ QueryRequest = / [\n", indent_space, "");
     printf("%*s/ type : / %u,\n", indent_space + indent_delta, "", query_request->type);
 
     printf("%*s/ options : / {\n", indent_space + indent_delta, "");
@@ -381,6 +411,45 @@ teep_err_t teep_print_query_request(const teep_query_request_t *query_request,
         }
         printf(" ]");
     }
+    if (query_request->contains & TEEP_MESSAGE_CONTAINS_ATTESTATION_PAYLOAD_FORMAT) {
+        if (printed) {
+            printf(",\n");
+        }
+        printed = true;
+
+        printf("%*s/ attestation-payload-format / %d : ", indent_space + 2 * indent_delta, "", TEEP_OPTIONS_KEY_ATTESTATION_PAYLOAD_FORMAT);
+        result = teep_print_string(&query_request->attestation_payload_format);
+        if (result != TEEP_SUCCESS) {
+            return result;
+        }
+    }
+    if (query_request->contains & TEEP_MESSAGE_CONTAINS_ATTESTATION_PAYLOAD) {
+        if (printed) {
+            printf(",\n");
+        }
+        printed = true;
+
+        printf("%*s/ attestation-payload / %d : ", indent_space + 2 * indent_delta, "", TEEP_OPTIONS_KEY_ATTESTATION_PAYLOAD);
+        result = teep_print_hex(query_request->attestation_payload.ptr, query_request->attestation_payload.len);
+        if (result != TEEP_SUCCESS) {
+            return result;
+        }
+    }
+    if (query_request->contains & TEEP_MESSAGE_CONTAINS_SUIT_REPORTS) {
+        if (printed) {
+            printf(",\n");
+        }
+        printed = true;
+
+        printf("%*s/ suit-reports / %d : [\n", indent_space + 2 * indent_delta, "", TEEP_OPTIONS_KEY_SUIT_REPORTS);
+        for (size_t i = 0; i < query_request->suit_reports.len; i++) {
+            printf("%*s", indent_space + 3 * indent_delta, "");
+            teep_print_hex(query_request->suit_reports.items[i].ptr, query_request->suit_reports.items[i].len);
+            if (i + 1 < query_request->suit_reports.len) {
+                printf(",\n");
+            }
+        }
+    }
     printf("\n%*s},\n", indent_space + indent_delta, "");
 
     printf("%*s/ supported-teep-cipher-suites : / [\n", indent_space + indent_delta, "");
@@ -399,7 +468,7 @@ teep_err_t teep_print_query_request(const teep_query_request_t *query_request,
     printf("%*s/ supported-suit-cose-profiles : / [\n", indent_space + indent_delta, "");
     for (size_t i = 0; i < query_request->supported_suit_cose_profiles.len; i++) {
         printf("%*s", indent_space + 2 * indent_delta, "");
-        result = teep_print_profile(&query_request->supported_suit_cose_profiles.items[i]);
+        result = teep_print_suit_cose_profile(&query_request->supported_suit_cose_profiles.items[i]);
         if (result != TEEP_SUCCESS) {
             return result;
         }
@@ -699,6 +768,26 @@ teep_err_t teep_print_update(const teep_update_t *teep_update,
             return result;
         }
     }
+    if (teep_update->contains & TEEP_MESSAGE_CONTAINS_ERR_CODE) {
+        if (printed) {
+            printf(",\n");
+        }
+        printed = true;
+
+        printf("%*s/ err-code / %d : %u / %s /", indent_space + 2 * indent_delta, "", TEEP_OPTIONS_KEY_ERR_CODE, teep_update->err_code, teep_err_code_to_str(teep_update->err_code));
+    }
+    if (teep_update->contains & TEEP_MESSAGE_CONTAINS_ERR_MSG) {
+        if (printed) {
+            printf(",\n");
+        }
+        printed = true;
+
+        printf("%*s/ err-msg / %d : ", indent_space + 2 * indent_delta, "", TEEP_OPTIONS_KEY_ERR_MSG);
+        result = teep_print_string(&teep_update->attestation_payload_format);
+        if (result != TEEP_SUCCESS) {
+            return result;
+        }
+    }
     printf("\n%*s}\n%*s]\n", indent_space + indent_delta, "", indent_space, "");
     return TEEP_SUCCESS;
 }
@@ -784,6 +873,18 @@ teep_err_t teep_print_error(const teep_error_t *teep_error,
         }
         printf("]");
     }
+    if (teep_error->contains & TEEP_MESSAGE_CONTAINS_CHALLENGE) {
+        if (printed) {
+            printf(",\n");
+        }
+        printed = true;
+
+        printf("%*s/ challenge / %d :", indent_space + 2 * indent_delta, "", TEEP_OPTIONS_KEY_CHALLENGE);
+        result = teep_print_hex(teep_error->challenge.ptr, teep_error->challenge.len);
+        if (result != TEEP_SUCCESS) {
+            return result;
+        }
+    }
     if (teep_error->contains & TEEP_MESSAGE_CONTAINS_VERSIONS) {
         if (printed) {
             printf(",\n");
@@ -815,7 +916,7 @@ teep_err_t teep_print_error(const teep_error_t *teep_error,
         }
     }
     printf("\n%*s},\n", indent_space + indent_delta, "");
-    printf("%*s/ err-code : / %u / (%s) /\n", indent_space + indent_delta, "", teep_error->err_code, teep_err_code_to_str(teep_error->err_code));
+    printf("%*s/ err-code : / %u / %s /\n", indent_space + indent_delta, "", teep_error->err_code, teep_err_code_to_str(teep_error->err_code));
     printf("%*s]\n", indent_space, "");
     return TEEP_SUCCESS;
 }
@@ -957,6 +1058,7 @@ char* teep_options_key_to_str(const int64_t label, const int64_t n)
     case TEEP_OPTIONS_KEY_SUIT_REPORTS: return "suit-reports";
     case TEEP_OPTIONS_KEY_TOKEN: return "token";
     case TEEP_OPTIONS_KEY_SUPPORTED_FRESHNESS_MECHANISMS: return "supported-freshness-mechanisms";
+    case TEEP_OPTIONS_KEY_ERR_CODE: return "err-code";
     default: return NULL;
     }
 }
@@ -1430,10 +1532,50 @@ teep_err_t teep_print_cose(QCBORDecodeContext *context,
     QCBORDecode_ExitBstrWrapped(context);
     printf(" >>,\n");
 
-    printf("%*s/ signature: / ", indent_space + indent_delta, "");
-    UsefulBufC signature;
-    QCBORDecode_GetByteString(context, &signature);
-    teep_print_hex(signature.ptr, signature.len);
+    QCBORDecode_PeekNext(context, &item);
+    if (item.uDataType == QCBOR_TYPE_BYTE_STRING) {
+        /* COSE_Sign1 */
+        printf("%*s/ signature: / ", indent_space + indent_delta, "");
+        UsefulBufC signature;
+        QCBORDecode_GetByteString(context, &signature);
+        teep_print_hex(signature.ptr, signature.len);
+    }
+    else if (item.uDataType == QCBOR_TYPE_ARRAY) {
+        /* COSE_Sign */
+        QCBORDecode_EnterArray(context, &item);
+        size_t array_len = item.val.uCount;
+        printf("%*s/ signatures: / [\n", indent_space + indent_delta, "");
+        for (size_t i = 0; i < array_len; i++) {
+            QCBORDecode_EnterArray(context, &item);
+            if (item.val.uCount != 3) {
+                return TEEP_ERR_INVALID_LENGTH;
+            }
+            printf("%*s[\n", indent_space + 2 * indent_delta, "");
+            QCBORDecode_EnterBstrWrapped(context, QCBOR_TAG_REQUIREMENT_NOT_A_TAG, NULL);
+            printf("%*s/ protected: / << ", indent_space + 3 * indent_delta, "");
+            teep_print_cose_header(context, indent_space + 3 * indent_delta, indent_delta);
+            printf(" >>,\n");
+            QCBORDecode_ExitBstrWrapped(context);
+            printf("%*s/ unprotected: / ", indent_space + 3 * indent_delta, "");
+            teep_print_cose_header(context, indent_space + 3 * indent_delta, indent_delta);
+            printf(",\n");
+            printf("%*s/ signature: / ", indent_space + 3 * indent_delta, "");
+            UsefulBufC signature;
+            QCBORDecode_GetByteString(context, &signature);
+            teep_print_hex(signature.ptr, signature.len);
+            printf("\n%*s]", indent_space + 2 * indent_delta, "");
+            QCBORDecode_ExitArray(context);
+            if (i + 1 < array_len) {
+                printf(",");
+            }
+            printf("\n");
+        }
+        printf("%*s]", indent_space + indent_delta, "");
+        QCBORDecode_ExitArray(context);
+    }
+    else {
+        return TEEP_ERR_INVALID_TYPE_OF_VALUE;
+    }
 
     QCBORDecode_ExitArray(context);
     printf("\n]");

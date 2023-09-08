@@ -19,8 +19,12 @@
 #endif
 
 #if defined(LIBTEEP_PSA_CRYPTO_C)
+  #if !defined(SHA256_DIGEST_LENGTH)
+  #define SHA256_DIGEST_LENGTH 32
+  #endif
 #include "psa/crypto.h"
 #else
+#include "openssl/sha.h"
 #include "openssl/evp.h"
 #include "openssl/ec.h"
 #include "openssl/opensslv.h"
@@ -34,9 +38,11 @@
 
 #endif /* LIBTEEP_PSA_CRYPTO_C */
 
-#define TEEP_COSE_X                     (-2)
-#define TEEP_COSE_Y                     (-3)
-#define TEEP_COSE_D                     (-4)
+#define TEEP_COSE_KTY                   (1)
+#define TEEP_COSE_KTY_OKP               (1)
+#define TEEP_COSE_KTY_EC2               (2)
+#define TEEP_COSE_KTY_SYMMETRIC         (4)
+
 #define TEEP_COSE_CRV                   (-1)
 #define TEEP_COSE_CRV_P256              (1)
 #define TEEP_COSE_CRV_P384              (2)
@@ -45,9 +51,10 @@
 #define TEEP_COSE_CRV_X448              (5)
 #define TEEP_COSE_CRV_ED25519           (6)
 #define TEEP_COSE_CRV_ED448             (7)
-#define TEEP_COSE_KTY                   (1)
-#define TEEP_COSE_KTY_OKP               (1)
-#define TEEP_COSE_KTY_EC2               (2)
+#define TEEP_COSE_X                     (-2)
+#define TEEP_COSE_Y                     (-3)
+#define TEEP_COSE_D                     (-4)
+#define TEEP_COSE_K                     (-1)
 
 #define PRIME256V1_PRIVATE_KEY_LENGTH       32
 #define PRIME256V1_PUBLIC_KEY_LENGTH        65
@@ -57,6 +64,8 @@
 #define SECP521R1_PUBLIC_KEY_LENGTH         133
 #define ED25519_PRIVATE_KEY_LENGTH          32
 #define ED25519_PUBLIC_KEY_LENGTH           32
+#define ED448_PRIVATE_KEY_LENGTH            57
+#define ED448_PUBLIC_KEY_LENGTH             57
 
 #define TEEP_MAX_PRIVATE_KEY_LEN            SECP521R1_PRIVATE_KEY_LENGTH
 #define TEEP_MAX_PUBLIC_KEY_LEN             SECP521R1_PUBLIC_KEY_LENGTH
@@ -203,5 +212,17 @@ teep_err_t teep_set_mechanism_from_cose_key_from_item(QCBORDecodeContext *contex
 teep_err_t teep_set_mechanism_from_cose_key(UsefulBufC buf,
                                             UsefulBufC kid,
                                             teep_mechanism_t *mechanism);
+/*!
+    \brief  Calculate COSE_Key thumbprint
+
+    \param[in]  cose_key            Pointer of the COSE_Key buffer.
+    \param[out] thumbprint          Pointer and length to the output buffer.
+
+    \return     This returns TEEP_SUCCESS or TEEP_ERR_FATAL.
+
+    The length of the thumbprint MUST be SHA256_DIGEST_LENGTH = 32.
+ */
+teep_err_t teep_calc_cose_key_thumbprint(UsefulBufC cose_key,
+                                         UsefulBuf thumbprint);
 
 #endif  /* TEEP_COSE_H */
