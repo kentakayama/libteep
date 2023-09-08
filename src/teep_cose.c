@@ -704,7 +704,7 @@ teep_err_t teep_generate_sha256(UsefulBufC target,
         return( TEEP_ERR_FATAL );
 
     if(real_hash_size != SHA256_DIGEST_LENGTH)
-        return( SUIT_ERR_NO_MEMORY );
+        return( TEEP_ERR_NO_MEMORY );
 
     return TEEP_SUCCESS;
 }
