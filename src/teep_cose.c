@@ -513,11 +513,25 @@ teep_err_t teep_key_init_ed25519_public_key(const unsigned char *public_key,
 }
 
 teep_err_t teep_free_key(const teep_key_t *key) {
-#if defined(LIBTEEP_PSA_CRYPTO_C)
-    psa_destroy_key((psa_key_handle_t)key->cose_key.key.handle);
+    switch (key->cose_algorithm_id) {
+    case T_COSE_ALGORITHM_ES256:
+    case T_COSE_ALGORITHM_ES384:
+    case T_COSE_ALGORITHM_ES512:
+    case T_COSE_ALGORITHM_EDDSA:
+#if defined(LIBCSUIT_PSA_CRYPTO_C)
+#if defined(LIBCSUIT_USE_T_COSE_1)
+        psa_destroy_key((psa_key_handle_t)key->cose_key.k.key_handle);
 #else
-    EVP_PKEY_free(key->cose_key.key.ptr);
+        psa_destroy_key((psa_key_handle_t)key->cose_key.key.handle);
+#endif /* LIBCSUIT_USE_T_COSE_1 */
+#else /* LIBCSUIT_PSA_CRYPTO_C */
+        EVP_PKEY_free(key->cose_key.key.ptr);
 #endif
+        break;
+
+    default:
+        return SUIT_ERR_NOT_IMPLEMENTED;
+    }
     return TEEP_SUCCESS;
 }
 
