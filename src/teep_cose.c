@@ -518,19 +518,19 @@ teep_err_t teep_free_key(const teep_key_t *key) {
     case T_COSE_ALGORITHM_ES384:
     case T_COSE_ALGORITHM_ES512:
     case T_COSE_ALGORITHM_EDDSA:
-#if defined(LIBCSUIT_PSA_CRYPTO_C)
-#if defined(LIBCSUIT_USE_T_COSE_1)
+#if defined(LIBTEEP_PSA_CRYPTO_C)
+#if defined(LIBTEEP_USE_T_COSE_1)
         psa_destroy_key((psa_key_handle_t)key->cose_key.k.key_handle);
 #else
         psa_destroy_key((psa_key_handle_t)key->cose_key.key.handle);
-#endif /* LIBCSUIT_USE_T_COSE_1 */
-#else /* LIBCSUIT_PSA_CRYPTO_C */
+#endif /* LIBTEEP_USE_T_COSE_1 */
+#else /* LIBTEEP_PSA_CRYPTO_C */
         EVP_PKEY_free(key->cose_key.key.ptr);
 #endif
         break;
 
     default:
-        return SUIT_ERR_NOT_IMPLEMENTED;
+        return TEEP_ERR_NOT_IMPLEMENTED;
     }
     return TEEP_SUCCESS;
 }
