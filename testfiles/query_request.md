@@ -22,8 +22,8 @@
     [ [ 18, -8 ] ]  / Sign1 using EdDSA /
   ],
   / supported-suit-cose-profiles: / [
-    [ -16, -7, -25, -65534 ] / suit-sha256-es256-ecdh-a128ctr /,
-    [ -16, -8, -25, -65534 ] / suit-sha256-eddsa-ecdh-a128ctr /
+    [ -16, -7, -29, -65534 ] / suit-sha256-es256-ecdh-a128ctr /,
+    [ -16, -8, -29, -65534 ] / suit-sha256-eddsa-ecdh-a128ctr /
   ],
   / data-item-requested: / 3 / attestation | trusted-components /
 ]
@@ -54,12 +54,12 @@
       84            # array(4)        / suit-sha256-es256-ecdh-a128ctr /
          2F         # negative(15)    / -16 = cose-alg-sha256 /
          26         # negative(6)     / -7 = cose-alg-es256 /
-         38 18      # negative(24)    / -25 = cose-alg-ecdhes-hkdf256 /
+         38 1C      # negative(28)    / -29 = cose-alg-ecdhes-a128kw /
          39 FFFD    # negative(65533) / -65534 = A128CTR /
       84            # array(4)        / suit-sha256-eddsa-ecdh-a128ctr /
          2F         # negative(15)    / -16 = cose-alg-sha256 /
          27         # negative(7)     / -8 = cose-alg-eddsa /
-         38 18      # negative(24)    / -25 = cose-alg-ecdhes-hkdf256 /
+         38 1C      # negative(28)    / -29 = cose-alg-ecdhes-a128kw /
          39 FFFD    # negative(65533) / -65534 = A128CTR /
    03               # unsigned(3)     / attestation | trusted-components /
 ~~~~
