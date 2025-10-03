@@ -64,4 +64,24 @@ uint32_t teep_array_to_int32(const uint8_t *array, int32_t byte_count);
 uint64_t teep_array_to_int64(const uint8_t *array);
 bool teep_is_valid_mechanism(int64_t cose_mechanism_key);
 
+/*!
+    \brief Slices the UsefulBuf and returns the left UsefulBuf
+
+    \param[in]  allocated   Whole allocated buffer
+    \param[in]  consumed    Part of the used buffer
+
+    \return     This returns the left buffer next to the tail of consumed buffer. NULLUsefulBuf on error.
+
+    ```
+    allocated{.ptr, len=16}
+                |     .-------return{.ptr, len=10}
+                v     v
+                0123456789ABCDEF
+                   ^
+                   |
+        consumed{.ptr, .len=3}
+    ```
+ */
+UsefulBuf UsefulBuf_SliceTail(UsefulBuf allocated, UsefulBufC consumed);
+
 #endif  // TEEP_COMMON_H

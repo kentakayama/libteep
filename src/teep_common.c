@@ -59,3 +59,16 @@ bool teep_is_valid_mechanism(int64_t cose_mechanism_key) {
     }
 }
 
+UsefulBuf UsefulBuf_SliceTail(UsefulBuf allocated, UsefulBufC consumed)
+{
+    size_t offset = UsefulBuf_PointerToOffset(UsefulBuf_Const(allocated), consumed.ptr);
+    if (offset == SIZE_MAX) {
+        /* the consumed pointer is not inside allocated buffer */
+        return NULLUsefulBuf;
+    }
+    if (allocated.len < offset + consumed.len) {
+        /* the consumed buffer exceeds the allocated buffer */
+        return NULLUsefulBuf;
+    }
+    return UsefulBuf_Unconst(UsefulBuf_Tail(UsefulBuf_Const(allocated), offset + consumed.len));
+}
