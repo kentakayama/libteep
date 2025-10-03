@@ -11,6 +11,7 @@
 
 void test_set_out_of_teep_buf(void);
 void test_add_usefulbufc(void);
+void test_UsefulBuf_SliceTail(void);
 
 int main(int argc, char *argv[])
 {
@@ -19,6 +20,7 @@ int main(int argc, char *argv[])
     suite = CU_add_suite("TEEP", NULL, NULL);
     CU_add_test(suite, "test_set_out_of_teep_buf", test_set_out_of_teep_buf);
     CU_add_test(suite, "test_add_usefulbufc", test_add_usefulbufc);
+    CU_add_test(suite, "test_UsefulBuf_SliceTail", test_UsefulBuf_SliceTail);
     CU_basic_set_mode(CU_BRM_SILENT);
     CU_basic_run_tests();
     CU_cleanup_registry();
@@ -87,4 +89,33 @@ void test_set_out_of_teep_buf(void)
     CU_ASSERT(teep_buf.ptr == buf1);
 }
 
+void test_UsefulBuf_SliceTail(void)
+{
+    // success patterns: slices a buffer within the allocated buffer
+    UsefulBuf_MAKE_STACK_UB(allocated, 16);
+    UsefulBufC buf0to2 = UsefulBuf_Head(UsefulBuf_Const(allocated), 3);
+    UsefulBuf  buf3toF = UsefulBuf_SliceTail(allocated, buf0to2);
+    CU_ASSERT((void *)((char *)allocated.ptr + 3) == buf3toF.ptr);
+    CU_ASSERT(buf3toF.len == 13);
+    UsefulBufC buf3to5 = UsefulBuf_Head(UsefulBuf_Const(buf3toF), 3);
+    UsefulBuf  buf6toF = UsefulBuf_SliceTail(buf3toF, buf3to5);
+    CU_ASSERT((void *)((char *)buf3toF.ptr + 3) == buf6toF.ptr);
+    CU_ASSERT(buf6toF.len == 10);
+    UsefulBuf _buf6toF = UsefulBuf_SliceTail(allocated, buf3to5);
+    CU_ASSERT(buf6toF.ptr == _buf6toF.ptr);
+    CU_ASSERT(buf6toF.len == _buf6toF.len);
+    UsefulBuf  buf0toF = UsefulBuf_SliceTail(allocated, (UsefulBufC){.ptr = allocated.ptr, .len = 0});
+    CU_ASSERT(allocated.ptr == buf0toF.ptr);
+    CU_ASSERT(allocated.len == buf0toF.len);
+    UsefulBuf  buf10to10 = UsefulBuf_SliceTail(allocated, UsefulBuf_Const(allocated));
+    CU_ASSERT((void *)((char *)allocated.ptr + allocated.len) == buf10to10.ptr);
+    CU_ASSERT(buf10to10.len == 0);
 
+    // error patterns
+    UsefulBuf  slice_null = UsefulBuf_SliceTail(allocated, NULLUsefulBufC);
+    CU_ASSERT(UsefulBuf_IsNULL(slice_null));
+    UsefulBuf  slice_prev = UsefulBuf_SliceTail(allocated, (UsefulBufC){.ptr = (void *)((char *)allocated.ptr - 2), .len = 4});
+    CU_ASSERT(UsefulBuf_IsNULL(slice_prev));
+    UsefulBuf  slice_exceed = UsefulBuf_SliceTail(allocated, (UsefulBufC){.ptr = allocated.ptr, .len = 20});
+    CU_ASSERT(UsefulBuf_IsNULL(slice_exceed));
+}
