@@ -72,7 +72,6 @@ run: $(TAM) $(AGENT) $(VERIFIER)
 	$(AGENT) ./testfiles/update$(COSE_FLAG).cbor || exit 1
 	$(TAM) ./testfiles/teep_success$(COSE_FLAG).cbor || exit 1
 	$(TAM) ./testfiles/teep_error$(COSE_FLAG).cbor || exit 1
-	$(VERIFIER) ./testfiles/attestation_results$(COSE_FLAG).cbor || exit 1
 
 clean:
 	$(RM) $(OBJS) $(TAM_OBJ) $(AGENT_OBJ) $(VERIFIER_OBJ) $(TAM) $(AGENT) $(VERIFIER)

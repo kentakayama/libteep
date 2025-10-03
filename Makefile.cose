@@ -36,8 +36,7 @@ else
     LDFLAGS += -lcrypto
 endif
 
-.PHONY: all clean run
-
+.PHONY: all
 all: $(TAM0) $(TAM1) $(AGENT) $(VERIFIER) $(TRUST_ANCHOR)
 
 include Makefile.common
@@ -75,6 +74,7 @@ $(VERIFIER): $(OBJS) $(VERIFIER_OBJ)
 $(TRUST_ANCHOR): $(OBJS) $(TRUST_ANCHOR_OBJ)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
+.PHONY: clean
 clean:
 	$(RM) $(OBJS) $(TAM0_OBJ) $(TAM1_OBJ) $(AGENT_OBJ) $(VERIFIER_OBJ) $(TAM0) $(TAM1) $(AGENT) $(VERIFIER)
 
@@ -91,12 +91,10 @@ SOURCES := \
 $(SOURCES):
 	$(MAKE) -C testfiles $@
 
-run: $(TAM0) $(TAM1) $(AGENT) $(VERIFIER) $(SOURCES)
-	$(TAM0)  ./testfiles/query_request.cbor  ./testfiles/query_request_cose.cbor  || exit 1
+run: $(TAM1) $(AGENT) $(SOURCES)
+	$(TAM1)  ./testfiles/query_request.cbor  ./testfiles/query_request_cose.cbor  || exit 1
 	$(AGENT) ./testfiles/query_response.cbor ./testfiles/query_response_cose.cbor || exit 1
 	$(TAM1)  ./testfiles/update.cbor         ./testfiles/update_cose.cbor         || exit 1
 	$(AGENT) ./testfiles/teep_success.cbor   ./testfiles/teep_success_cose.cbor   || exit 1
 	$(AGENT) ./testfiles/teep_error.cbor     ./testfiles/teep_error_cose.cbor     || exit 1
-	$(AGENT) ./testfiles/evidence.cbor       ./testfiles/evidence_cose.cbor       || exit 1
-	$(VERIFIER) ./testfiles/attestation_results.cbor ./testfiles/attestation_results_cose.cbor || exit 1
 

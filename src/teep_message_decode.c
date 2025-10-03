@@ -928,7 +928,7 @@ teep_err_t teep_set_error(QCBORDecodeContext *message,
 {
     teep_err_t result = TEEP_SUCCESS;
     memset(teep_error, 0, sizeof(teep_error_t));
-    teep_error->type = TEEP_TYPE_QUERY_REQUEST;
+    teep_error->type = TEEP_TYPE_TEEP_ERROR;
     teep_error->contains = TEEP_MESSAGE_CONTAINS_TYPE;
 
     result = teep_qcbor_get_next(message, item, QCBOR_TYPE_MAP);
