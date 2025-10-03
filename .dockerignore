@@ -2,6 +2,8 @@
 teep_*
 libteep.a
 libteep.so
+bin/teep_*
+bin/cose_parser
 obj
 *Dockerfile
 docker-compose.yml
