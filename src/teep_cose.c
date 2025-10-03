@@ -144,11 +144,12 @@ teep_err_t teep_verify_cose_sign(const UsefulBufC signed_cose,
         }
     }
 
-    cose_result = t_cose_sign_verify(&verify_ctx,
-                                     signed_cose,
-                                     NULLUsefulBufC,
-                                     returned_payload,
-                                     NULL);
+    cose_result = t_cose_sign_verify_msg(&verify_ctx,
+                                          signed_cose,
+                                          NULLUsefulBufC,
+                                          returned_payload,
+                                          NULL,
+                                          NULL);
     if (cose_result != T_COSE_SUCCESS) {
         result = TEEP_ERR_VERIFICATION_FAILED;
     }
