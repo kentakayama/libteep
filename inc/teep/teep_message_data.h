@@ -86,11 +86,14 @@ typedef enum teep_cose_algs {
     TEEP_COSE_MAC_HMAC256               = 5,        // cose-alg-hmac-256-256
     TEEP_COSE_SIGN_ES256                = -7,       // cose-alg-es256
     TEEP_COSE_SIGN_EDDSA                = -8,       // cose-alg-eddsa
+    TEEP_COSE_SIGN_ESP256               = -9,       // cose-alg-esp256
+    TEEP_COSE_SIGN_ED25519              = -19,      // cose-alg-ed25519
     TEEP_COSE_SIGN_HSS_LMS              = -46,      // cose-alg-hss-lms
 
     /* key_exchange algorithms */
     TEEP_COSE_A128KW                    = -3,       // cose-alg-aeskw-128
     TEEP_COSE_ECDHES_HKDF256            = -25,      // cose-alg-ecdh-es-hkdf-256
+    TEEP_COSE_ECDHES_A128KW             = -29,      // cose-alg-ecdh-es-a128kw
 
     /* encryption algorithms */
     TEEP_COSE_ENCRYPT_A128_GCM          = 1,        // cose-alg-aes-gcm-128
