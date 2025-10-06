@@ -228,8 +228,12 @@ char *teep_cose_algs_key_to_str(int64_t cose_algs_key)
         return "HMAC-256";
     case TEEP_COSE_SIGN_ES256:
         return "ES256";
+    case TEEP_COSE_SIGN_ESP256:
+        return "ESP256";
     case TEEP_COSE_SIGN_EDDSA:
         return "EdDSA";
+    case TEEP_COSE_SIGN_ED25519:
+        return "Ed25519";
     case TEEP_COSE_SIGN_HSS_LMS:
         return "HSS-LMS";
 
@@ -238,6 +242,8 @@ char *teep_cose_algs_key_to_str(int64_t cose_algs_key)
         return "A128KW";
     case TEEP_COSE_ECDHES_HKDF256:
         return "ECDH-ES+HKDF-256";
+    case TEEP_COSE_ECDHES_A128KW:
+        return "ECDH-ES+A128KW";
 
     /* encryption algorithms */
     case TEEP_COSE_ENCRYPT_A128_GCM:
