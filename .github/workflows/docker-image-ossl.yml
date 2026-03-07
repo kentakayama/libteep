@@ -9,7 +9,7 @@ on:
 
 jobs:
 
-  build:
+  build-ossl:
 
     runs-on: ubuntu-latest
 
