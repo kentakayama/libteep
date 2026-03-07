@@ -151,10 +151,6 @@ teep_err_t teep_encode_query_response(const teep_query_response_t *query_respons
     if (query_response->contains & TEEP_MESSAGE_CONTAINS_TOKEN) {
         QCBOREncode_AddBytesToMapN(context, TEEP_OPTIONS_KEY_TOKEN, (UsefulBufC){.ptr = query_response->token.ptr, .len = query_response->token.len});
     }
-    if (query_response->contains & TEEP_MESSAGE_CONTAINS_SELECTED_TEEP_CIPHER_SUITE) {
-        QCBOREncode_AddInt64(context, TEEP_OPTIONS_KEY_SELECTED_TEEP_CIPHER_SUITE);
-        teep_encode_add_cipher_suite(context, query_response->selected_teep_cipher_suite);
-    }
     if (query_response->contains & TEEP_MESSAGE_CONTAINS_SELECTED_VERSION) {
         QCBOREncode_AddUInt64ToMapN(context, TEEP_OPTIONS_KEY_SELECTED_VERSION, query_response->selected_version);
     }
@@ -280,10 +276,10 @@ teep_err_t teep_encode_message_body(const teep_message_t *message,
         case TEEP_TYPE_UPDATE:
             result = teep_encode_update(&message->teep_update, context);
             break;
-        case TEEP_TYPE_TEEP_SUCCESS:
+        case TEEP_TYPE_SUCCESS:
             result = teep_encode_success(&message->teep_success, context);
             break;
-        case TEEP_TYPE_TEEP_ERROR:
+        case TEEP_TYPE_ERROR:
             result = teep_encode_error(&message->teep_error, context);
             break;
         default:

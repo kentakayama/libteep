@@ -62,7 +62,7 @@ teep_err_t create_error(teep_buf_t token,
                         teep_message_t *message)
 {
     teep_error_t *error = (teep_error_t *)message;
-    error->type = TEEP_TYPE_TEEP_ERROR;
+    error->type = TEEP_TYPE_ERROR;
     error->contains = 0;
 
     if (token.ptr != NULL && 8 <= token.len && token.len <= 64) {
@@ -122,7 +122,7 @@ teep_err_t create_success_or_error(const teep_update_t *update,
 
     // create SUCCESS message
     teep_success_t *success = (teep_success_t *)message;
-    success->type = TEEP_TYPE_TEEP_SUCCESS;
+    success->type = TEEP_TYPE_SUCCESS;
     success->contains = TEEP_MESSAGE_CONTAINS_TOKEN;
     success->token = update->token;
     return TEEP_SUCCESS;
@@ -350,7 +350,7 @@ int main(int argc, const char * argv[])
             status = WAITING_UPDATE_OR_QUERY_REQUEST;
         }
         else if (status == WAITING_UPDATE_OR_QUERY_REQUEST &&
-            send_message.teep_message.type == TEEP_TYPE_TEEP_SUCCESS) {
+            send_message.teep_message.type == TEEP_TYPE_SUCCESS) {
             status = WAITING_QUERY_REQUEST;
         }
 

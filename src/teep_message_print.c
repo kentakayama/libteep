@@ -535,26 +535,6 @@ teep_err_t teep_print_query_response(const teep_query_response_t *query_response
         printf("%*s/ token / %d : ", indent_space + 2 * indent_delta, "", TEEP_OPTIONS_KEY_TOKEN);
         teep_print_hex(query_response->token.ptr, query_response->token.len);
     }
-    if (query_response->contains & TEEP_MESSAGE_CONTAINS_SELECTED_TEEP_CIPHER_SUITE) {
-        if (printed) {
-            printf(",\n");
-        }
-        printed = true;
-
-        printf("%*s/ selected-teep-cipher-suite / %d : ", indent_space + 2 * indent_delta, "", TEEP_OPTIONS_KEY_SELECTED_TEEP_CIPHER_SUITE);
-        result = teep_print_cipher_suite(&query_response->selected_teep_cipher_suite);
-        if (result != TEEP_SUCCESS) {
-            return result;
-        }
-    }
-    if (query_response->contains & TEEP_MESSAGE_CONTAINS_SELECTED_VERSION) {
-        if (printed) {
-            printf(",\n");
-        }
-        printed = true;
-
-        printf("%*s/ selected-version / %d : %u", indent_space + 2 * indent_delta, "", TEEP_OPTIONS_KEY_SELECTED_VERSION, query_response->selected_version);
-    }
     if (query_response->contains & TEEP_MESSAGE_CONTAINS_ATTESTATION_PAYLOAD_FORMAT) {
         if (printed) {
             printf(",\n");
@@ -983,10 +963,10 @@ teep_err_t teep_print_message(const teep_message_t *msg,
         case TEEP_TYPE_UPDATE:
             result = teep_print_update(&msg->teep_update, indent_space, indent_delta, ta_public_key);
             break;
-        case TEEP_TYPE_TEEP_SUCCESS:
+        case TEEP_TYPE_SUCCESS:
             result = teep_print_success(&msg->teep_success, indent_space, indent_delta);
             break;
-        case TEEP_TYPE_TEEP_ERROR:
+        case TEEP_TYPE_ERROR:
             result = teep_print_error(&msg->teep_error, indent_space, indent_delta);
             break;
         default:
@@ -1005,7 +985,7 @@ char* teep_position_label_to_str(const int64_t position, const int64_t type)
         if (type == TEEP_TYPE_QUERY_REQUEST) {
             return "supported-teep-cipher-suites";
         }
-        else if (type == TEEP_TYPE_TEEP_ERROR) {
+        else if (type == TEEP_TYPE_ERROR) {
             return "err-code";
         }
         break;
@@ -1033,8 +1013,8 @@ char* teep_message_type_to_str(const int64_t type, const int64_t n)
     case TEEP_TYPE_QUERY_REQUEST: return "TEEP-TYPE-QueryRequest";
     case TEEP_TYPE_QUERY_RESPONSE: return "TEEP-TYPE-QueryResponse";
     case TEEP_TYPE_UPDATE: return "TEEP-TYPE-Update";
-    case TEEP_TYPE_TEEP_SUCCESS: return "TEEP-TYPE-Success";
-    case TEEP_TYPE_TEEP_ERROR: return "TEEP-TYPE-Error";
+    case TEEP_TYPE_SUCCESS: return "TEEP-TYPE-Success";
+    case TEEP_TYPE_ERROR: return "TEEP-TYPE-Error";
     default: return NULL;
     }
 }
@@ -1047,7 +1027,6 @@ char* teep_options_key_to_str(const int64_t label, const int64_t n)
     case TEEP_OPTIONS_KEY_CHALLENGE: return "challenge";
     case TEEP_OPTIONS_KEY_VERSIONS: return "versions";
     case TEEP_OPTIONS_KEY_SUPPORTED_SUIT_COSE_PROFILES: return "supported-suit-cose-profiles";
-    case TEEP_OPTIONS_KEY_SELECTED_TEEP_CIPHER_SUITE: return "selected-teep-cipher-suite";
     case TEEP_OPTIONS_KEY_SELECTED_VERSION: return "selected-version";
     case TEEP_OPTIONS_KEY_ATTESTATION_PAYLOAD: return "attestation-payload";
     case TEEP_OPTIONS_KEY_TC_LIST: return "tc-list";
@@ -1064,6 +1043,7 @@ char* teep_options_key_to_str(const int64_t label, const int64_t n)
     case TEEP_OPTIONS_KEY_SUIT_REPORTS: return "suit-reports";
     case TEEP_OPTIONS_KEY_TOKEN: return "token";
     case TEEP_OPTIONS_KEY_SUPPORTED_FRESHNESS_MECHANISMS: return "supported-freshness-mechanisms";
+    case TEEP_OPTIONS_KEY_ERR_LANG: return "err-lang";
     case TEEP_OPTIONS_KEY_ERR_CODE: return "err-code";
     default: return NULL;
     }
@@ -1236,8 +1216,6 @@ TeepLabelToStr teep_a_to_str(TeepLabelToStr from, bool is_map, const int64_t lab
             return teep_position_tc_list_to_str;
         case TEEP_OPTIONS_KEY_REQUESTED_TC_LIST:
             return teep_position_requested_tc_list_to_str;
-        case TEEP_OPTIONS_KEY_SELECTED_TEEP_CIPHER_SUITE:
-            return teep_position_cipher_suite;
         }
     }
     else if (from == teep_position_cipher_suite) {

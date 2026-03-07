@@ -38,7 +38,7 @@ int main(int argc, const char * argv[])
     uint8_t token[] = {0xa0, 0xa1, 0xa2, 0xa3, 0xa4, 0xa5, 0xa6, 0xa7};
 
     teep_success_t teep_message;
-    teep_message.type = TEEP_TYPE_TEEP_SUCCESS;
+    teep_message.type = TEEP_TYPE_SUCCESS;
     teep_message.contains = TEEP_MESSAGE_CONTAINS_TOKEN;
     teep_message.token = (teep_buf_t){.ptr = token, .len = sizeof(token)};
 
