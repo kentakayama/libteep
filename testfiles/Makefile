@@ -8,9 +8,7 @@ TARGETS	:=	query_request.cbor \
 			query_response.cbor \
 			update.cbor \
 			teep_success.cbor \
-			teep_error.cbor \
-			evidence.cbor \
-			attestation_results.cbor
+			teep_error.cbor
 
 .PHONY: all
 all: $(TARGETS)
@@ -32,12 +30,7 @@ update_cose.cbor: update.cbor ../bin/teep_cose_tam1
 query_response_cose.cbor: query_response.cbor ../bin/teep_cose_agent
 teep_success_cose.cbor: teep_success.cbor ../bin/teep_cose_agent
 teep_error_cose.cbor: teep_error.cbor ../bin/teep_cose_agent
-evidence_cose.cbor: evidence.cbor ../bin/teep_cose_agent
 	../bin/teep_cose_agent $< $@
-
-# Verifier Sign1
-attestation_results_cose.cbor: attestation_results.cbor ../bin/teep_cose_verifier
-	../bin/teep_cose_verifier $< $@
 
 .PHONY: sign
 sign: $(TARGETS:%.cbor=%_cose.cbor)

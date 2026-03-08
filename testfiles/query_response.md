@@ -5,7 +5,7 @@
 -->
 
 # QueryRequest Message
-    https://datatracker.ietf.org/doc/html/draft-ietf-teep-protocol-12#name-d3-queryresponse-message
+    https://datatracker.ietf.org/doc/html/draft-ietf-teep-protocol-26#name-d3-queryresponse-message
 
 ## CBOR Diagnostic Notation
 ~~~~cbor-diag
@@ -14,10 +14,9 @@
   / type: / 2 / TEEP-TYPE-query-response /,
   / options: /
   {
-    / token / 20 : h'A0A1A2A3A4A5A6A7A8A9AAABACADAEAF',
-    / selected-teep-cipher-suite / 5 : [ [ 18, -7 ] ] / Sign1 using ES256 /,
-    / selected-version / 6 : 0,
-    / tc-list / 8 : [
+    / token / 19 : h'A0A1A2A3A4A5A6A7A8A9AAABACADAEAF',
+    / selected-version / 5 : 0,
+    / tc-list / 7 : [
       {
         / system-component-id / 0 : [ h'0102030405060708090A0B0C0D0E0F' ],
         / suit-parameter-image-digest / 3 : << [
@@ -40,18 +39,13 @@
 ~~~~
 82                      # array(2)
    02                   # unsigned(2) / TEEP-TYPE-query-response /
-   A4                   # map(4)
-      14                # unsigned(20) / token: /
+   A3                   # map(3)
+      13                # unsigned(19) / token: /
       50                # bytes(16)
          A0A1A2A3A4A5A6A7A8A9AAABACADAEAF
-      05                # unsigned(5) / selected-cipher-suite: /
-      81                # array(1)
-         82             # array(2)
-            12          # unsigned(18) / 18 = COSE_Sign1 /
-            26          # negative(6) / -7 = cose-alg-es256 /
       06                # unsigned(6) / selected-version: /
       00                # unsigned(0)
-      08                # unsigned(8) / tc-list: /
+      07                # unsigned(7) / tc-list: /
       82                # array(2)
          A2             # map(2)
             00          # unsigned(0) / system-component-id: /
