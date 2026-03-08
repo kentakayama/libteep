@@ -12,6 +12,11 @@
 
 ## Getting started
 
+### Dockerfile policy
+- `ossl.Dockerfile`, `ossl3.Dockerfile`, and `psa.Dockerfile` are for CI latest checks.
+  They intentionally track latest upstream dependencies and are expected to fail fast when upstream changes break compatibility.
+- `client.Dockerfile` is a stable example image for libteep consumers and pins dependency refs by default for reproducible builds.
+
 ### Parse & Encode tests with OpenSSL 1.1.1
 ```
 docker build -f ossl.Dockerfile -t libteep_ossl .
@@ -28,6 +33,21 @@ docker run -t libteep_ossl3
 ```
 docker build -f psa.Dockerfile -t libteep_psa .
 docker run -t libteep_psa
+```
+
+### Stable TEEP over HTTP client example
+```
+docker build -f client.Dockerfile -t libteep_client .
+docker run --rm -e TAM_URI=http://host.docker.internal:8080 libteep_client
+```
+
+Override pinned refs only when needed:
+```
+docker build \
+  --build-arg QCBOR_REF=<qcbor_tag_or_sha> \
+  --build-arg T_COSE_REF=<t_cose_tag_or_sha> \
+  --build-arg LIBTEEP_REF=<kentakayama_libteep_tag_or_sha> \
+  -f client.Dockerfile -t libteep_client .
 ```
 
 ### TEEP over HTTP Client test

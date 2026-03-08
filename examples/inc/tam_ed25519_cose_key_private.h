@@ -7,6 +7,9 @@
 
 #ifndef TAM_ED25519_COSE_KEY_PRIVATE_H
 #define TAM_ED25519_COSE_KEY_PRIVATE_H
+
+#include "qcbor/UsefulBuf.h"
+
 const unsigned char tam_ed25519_cose_key_private_buf[] = {
     0xA4,                                   //# map(4)
        0x01,                                //# unsigned(1) / 1 = kty /

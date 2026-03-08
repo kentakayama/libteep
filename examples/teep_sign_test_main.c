@@ -42,7 +42,7 @@ int main(int argc, const char * argv[])
     teep_message.contains = TEEP_MESSAGE_CONTAINS_TOKEN;
     teep_message.token = (teep_buf_t){.ptr = token, .len = sizeof(token)};
 
-    uint8_t expected_success[] = {0x82, 0x05, 0xa1, 0x14, 0x48, 0xa0, 0xa1, 0xa2, 0xa3, 0xa4, 0xa5, 0xa6, 0xa7};
+    uint8_t expected_success[] = {0x82, 0x04, 0xa1, 0x13, 0x48, 0xa0, 0xa1, 0xa2, 0xa3, 0xa4, 0xa5, 0xa6, 0xa7};
     result = teep_encode_message((teep_message_t *)&teep_message, &cbor_buf.ptr, &cbor_buf.len);
     if (result != TEEP_SUCCESS) {
         return EXIT_FAILURE;
