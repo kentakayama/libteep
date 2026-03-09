@@ -9,8 +9,6 @@ LDFLAGS = $(CMD_LD) -lt_cose -lqcbor -lm
 INC = $(CMD_INC) -I ./inc -I ./examples/inc
 TAM = ./bin/teep_cose_tam
 AGENT = ./bin/teep_cose_agent
-VERIFIER = ./bin/teep_cose_verifier
-TRUST_ANCHOR = ./bin/teep_cose_trust_anchor
 SRCS = \
 	examples/teep_examples_common.c \
 	src/teep_common.c \
@@ -21,8 +19,6 @@ OBJDIR = ./obj
 OBJS = $(addprefix $(OBJDIR)/,$(patsubst %.c,%.o,$(SRCS)))
 TAM_OBJ = obj/examples/teep_cose_tam.o
 AGENT_OBJ = obj/examples/teep_cose_agent.o
-VERIFIER_OBJ = obj/examples/teep_cose_verifier.o
-TRUST_ANCHOR_OBJ = obj/examples/teep_cose_trust_anchor.o
 
 ifeq ($(MBEDTLS),1)
     # use MbedTLS
@@ -35,7 +31,7 @@ else
 endif
 
 .PHONY: all
-all: $(TAM) $(AGENT) $(VERIFIER) $(TRUST_ANCHOR)
+all: $(TAM) $(AGENT)
 
 include Makefile.common
 
@@ -48,24 +44,15 @@ $(TAM_OBJ): examples/teep_cose_test_main.c | $(OBJDIR)/examples
 $(AGENT_OBJ): examples/teep_cose_test_main.c | $(OBJDIR)/examples
 	$(CC) $(CFLAGS) $(INC) -DTEEP_ACTOR_AGENT=1 -o $@ -c $<
 
-$(TRUST_ANCHOR_OBJ): examples/teep_cose_test_main.c | $(OBJDIR)/examples
-	$(CC) $(CFLAGS) $(INC) -DTEEP_ACTOR_TRUST_ANCHOR=1 -o $@ -c $<
-
 $(TAM): $(OBJS) $(TAM_OBJ)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 $(AGENT): $(OBJS) $(AGENT_OBJ)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
-$(VERIFIER): $(OBJS) $(VERIFIER_OBJ)
-	$(CC) -o $@ $^ $(LDFLAGS)
-
-$(TRUST_ANCHOR): $(OBJS) $(TRUST_ANCHOR_OBJ)
-	$(CC) -o $@ $^ $(LDFLAGS)
-
 .PHONY: clean
 clean:
-	$(RM) $(OBJS) $(TAM_OBJ) $(AGENT_OBJ) $(VERIFIER_OBJ) $(TAM) $(AGENT) $(VERIFIER)
+	$(RM) $(OBJS) $(TAM_OBJ) $(AGENT_OBJ) $(TAM) $(AGENT)
 
 
 SOURCES := \
@@ -84,4 +71,3 @@ run: $(TAM) $(AGENT) $(SOURCES)
 	$(TAM)   ./testfiles/update.cbor         ./testfiles/update_cose.cbor         || exit 1
 	$(AGENT) ./testfiles/teep_success.cbor   ./testfiles/teep_success_cose.cbor   || exit 1
 	$(AGENT) ./testfiles/teep_error.cbor     ./testfiles/teep_error_cose.cbor     || exit 1
-

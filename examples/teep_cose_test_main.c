@@ -16,19 +16,16 @@
 #include <stdlib.h>
 #endif
 
-UsefulBufC teep_private_key;
 #if TEEP_ACTOR_AGENT == 1
     #include "teep_agent_esp256_cose_key_private.h"
-    teep_private_key = teep_agent_es256_cose_key_private;
+    UsefulBufC teep_private_key = teep_agent_esp256_cose_key_private;
 #elif TEEP_ACTOR_TAM == 1
     /* MbedTLS does not support EdDSA well, so ignore it */
     #include "tam_esp256_cose_key_private.h"
-    teep_private_key = tam_es256_cose_key_private;
-#elif TEEP_ACTOR_TRUST_ANCHOR == 1
-    #include "trust_anchor_prime256v1_cose_key_private.h"
-    teep_private_key = trust_anchor_prime256v1_cose_key_private;
+    UsefulBufC teep_private_key = tam_esp256_cose_key_private;
 #else
     #error Signing key is not specified
+    UsefulBufC teep_private_key;
 #endif
 
 int main(int argc, const char * argv[]) {

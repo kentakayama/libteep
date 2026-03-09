@@ -4,11 +4,17 @@
 # SPDX-License-Identifier: BSD-2-Clause
 #
 
-TARGETS	:=	query_request.cbor \
-			query_response.cbor \
-			update.cbor \
-			teep_success.cbor \
-			teep_error.cbor
+TARGETS	:= query_request.cbor
+TARGETS += query_response.cbor
+TARGETS += update.cbor
+TARGETS += teep_success.cbor
+TARGETS += teep_error.cbor
+
+SIGNED_TARGETS := query_request.tam.cose
+SIGNED_TARGETS += query_response.agent.cose
+SIGNED_TARGETS += update.tam.cose
+SIGNED_TARGETS += teep_success.agent.cose
+SIGNED_TARGETS += teep_error.agent.cose
 
 .PHONY: all
 all: $(TARGETS)
@@ -19,19 +25,17 @@ CODE_PAT	:= ^\~\~\~\~
 	sed -n '/${CODE_PAT}cbor-diag/,/${CODE_PAT}/ p' < $^ | sed '/${CODE_PAT}.*/ d' | diag2cbor.rb > $@
 
 # TAM Sign1
-query_request_cose.cbor: query_request.cbor ../bin/teep_cose_tam
-update_cose.cbor: update.cbor ../bin/teep_cose_tam
+%.tam.cose: %.cbor ../bin/teep_cose_tam
 	../bin/teep_cose_tam $< $@
 
 # Agent Sign1
-query_response_cose.cbor: query_response.cbor ../bin/teep_cose_agent
-teep_success_cose.cbor: teep_success.cbor ../bin/teep_cose_agent
-teep_error_cose.cbor: teep_error.cbor ../bin/teep_cose_agent
+%.agent.cose: %.cbor ../bin/teep_cose_agent
 	../bin/teep_cose_agent $< $@
 
 .PHONY: sign
-sign: $(TARGETS:%.cbor=%_cose.cbor)
+sign: $(SIGNED_TARGETS)
 
 .PHONY: clean
 clean:
 	$(RM) -f $(TARGETS)
+	$(RM) -f $(SIGNED_TARGETS)
