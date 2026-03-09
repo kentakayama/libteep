@@ -1,5 +1,5 @@
 # [libteep](https://github.com/kentakayama/libteep/)
-**libcteep** is a C library for encoding/decoding [IETF TEEP Protocol](https://tools.ietf.org/html/draft-ietf-teep-protocol) messages.
+**libcteep** is a C library for encoding/decoding [IETF TEEP Protocol](https://www.ietf.org/archive/id/draft-ietf-teep-protocol-26.html) messages.
 
 ## Overview
  - Implemented C-native data representation.
@@ -11,6 +11,11 @@
    - The above TEEP Protocol message is protected by the COSE_Sign1 structure.
 
 ## Getting started
+
+### Dockerfile policy
+- `ossl.Dockerfile`, `ossl3.Dockerfile`, and `psa.Dockerfile` are for CI latest checks.
+  They intentionally track latest upstream dependencies and are expected to fail fast when upstream changes break compatibility.
+- `client.Dockerfile` is a stable example image for libteep consumers and pins dependency refs by default for reproducible builds.
 
 ### Parse & Encode tests with OpenSSL 1.1.1
 ```
@@ -30,6 +35,21 @@ docker build -f psa.Dockerfile -t libteep_psa .
 docker run -t libteep_psa
 ```
 
+### Stable TEEP over HTTP client example
+```
+docker build -f client.Dockerfile -t libteep_client .
+docker run --rm -e TAM_URI=http://host.docker.internal:8080 libteep_client
+```
+
+Override pinned refs only when needed:
+```
+docker build \
+  --build-arg QCBOR_REF=<qcbor_tag_or_sha> \
+  --build-arg T_COSE_REF=<t_cose_tag_or_sha> \
+  --build-arg LIBTEEP_REF=<kentakayama_libteep_tag_or_sha> \
+  -f client.Dockerfile -t libteep_client .
+```
+
 ### TEEP over HTTP Client test
 Use [tamproto](https://github.com/ko-isobe/tamproto) as a TAM.
 ```
@@ -38,7 +58,7 @@ docker-compose up
 ```
 
 ## TEEP Protocol Message Examples
-The following description Markdown and CBOR files are compliant with [draft-ietf-teep-protocol-10](https://tools.ietf.org/html/draft-ietf-teep-protocol-10).
+The following description Markdown and CBOR files target [draft-ietf-teep-protocol-26](https://www.ietf.org/archive/id/draft-ietf-teep-protocol-26.html).
 - QueryRequest
   - [query_request.md](https://github.com/kentakayama/libteep/blob/master/testfiles/query_request.md)
   - [query_request.cbor](https://github.com/kentakayama/libteep/blob/master/testfiles/query_request.cbor)

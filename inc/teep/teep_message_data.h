@@ -43,8 +43,8 @@ typedef enum teep_type {
     TEEP_TYPE_QUERY_REQUEST                 = 1,
     TEEP_TYPE_QUERY_RESPONSE                = 2,
     TEEP_TYPE_UPDATE                        = 3,
-    TEEP_TYPE_TEEP_SUCCESS                  = 5,
-    TEEP_TYPE_TEEP_ERROR                    = 6
+    TEEP_TYPE_SUCCESS                       = 4,
+    TEEP_TYPE_ERROR                         = 5,
 } teep_type_t;
 
 /*
@@ -56,24 +56,24 @@ typedef enum teep_options_key {
     TEEP_OPTIONS_KEY_CHALLENGE                          = 2,
     TEEP_OPTIONS_KEY_VERSIONS                           = 3,
     TEEP_OPTIONS_KEY_SUPPORTED_SUIT_COSE_PROFILES       = 4,
-    TEEP_OPTIONS_KEY_SELECTED_TEEP_CIPHER_SUITE         = 5,
-    TEEP_OPTIONS_KEY_SELECTED_VERSION                   = 6,
-    TEEP_OPTIONS_KEY_ATTESTATION_PAYLOAD                = 7,
-    TEEP_OPTIONS_KEY_TC_LIST                            = 8,
-    TEEP_OPTIONS_KEY_EXT_LIST                           = 9,
-    TEEP_OPTIONS_KEY_MANIFEST_LIST                      = 10,
-    TEEP_OPTIONS_KEY_MSG                                = 11,
-    TEEP_OPTIONS_KEY_ERR_MSG                            = 12,
-    TEEP_OPTIONS_KEY_ATTESTATION_PAYLOAD_FORMAT         = 13,
-    TEEP_OPTIONS_KEY_REQUESTED_TC_LIST                  = 14,
-    TEEP_OPTIONS_KEY_UNNEEDED_TC_LIST                   = 15,
-    TEEP_OPTIONS_KEY_COMPONENT_ID                       = 16,
-    TEEP_OPTIONS_KEY_TC_MANIFEST_SEQUENCE_NUMBER        = 17,
-    TEEP_OPTIONS_KEY_HAVE_BINARY                        = 18,
-    TEEP_OPTIONS_KEY_SUIT_REPORTS                       = 19,
-    TEEP_OPTIONS_KEY_TOKEN                              = 20,
-    TEEP_OPTIONS_KEY_SUPPORTED_FRESHNESS_MECHANISMS     = 21,
-    TEEP_OPTIONS_KEY_ERR_CODE                           = 23,
+    TEEP_OPTIONS_KEY_SELECTED_VERSION                   = 5,
+    TEEP_OPTIONS_KEY_ATTESTATION_PAYLOAD                = 6,
+    TEEP_OPTIONS_KEY_TC_LIST                            = 7,
+    TEEP_OPTIONS_KEY_EXT_LIST                           = 8,
+    TEEP_OPTIONS_KEY_MANIFEST_LIST                      = 9,
+    TEEP_OPTIONS_KEY_MSG                                = 10,
+    TEEP_OPTIONS_KEY_ERR_MSG                            = 11,
+    TEEP_OPTIONS_KEY_ATTESTATION_PAYLOAD_FORMAT         = 12,
+    TEEP_OPTIONS_KEY_REQUESTED_TC_LIST                  = 13,
+    TEEP_OPTIONS_KEY_UNNEEDED_TC_LIST                   = 14,
+    TEEP_OPTIONS_KEY_COMPONENT_ID                       = 15,
+    TEEP_OPTIONS_KEY_TC_MANIFEST_SEQUENCE_NUMBER        = 16,
+    TEEP_OPTIONS_KEY_HAVE_BINARY                        = 17,
+    TEEP_OPTIONS_KEY_SUIT_REPORTS                       = 18,
+    TEEP_OPTIONS_KEY_TOKEN                              = 19,
+    TEEP_OPTIONS_KEY_SUPPORTED_FRESHNESS_MECHANISMS     = 20,
+    TEEP_OPTIONS_KEY_ERR_LANG                           = 21,
+    TEEP_OPTIONS_KEY_ERR_CODE                           = 22,
 } teep_options_key_t;
 
 typedef enum teep_cose_algs {
@@ -166,9 +166,10 @@ typedef enum teep_err_code {
     TEEP_ERR_CODE_UNSUPPORTED_CIPHER_SUITES = 5,
     TEEP_ERR_CODE_BAD_CERTIFICATE = 6,
     TEEP_ERR_CODE_ATTESTATION_REQUIRED = 7,
+    TEEP_ERR_CODE_UNSUPPORTED_SUIT_REPORT = 8,
     TEEP_ERR_CODE_CERTIFICATE_EXPIRED = 9,
     TEEP_ERR_CODE_TEMPORARY_ERROR = 10,
-    TEEP_ERR_CODE_MANIFEST_PROCESSING_FAILED = 17
+    TEEP_ERR_CODE_MANIFEST_PROCESSING_FAILED = 11
 } teep_err_code_t;
 
 /*
@@ -263,7 +264,6 @@ typedef struct teep_requested_tc_info_array {
 #define TEEP_MESSAGE_CONTAINS_SUPPORTED_SUIT_COSE_PROFILES BIT(TEEP_OPTIONS_KEY_SUPPORTED_SUIT_COSE_PROFILES)
 #define TEEP_MESSAGE_CONTAINS_CHALLENGE BIT(TEEP_OPTIONS_KEY_CHALLENGE)
 #define TEEP_MESSAGE_CONTAINS_VERSIONS BIT(TEEP_OPTIONS_KEY_VERSIONS)
-#define TEEP_MESSAGE_CONTAINS_SELECTED_TEEP_CIPHER_SUITE BIT(TEEP_OPTIONS_KEY_SELECTED_TEEP_CIPHER_SUITE)
 #define TEEP_MESSAGE_CONTAINS_SELECTED_VERSION BIT(TEEP_OPTIONS_KEY_SELECTED_VERSION)
 #define TEEP_MESSAGE_CONTAINS_ATTESTATION_PAYLOAD BIT(TEEP_OPTIONS_KEY_ATTESTATION_PAYLOAD)
 #define TEEP_MESSAGE_CONTAINS_TC_LIST BIT(TEEP_OPTIONS_KEY_TC_LIST)
@@ -280,9 +280,8 @@ typedef struct teep_requested_tc_info_array {
 #define TEEP_MESSAGE_CONTAINS_SUIT_REPORTS BIT(TEEP_OPTIONS_KEY_SUIT_REPORTS)
 #define TEEP_MESSAGE_CONTAINS_TOKEN BIT(TEEP_OPTIONS_KEY_TOKEN)
 #define TEEP_MESSAGE_CONTAINS_SUPPORTED_FRESHNESS_MECHANISMS BIT(TEEP_OPTIONS_KEY_SUPPORTED_FRESHNESS_MECHANISMS)
+#define TEEP_MESSAGE_CONTAINS_ERR_LANG BIT(TEEP_OPTIONS_KEY_ERR_LANG)
 #define TEEP_MESSAGE_CONTAINS_ERR_CODE BIT(TEEP_OPTIONS_KEY_ERR_CODE)
-/* 22 <= unused <= 62 */
-#define TEEP_MESSAGE_CONTAINS_DATA_ITEM_REQUESTED BIT(63)
 
 /*
  * teep-message-header
@@ -332,7 +331,6 @@ typedef struct teep_query_response {
 
     uint64_t                                contains;
     teep_buf_t                              token;
-    teep_cipher_suite_t                     selected_teep_cipher_suite;
     uint32_t                                selected_version;
     teep_buf_t                              attestation_payload_format;
     teep_buf_t                              attestation_payload;
@@ -340,10 +338,10 @@ typedef struct teep_query_response {
     //system_property_claims_array_t          tc_list;
     teep_buf_array_t                        tc_list;
     teep_requested_tc_info_array_t          requested_tc_list;
-    teep_buf_array_t                        unneeded_tc_list;
+    teep_buf_array_t                        unneeded_manifest_list;
     teep_uint64_array_t                     ext_list;
-    // TODO :                       query-response-extensions
-    // TODO :                       teep-option-extensions
+    // TODO :                               query-response-extensions
+    // TODO :                               teep-option-extensions
 } teep_query_response_t;
 
 /*
@@ -354,12 +352,13 @@ typedef struct teep_update {
 
     uint64_t                contains;
     teep_buf_t              token;
-    teep_buf_array_t        unneeded_tc_list; // [ + SUIT_Component_Identifier ]
+    teep_buf_array_t        unneeded_manifest_list; // [ + SUIT_Component_Identifier ]
     teep_buf_array_t        manifest_list;
     teep_buf_t              attestation_payload_format;
     teep_buf_t              attestation_payload;
     teep_err_code_t         err_code;
     teep_buf_t              err_msg;
+    teep_buf_t              err_lang;
 
     // TODO :               update-extensions
     // TODO :               teep-option-extensions
@@ -383,20 +382,22 @@ typedef struct teep_success {
  * teep-error
  */
 typedef struct teep_error {
-    teep_type_t                 type;
+    teep_type_t                     type;
 
-    uint64_t                    contains;
-    teep_buf_t                  token;
-    teep_buf_t                  err_msg;
-    teep_cipher_suite_array_t   supported_teep_cipher_suites;
-    teep_uint32_array_t         supported_freshness_mechanisms;
-    teep_buf_t                  challenge;
-    teep_uint32_array_t         versions;
-    teep_buf_array_t            suit_reports;
-    // TODO :                   $$teep-error--extensions
-    // TODO :                   $$teep-option-extensions
+    uint64_t                        contains;
+    teep_buf_t                      token;
+    teep_buf_t                      err_msg;
+    teep_buf_t                      err_lang;
+    teep_cipher_suite_array_t       supported_teep_cipher_suites;
+    teep_uint32_array_t             supported_freshness_mechanisms;
+    teep_suit_cose_profile_array_t  supported_suit_cose_profiles;
+    teep_buf_t                      challenge;
+    teep_uint32_array_t             versions;
+    teep_buf_array_t                suit_reports;
+    // TODO :                       $$teep-error--extensions
+    // TODO :                       $$teep-option-extensions
 
-    teep_err_code_t             err_code;
+    teep_err_code_t                 err_code;
 } teep_error_t;
 
 /*

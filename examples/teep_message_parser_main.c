@@ -16,16 +16,14 @@
 #define MAX_FILE_BUFFER_SIZE                ( 4 * 1024 * 1024)
 
 #if TEEP_ACTOR_AGENT == 1
-#include "tam_es256_public_key.h"
-const unsigned char *teep_public_key = tam_es256_public_key;
+#include "tam_esp256_cose_key_public.h"
+UsefulBufC teep_public_key = tam_esp256_cose_key_public;
 #elif TEEP_ACTOR_TAM == 1
-#include "teep_agent_es256_public_key.h"
-const unsigned char *teep_public_key = teep_agent_es256_public_key;
-#elif TEEP_ACTOR_VERIFIER == 1
-#include "verifier_es256_public_key.h"
-const unsigned char *teep_public_key = verifier_es256_public_key;
+#include "teep_agent_esp256_cose_key_public.h"
+UsefulBufC teep_public_key = teep_agent_esp256_cose_key_public;
 #else
-const unsigned char *teep_public_key = NULL;
+#error Public key is not specified
+UsefulBufC teep_public_key = NULLUsefulBufC;
 #endif
 
 #ifdef PARSE_SUIT
@@ -47,14 +45,11 @@ int main(int argc, const char * argv[])
     cbor_file_name = argv[1];
 
     teep_mechanism_t mechanism;
-    result = teep_key_init_es256_public_key(teep_public_key, NULLUsefulBufC, &mechanism.key);
+    result = teep_set_mechanism_from_cose_key(teep_public_key, NULLUsefulBufC, &mechanism);
     if (result != TEEP_SUCCESS) {
         printf("main : Failed to parse t_cose_key. (%d)\n", result);
     }
     mechanism.use = true;
-    printf("public_key : ");
-    teep_print_hex(teep_public_key, PRIME256V1_PUBLIC_KEY_LENGTH);
-    printf("\n");
 
     // Read cbor file.
     UsefulBuf cbor_buf = (UsefulBuf) {

@@ -7,11 +7,8 @@
 CFLAGS = -Wall -g
 LDFLAGS = $(CMD_LD) -lt_cose -lqcbor -lm
 INC = $(CMD_INC) -I ./inc -I ./examples/inc
-TAM0 = ./bin/teep_cose_tam0
-TAM1 = ./bin/teep_cose_tam1
+TAM = ./bin/teep_cose_tam
 AGENT = ./bin/teep_cose_agent
-VERIFIER = ./bin/teep_cose_verifier
-TRUST_ANCHOR = ./bin/teep_cose_trust_anchor
 SRCS = \
 	examples/teep_examples_common.c \
 	src/teep_common.c \
@@ -20,11 +17,8 @@ SRCS = \
 	src/teep_cose.c
 OBJDIR = ./obj
 OBJS = $(addprefix $(OBJDIR)/,$(patsubst %.c,%.o,$(SRCS)))
-TAM0_OBJ = obj/examples/teep_cose_tam0.o
-TAM1_OBJ = obj/examples/teep_cose_tam1.o
+TAM_OBJ = obj/examples/teep_cose_tam.o
 AGENT_OBJ = obj/examples/teep_cose_agent.o
-VERIFIER_OBJ = obj/examples/teep_cose_verifier.o
-TRUST_ANCHOR_OBJ = obj/examples/teep_cose_trust_anchor.o
 
 ifeq ($(MBEDTLS),1)
     # use MbedTLS
@@ -37,46 +31,28 @@ else
 endif
 
 .PHONY: all
-all: $(TAM0) $(TAM1) $(AGENT) $(VERIFIER) $(TRUST_ANCHOR)
+all: $(TAM) $(AGENT)
 
 include Makefile.common
 
 $(OBJDIR)/%.o: %.c | $(OBJDIR) $(OBJDIR)/examples $(OBJDIR)/src
 	$(CC) $(CFLAGS) $(INC) -o $@ -c $<
 
-$(TAM0_OBJ): examples/teep_cose_test_main.c | $(OBJDIR)/examples
-	$(CC) $(CFLAGS) $(INC) -DTEEP_ACTOR_TAM0=1 -o $@ -c $<
-
-$(TAM1_OBJ): examples/teep_cose_test_main.c | $(OBJDIR)/examples
-	$(CC) $(CFLAGS) $(INC) -DTEEP_ACTOR_TAM1=1 -o $@ -c $<
+$(TAM_OBJ): examples/teep_cose_test_main.c | $(OBJDIR)/examples
+	$(CC) $(CFLAGS) $(INC) -DTEEP_ACTOR_TAM=1 -o $@ -c $<
 
 $(AGENT_OBJ): examples/teep_cose_test_main.c | $(OBJDIR)/examples
 	$(CC) $(CFLAGS) $(INC) -DTEEP_ACTOR_AGENT=1 -o $@ -c $<
 
-$(VERIFIER_OBJ): examples/teep_cose_test_main.c | $(OBJDIR)/examples
-	$(CC) $(CFLAGS) $(INC) -DTEEP_ACTOR_VERIFIER=1 -o $@ -c $<
-
-$(TRUST_ANCHOR_OBJ): examples/teep_cose_test_main.c | $(OBJDIR)/examples
-	$(CC) $(CFLAGS) $(INC) -DTEEP_ACTOR_TRUST_ANCHOR=1 -o $@ -c $<
-
-$(TAM0): $(OBJS) $(TAM0_OBJ)
-	$(CC) -o $@ $^ $(LDFLAGS)
-
-$(TAM1): $(OBJS) $(TAM1_OBJ)
+$(TAM): $(OBJS) $(TAM_OBJ)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 $(AGENT): $(OBJS) $(AGENT_OBJ)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
-$(VERIFIER): $(OBJS) $(VERIFIER_OBJ)
-	$(CC) -o $@ $^ $(LDFLAGS)
-
-$(TRUST_ANCHOR): $(OBJS) $(TRUST_ANCHOR_OBJ)
-	$(CC) -o $@ $^ $(LDFLAGS)
-
 .PHONY: clean
 clean:
-	$(RM) $(OBJS) $(TAM0_OBJ) $(TAM1_OBJ) $(AGENT_OBJ) $(VERIFIER_OBJ) $(TAM0) $(TAM1) $(AGENT) $(VERIFIER)
+	$(RM) $(OBJS) $(TAM_OBJ) $(AGENT_OBJ) $(TAM) $(AGENT)
 
 
 SOURCES := \
@@ -84,17 +60,14 @@ SOURCES := \
 	query_response.cbor \
 	update.cbor \
 	teep_success.cbor \
-	teep_error.cbor \
-	evidence.cbor \
-	attestation_results.cbor
+	teep_error.cbor
 
 $(SOURCES):
 	$(MAKE) -C testfiles $@
 
-run: $(TAM1) $(AGENT) $(SOURCES)
-	$(TAM1)  ./testfiles/query_request.cbor  ./testfiles/query_request_cose.cbor  || exit 1
+run: $(TAM) $(AGENT) $(SOURCES)
+	$(TAM)   ./testfiles/query_request.cbor  ./testfiles/query_request_cose.cbor  || exit 1
 	$(AGENT) ./testfiles/query_response.cbor ./testfiles/query_response_cose.cbor || exit 1
-	$(TAM1)  ./testfiles/update.cbor         ./testfiles/update_cose.cbor         || exit 1
+	$(TAM)   ./testfiles/update.cbor         ./testfiles/update_cose.cbor         || exit 1
 	$(AGENT) ./testfiles/teep_success.cbor   ./testfiles/teep_success_cose.cbor   || exit 1
 	$(AGENT) ./testfiles/teep_error.cbor     ./testfiles/teep_error_cose.cbor     || exit 1
-

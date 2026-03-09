@@ -175,6 +175,7 @@ teep_err_t teep_create_es_key(teep_key_t *key)
     psa_algorithm_t alg;
     switch (key->cose_algorithm_id) {
     case T_COSE_ALGORITHM_ES256:
+    case T_COSE_ALGORITHM_ESP256:
         if (key->private_key == NULL) {
             type = PSA_KEY_TYPE_ECC_PUBLIC_KEY(PSA_ECC_FAMILY_SECP_R1);
             usage = PSA_KEY_USAGE_VERIFY_HASH | PSA_KEY_USAGE_EXPORT;
@@ -186,6 +187,7 @@ teep_err_t teep_create_es_key(teep_key_t *key)
         alg = PSA_ALG_DETERMINISTIC_ECDSA(PSA_ALG_SHA_256);
         break;
     case T_COSE_ALGORITHM_ES384:
+    case T_COSE_ALGORITHM_ESP384:
         if (key->private_key == NULL) {
             type = PSA_KEY_TYPE_ECC_PUBLIC_KEY(PSA_ECC_FAMILY_SECP_R1);
             usage = PSA_KEY_USAGE_VERIFY_HASH | PSA_KEY_USAGE_EXPORT;
@@ -197,6 +199,7 @@ teep_err_t teep_create_es_key(teep_key_t *key)
         alg = PSA_ALG_DETERMINISTIC_ECDSA(PSA_ALG_SHA_384);
         break;
     case T_COSE_ALGORITHM_ES512:
+    case T_COSE_ALGORITHM_ESP512:
         if (key->private_key == NULL) {
             type = PSA_KEY_TYPE_ECC_PUBLIC_KEY(PSA_ECC_FAMILY_SECP_R1);
             usage = PSA_KEY_USAGE_VERIFY_HASH | PSA_KEY_USAGE_EXPORT;
@@ -276,14 +279,17 @@ teep_err_t teep_create_es_key(teep_key_t *key)
     char *group_name;
     switch (key->cose_algorithm_id) {
     case T_COSE_ALGORITHM_ES256:
+    case T_COSE_ALGORITHM_ESP256:
         id = EVP_PKEY_EC;
         group_name = SN_X9_62_prime256v1;
         break;
     case T_COSE_ALGORITHM_ES384:
+    case T_COSE_ALGORITHM_ESP384:
         id = EVP_PKEY_EC;
         group_name = SN_secp384r1;
         break;
     case T_COSE_ALGORITHM_ES512:
+    case T_COSE_ALGORITHM_ESP512:
         id = EVP_PKEY_EC;
         group_name = SN_secp521r1;
         break;
@@ -371,12 +377,15 @@ teep_err_t teep_create_es_key(teep_key_t *key)
     const char *group_name;
     switch (key->cose_algorithm_id) {
     case T_COSE_ALGORITHM_ES256:
+    case T_COSE_ALGORITHM_ESP256
         group_name = "prime256v1";
         break;
     case T_COSE_ALGORITHM_ES384:
+    case T_COSE_ALGORITHM_ESP384
         group_name = "secp384r1";
         break;
     case T_COSE_ALGORITHM_ES512:
+    case T_COSE_ALGORITHM_ESP512:
         group_name = "secp521r1";
         break;
     default:
@@ -443,6 +452,20 @@ teep_err_t teep_key_init_es256_key_pair(const unsigned char *private_key,
     return teep_create_es_key(cose_key_pair);
 }
 
+teep_err_t teep_key_init_esp256_key_pair(const unsigned char *private_key,
+                                         const unsigned char *public_key,
+                                         UsefulBufC kid,
+                                         teep_key_t *cose_key_pair)
+{
+    cose_key_pair->private_key = private_key;
+    cose_key_pair->private_key_len = (private_key == NULL) ? 0 : PRIME256V1_PRIVATE_KEY_LENGTH;
+    cose_key_pair->public_key = public_key;
+    cose_key_pair->public_key_len = PRIME256V1_PUBLIC_KEY_LENGTH;
+    cose_key_pair->cose_algorithm_id = T_COSE_ALGORITHM_ESP256;
+    cose_key_pair->kid = kid;
+    return teep_create_es_key(cose_key_pair);
+}
+
 teep_err_t teep_key_init_es384_key_pair(const unsigned char *private_key,
                                         const unsigned char *public_key,
                                         UsefulBufC kid,
@@ -490,6 +513,13 @@ teep_err_t teep_key_init_es256_public_key(const unsigned char *public_key,
                                           teep_key_t *cose_public_key)
 {
     return teep_key_init_es256_key_pair(NULL, public_key, kid, cose_public_key);
+}
+
+teep_err_t teep_key_init_esp256_public_key(const unsigned char *public_key,
+                                           UsefulBufC kid,
+                                           teep_key_t *cose_public_key)
+{
+    return teep_key_init_esp256_key_pair(NULL, public_key, kid, cose_public_key);
 }
 
 teep_err_t teep_key_init_es384_public_key(const unsigned char *public_key,
@@ -547,6 +577,7 @@ teep_err_t teep_set_mechanism_from_cose_key_from_item(QCBORDecodeContext *contex
         return TEEP_ERR_INVALID_TYPE_OF_VALUE;
     }
     UsefulBuf_MAKE_STACK_UB(public_key, TEEP_MAX_PUBLIC_KEY_LEN); // for ECDSA (x, y) parameters
+    int64_t alg = 0;
     int64_t crv = 0;
     int64_t kty = 0;
 
@@ -591,6 +622,21 @@ teep_err_t teep_set_mechanism_from_cose_key_from_item(QCBORDecodeContext *contex
             }
             kty = item->val.int64;
             break;
+        case TEEP_COSE_KID:
+            if (item->uDataType != QCBOR_TYPE_BYTE_STRING) {
+                return TEEP_ERR_INVALID_TYPE_OF_VALUE;
+            }
+            if (UsefulBuf_IsNULLOrEmptyC(kid)) {
+                // overwrite kid if it is not set by parameter.
+                kid = item->val.string;
+            }
+            break;
+        case TEEP_COSE_ALG:
+            if (item->uDataType != QCBOR_TYPE_INT64) {
+                return TEEP_ERR_INVALID_TYPE_OF_VALUE;
+            }
+            alg = item->val.int64;
+            break;
         default:
             return TEEP_ERR_NOT_IMPLEMENTED;
         }
@@ -618,10 +664,26 @@ teep_err_t teep_set_mechanism_from_cose_key_from_item(QCBORDecodeContext *contex
                 return TEEP_ERR_INVALID_VALUE;
             }
             if (d.len == PRIME256V1_PRIVATE_KEY_LENGTH) {
-                result = teep_key_init_es256_key_pair(d.ptr, public_key.ptr, kid, &mechanism->key);
+                if (alg == T_COSE_ALGORITHM_ESP256) {
+                    result = teep_key_init_esp256_key_pair(d.ptr, public_key.ptr, kid, &mechanism->key);
+                }
+                else if (alg == T_COSE_ALGORITHM_ES256 || alg == 0) {
+                    result = teep_key_init_es256_key_pair(d.ptr, public_key.ptr, kid, &mechanism->key);
+                }
+                else {
+                    return TEEP_ERR_INVALID_VALUE;
+                }
             }
             else if (d.len == 0) {
-                result = teep_key_init_es256_public_key(public_key.ptr, kid, &mechanism->key);
+                if (alg == T_COSE_ALGORITHM_ESP256) {
+                    result = teep_key_init_esp256_public_key(public_key.ptr, kid, &mechanism->key);
+                }
+                else if (alg == T_COSE_ALGORITHM_ES256 || alg == 0) {
+                    result = teep_key_init_es256_public_key(public_key.ptr, kid, &mechanism->key);
+                }
+                else {
+                    return TEEP_ERR_INVALID_VALUE;
+                }
             }
             else {
                 return TEEP_ERR_INVALID_VALUE;

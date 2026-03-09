@@ -17,67 +17,15 @@
 #endif
 
 #if TEEP_ACTOR_AGENT == 1
-  #include "teep_agent_es256_cose_key_private.h"
-  #define NUM_TEEP_PRIVATE_KEY 1
-  UsefulBufC teep_private_keys[NUM_TEEP_PRIVATE_KEY] = {
-      teep_agent_es256_cose_key_private,
-  };
-  UsefulBuf kids[NUM_TEEP_PRIVATE_KEY] = {
-      {NULL, SHA256_DIGEST_LENGTH},
-  };
-#elif TEEP_ACTOR_TAM0 == 1
-  #if defined(LIBTEEP_PSA_CRYPTO_C)
+    #include "teep_agent_esp256_cose_key_private.h"
+    UsefulBufC teep_private_key = teep_agent_esp256_cose_key_private;
+#elif TEEP_ACTOR_TAM == 1
     /* MbedTLS does not support EdDSA well, so ignore it */
-    #include "tam_es256_cose_key_private.h"
-    #define NUM_TEEP_PRIVATE_KEY 1
-    UsefulBufC teep_private_keys[NUM_TEEP_PRIVATE_KEY] = {
-        tam_es256_cose_key_private,
-    };
-    UsefulBuf kids[NUM_TEEP_PRIVATE_KEY] = {
-        {NULL, SHA256_DIGEST_LENGTH},
-    };
-  #else
-    #include "tam_es256_cose_key_private.h"
-    #include "tam_ed25519_cose_key_private.h"
-    #define NUM_TEEP_PRIVATE_KEY 2
-    UsefulBufC teep_private_keys[NUM_TEEP_PRIVATE_KEY] = {
-        tam_es256_cose_key_private,
-        tam_ed25519_cose_key_private
-    };
-    UsefulBuf kids[NUM_TEEP_PRIVATE_KEY] = {
-        {NULL, SHA256_DIGEST_LENGTH},
-        {NULL, SHA256_DIGEST_LENGTH},
-    };
-  #endif
-#elif TEEP_ACTOR_TAM1 == 1
-  #include "tam_es256_cose_key_private.h"
-  #define NUM_TEEP_PRIVATE_KEY 1
-  UsefulBufC teep_private_keys[NUM_TEEP_PRIVATE_KEY] = {
-      tam_es256_cose_key_private,
-  };
-  UsefulBuf kids[NUM_TEEP_PRIVATE_KEY] = {
-      {NULL, SHA256_DIGEST_LENGTH},
-  };
-#elif TEEP_ACTOR_VERIFIER == 1
-  #include "verifier_es256_cose_key_private.h"
-  #define NUM_TEEP_PRIVATE_KEY 1
-  UsefulBufC teep_private_keys[NUM_TEEP_PRIVATE_KEY] = {
-      verifier_es256_cose_key_private
-  };
-  UsefulBuf kids[NUM_TEEP_PRIVATE_KEY] = {
-      {NULL, SHA256_DIGEST_LENGTH},
-  };
-#elif TEEP_ACTOR_TRUST_ANCHOR == 1
-  #include "trust_anchor_prime256v1_cose_key_private.h"
-  #define NUM_TEEP_PRIVATE_KEY 1
-  UsefulBufC teep_private_keys[NUM_TEEP_PRIVATE_KEY] = {
-      trust_anchor_prime256v1_cose_key_private
-  };
-  UsefulBuf kids[NUM_TEEP_PRIVATE_KEY] = {
-      NULLUsefulBuf
-  };
+    #include "tam_esp256_cose_key_private.h"
+    UsefulBufC teep_private_key = tam_esp256_cose_key_private;
 #else
-  #error Signing key is not specified
+    #error Signing key is not specified
+    UsefulBufC teep_private_key;
 #endif
 
 int main(int argc, const char * argv[]) {
@@ -89,24 +37,20 @@ int main(int argc, const char * argv[]) {
         return EXIT_FAILURE;
     }
 
-    teep_mechanism_t mechanisms[NUM_TEEP_PRIVATE_KEY];
-    for (size_t i = 0; i < NUM_TEEP_PRIVATE_KEY; i++) {
-        if (UsefulBuf_IsNULL(kids[i]) && !UsefulBuf_IsEmpty(kids[i])) {
-            kids[i].ptr = malloc(kids[i].len);
-            result = teep_calc_cose_key_thumbprint(teep_private_keys[i], kids[i]);
-            if (result != TEEP_SUCCESS) {
-                printf("main : Failed to calculate COSE_Key thumbprint. %s(%d)\n", teep_err_to_str(result), result);
-                return EXIT_FAILURE;
-            }
-        }
-        result = teep_set_mechanism_from_cose_key(teep_private_keys[i], UsefulBuf_Const(kids[i]), &mechanisms[i]);
-        if (result != TEEP_SUCCESS) {
-            printf("main : Failed to create key pair. %s(%d)\n", teep_err_to_str(result), result);
-            return EXIT_FAILURE;
-        }
-        mechanisms[i].cose_tag = (NUM_TEEP_PRIVATE_KEY > 1) ? CBOR_TAG_COSE_SIGN : CBOR_TAG_COSE_SIGN1;
-        mechanisms[i].use = true;
+    teep_mechanism_t mechanism;
+    UsefulBuf_MAKE_STACK_UB(kid_buf, SHA256_DIGEST_LENGTH);
+    result = teep_calc_cose_key_thumbprint(teep_private_key, kid_buf);
+    if (result != TEEP_SUCCESS) {
+        printf("main : Failed to calculate COSE_Key thumbprint. %s(%d)\n", teep_err_to_str(result), result);
+        return EXIT_FAILURE;
     }
+    result = teep_set_mechanism_from_cose_key(teep_private_key, UsefulBuf_Const(kid_buf), &mechanism);
+    if (result != TEEP_SUCCESS) {
+        printf("main : Failed to create key pair. %s(%d)\n", teep_err_to_str(result), result);
+        return EXIT_FAILURE;
+    }
+    mechanism.cose_tag = CBOR_TAG_COSE_SIGN1;
+    mechanism.use = true;
 
     // Read cbor file.
     printf("main : Read CBOR file.\n");
@@ -135,12 +79,7 @@ int main(int argc, const char * argv[]) {
     UsefulBuf_MAKE_STACK_UB(signed_cose, MAX_FILE_BUFFER_SIZE);
 #endif
 
-#if NUM_TEEP_PRIVATE_KEY > 1
-    result = teep_sign_cose_sign(UsefulBuf_Const(cbor_buf), mechanisms, NUM_TEEP_PRIVATE_KEY, &signed_cose);
-#else
-    result = teep_sign_cose_sign1(UsefulBuf_Const(cbor_buf), &mechanisms[0], &signed_cose);
-#endif
-
+    result = teep_sign_cose_sign1(UsefulBuf_Const(cbor_buf), &mechanism, &signed_cose);
     if (result != TEEP_SUCCESS) {
         printf("main : Failed to sign. %s(%d)\n", teep_err_to_str(result), result);
         return EXIT_FAILURE;
@@ -151,11 +90,7 @@ int main(int argc, const char * argv[]) {
 
     // Verify cose signed file.
     UsefulBufC returned_payload;
-#if NUM_TEEP_PRIVATE_KEY > 1
-    result = teep_verify_cose_sign(UsefulBuf_Const(signed_cose), mechanisms, NUM_TEEP_PRIVATE_KEY, &returned_payload);
-#else
-    result = teep_verify_cose_sign1(UsefulBuf_Const(signed_cose), &mechanisms[0], &returned_payload);
-#endif
+    result = teep_verify_cose_sign1(UsefulBuf_Const(signed_cose), &mechanism, &returned_payload);
     if (result != TEEP_SUCCESS) {
         printf("Failed to verify file. %s(%d)\n", teep_err_to_str(result), result);
         return EXIT_FAILURE;
@@ -173,13 +108,7 @@ int main(int argc, const char * argv[]) {
         printf("main : Succeed to write to \"%s\".\n", argv[2]);
     }
 
-    for (size_t i = 0; i < NUM_TEEP_PRIVATE_KEY; i++) {
-        if (kids[i].ptr != NULL) {
-            free(kids[i].ptr);
-        }
-        teep_free_key(&mechanisms[i].key);
-    }
-
+    teep_free_key(&mechanism.key);
 #if MAX_FILE_BUFFER_SIZE > (2 * 1024)
     free(cbor_buf.ptr);
     free(signed_cose.ptr);

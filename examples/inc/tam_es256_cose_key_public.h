@@ -7,6 +7,9 @@
 
 #ifndef TAM_ES256_COSE_KEY_PUBLIC_H
 #define TAM_ES256_COSE_KEY_PUBLIC_H
+
+#include "qcbor/UsefulBuf.h"
+
 const unsigned char tam_es256_cose_key_public_buf[] = {
     0xA4,                                 //# map(4)
        0x01,                              //# unsigned(1) / 1 = kty /

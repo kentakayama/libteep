@@ -7,6 +7,9 @@
 
 #ifndef TAM_ED25519_COSE_KEY_PUBLIC_H
 #define TAM_ED25519_COSE_KEY_PUBLIC_H
+
+#include "qcbor/UsefulBuf.h"
+
 const unsigned char tam_ed25519_cose_key_public_buf[] = {
     0xA3,                                   //# map(3)
        0x01,                                //# unsigned(1) / 1 = kty /

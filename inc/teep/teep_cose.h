@@ -39,6 +39,9 @@
 #endif /* LIBTEEP_PSA_CRYPTO_C */
 
 #define TEEP_COSE_KTY                   (1)
+#define TEEP_COSE_KID                   (2)
+#define TEEP_COSE_ALG                   (3)
+
 #define TEEP_COSE_KTY_OKP               (1)
 #define TEEP_COSE_KTY_EC2               (2)
 #define TEEP_COSE_KTY_SYMMETRIC         (4)
@@ -126,6 +129,23 @@ teep_err_t teep_key_init_es256_key_pair(const unsigned char *private_key,
                                         teep_key_t *cose_key_pair);
 
 /*!
+    \brief  Create ESP256 key pair
+
+    \param[in]  private_key         Pointer of char array type of private key.
+    \param[in]  public_key          Pointer of char array type of public key.
+    \param[in]  kid                 kid to be encoded in unprotected header or `NULLUsefulBufC`.
+    \param[out] cose_public_key     Pointer of teep_key_t type of public key.
+
+    \return     This returns TEEP_SUCCESS or TEEP_ERR_FATAL.
+
+    The length of the char array public key is estimated from the algorithm and library.
+ */
+teep_err_t teep_key_init_esp256_key_pair(const unsigned char *private_key,
+                                         const unsigned char *public_key,
+                                         UsefulBufC kid,
+                                         teep_key_t *cose_key_pair);
+
+/*!
     \brief  Create ES256 public key
 
     \param[in]  public_key          Pointer of char array type of public key.
@@ -137,6 +157,21 @@ teep_err_t teep_key_init_es256_key_pair(const unsigned char *private_key,
     The length of the char array public key is estimated from the algorithm and library.
  */
 teep_err_t teep_key_init_es256_public_key(const unsigned char *public_key,
+                                          UsefulBufC kid,
+                                          teep_key_t *cose_key_pair);
+
+/*!
+    \brief  Create EP256 public key
+
+    \param[in]  public_key          Pointer of char array type of public key.
+    \param[in]  kid                 kid to be encoded in unprotected header or `NULLUsefulBufC`.
+    \param[out] cose_public_key     Pointer of teep_key_t type of public key.
+
+    \return     This returns TEEP_SUCCESS or TEEP_ERR_FAILED_TO_VERIFY.
+
+    The length of the char array public key is estimated from the algorithm and library.
+ */
+teep_err_t teep_key_init_esp256_public_key(const unsigned char *public_key,
                                           UsefulBufC kid,
                                           teep_key_t *cose_key_pair);
 
