@@ -5,12 +5,12 @@
  *
  */
 
-#ifndef TEEP_AGENT_ESP256_COSE_KEY_PRIVATE_H
-#define TEEP_AGENT_ESP256_COSE_KEY_PRIVATE_H
+#ifndef TAM_ESP256_COSE_KEY_PRIVATE_H
+#define TAM_ESP256_COSE_KEY_PRIVATE_H
 
 #include "qcbor/UsefulBuf.h"
 
-const unsigned char teep_agent_esp256_cose_key_public_buf[] = {
+const unsigned char tam_esp256_cose_key_public_buf[] = {
     0xA6,                                 //# map(6)
        0x01,                              //# unsigned(1) / 1 = kty /
        0x02,                              //# unsigned(2) / 2 = EC2 /
@@ -37,8 +37,8 @@ const unsigned char teep_agent_esp256_cose_key_public_buf[] = {
           0x16, 0x4d, 0x49, 0xad, 0x35, 0x51, 0xd7, 0x1d,
           0x31, 0x4b, 0x27, 0x49, 0xee, 0x42, 0xd2, 0x9a,
 };
-const UsefulBufC teep_agent_esp256_cose_key_public = {
-    .ptr = teep_agent_esp256_cose_key_public_buf,
-    .len = sizeof(teep_agent_esp256_cose_key_public_buf)
+const UsefulBufC tam_esp256_cose_key_public = {
+    .ptr = tam_esp256_cose_key_public_buf,
+    .len = sizeof(tam_esp256_cose_key_public_buf)
 };
-#endif /* TEEP_AGENT_ESP256_COSE_KEY_PUBLIC_H */
+#endif /* TAM_ESP256_COSE_KEY_PRIVATE_H */

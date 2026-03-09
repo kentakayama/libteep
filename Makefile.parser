@@ -9,14 +9,13 @@ LDFLAGS = $(CMD_LD) -lt_cose -lqcbor -lm
 INC = $(CMD_INC) -I ./inc -I ./examples/inc
 TAM = ./bin/teep_message_parser_tam
 AGENT = ./bin/teep_message_parser_agent
-VERIFIER = ./bin/teep_message_parser_verifier
-SRCS = examples/teep_examples_common.c examples/teep_examples_cose.c src/teep_common.c src/teep_message_decode.c src/teep_message_print.c src/teep_cose.c
+SRCS = examples/teep_examples_common.c src/teep_common.c src/teep_message_decode.c src/teep_message_print.c src/teep_cose.c
 TAM_OBJ = obj/examples/teep_message_parser_tam.o
 AGENT_OBJ = obj/examples/teep_message_parser_agent.o
-VERIFIER_OBJ = obj/examples/teep_message_parser_verifier.o
 OBJDIR = ./obj
 OBJS = $(addprefix $(OBJDIR)/,$(patsubst %.c,%.o,$(SRCS)))
-COSE_FLAG = _cose
+COSE_FLAG_TAM = .tam.cose
+COSE_FLAG_AGENT = .agent.cose
 
 ifeq ($(suit),1)
     CFLAGS += -DPARSE_SUIT
@@ -26,7 +25,8 @@ endif
 
 ifeq ($(debug),1)
     CFLAGS += -DALLOW_CBOR_WITHOUT_SIGN1
-    COSE_FLAG=
+    COSE_FLAG_TAM = .cbor
+	COSE_FLAG_AGENT = .cbor
 endif
 
 ifeq ($(MBEDTLS),1)
@@ -54,24 +54,18 @@ $(TAM_OBJ): examples/teep_message_parser_main.c
 $(AGENT_OBJ): examples/teep_message_parser_main.c
 	$(CC) $(CFLAGS) $(INC) -DTEEP_ACTOR_AGENT=1 -o $@ -c $<
 
-$(VERIFIER_OBJ): examples/teep_message_parser_main.c
-	$(CC) $(CFLAGS) $(INC) -DTEEP_ACTOR_VERIFIER=1 -o $@ -c $<
-
 $(TAM): $(OBJS) $(TAM_OBJ)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 $(AGENT): $(OBJS) $(AGENT_OBJ)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
-$(VERIFIER): $(OBJS) $(VERIFIER_OBJ)
-	$(CC) -o $@ $^ $(LDFLAGS)
-
 run: $(TAM) $(AGENT) $(VERIFIER)
-	$(AGENT) ./testfiles/query_request$(COSE_FLAG).cbor || exit 1
-	$(TAM) ./testfiles/query_response$(COSE_FLAG).cbor || exit 1
-	$(AGENT) ./testfiles/update$(COSE_FLAG).cbor || exit 1
-	$(TAM) ./testfiles/teep_success$(COSE_FLAG).cbor || exit 1
-	$(TAM) ./testfiles/teep_error$(COSE_FLAG).cbor || exit 1
+	$(AGENT) ./testfiles/query_request$(COSE_FLAG_TAM) || exit 1
+	$(TAM) ./testfiles/query_response$(COSE_FLAG_AGENT) || exit 1
+	$(AGENT) ./testfiles/update$(COSE_FLAG_TAM) || exit 1
+	$(TAM) ./testfiles/teep_success$(COSE_FLAG_AGENT) || exit 1
+	$(TAM) ./testfiles/teep_error$(COSE_FLAG_AGENT) || exit 1
 
 clean:
-	$(RM) $(OBJS) $(TAM_OBJ) $(AGENT_OBJ) $(VERIFIER_OBJ) $(TAM) $(AGENT) $(VERIFIER)
+	$(RM) $(OBJS) $(TAM_OBJ) $(AGENT_OBJ) $(TAM) $(AGENT)
