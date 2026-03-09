@@ -185,6 +185,8 @@ char *teep_err_code_to_str(int32_t err_code)
         return "ERR_BAD_CERTIFICATE";
     case TEEP_ERR_CODE_ATTESTATION_REQUIRED:
         return "ERR_ATTESTATION_REQUIRED";
+    case TEEP_ERR_CODE_UNSUPPORTED_SUIT_REPORT:
+        return "ERR_UNSUPPORTED_SUIT_REPORT";
     case TEEP_ERR_CODE_CERTIFICATE_EXPIRED:
         return "ERR_CERTIFICATE_EXPIRED";
     case TEEP_ERR_CODE_TEMPORARY_ERROR:
@@ -621,10 +623,10 @@ teep_err_t teep_print_query_response(const teep_query_response_t *query_response
         }
         printed = true;
 
-        printf("%*s/ unneeded-tc-list / %d : [\n", indent_space + 2 * indent_delta, "", TEEP_OPTIONS_KEY_UNNEEDED_TC_LIST);
-        for (size_t i = 0; i < query_response->unneeded_tc_list.len; i++) {
+        printf("%*s/ unneeded-manifest-list / %d : [\n", indent_space + 2 * indent_delta, "", TEEP_OPTIONS_KEY_UNNEEDED_TC_LIST);
+        for (size_t i = 0; i < query_response->unneeded_manifest_list.len; i++) {
             printf("%*s", indent_space + 3 * indent_delta, "");
-            result = teep_print_component_id(&query_response->unneeded_tc_list.items[i]);
+            result = teep_print_component_id(&query_response->unneeded_manifest_list.items[i]);
             if (result != TEEP_SUCCESS) {
                 return result;
             }
@@ -676,10 +678,10 @@ teep_err_t teep_print_update(const teep_update_t *teep_update,
         }
         printed = true;
 
-        printf("%*s/ unneeded-tc-list / %d : [\n", indent_space + 2 * indent_delta, "", TEEP_OPTIONS_KEY_UNNEEDED_TC_LIST);
-        for (size_t i = 0; i < teep_update->unneeded_tc_list.len; i++) {
+        printf("%*s/ unneeded-manifest-list / %d : [\n", indent_space + 2 * indent_delta, "", TEEP_OPTIONS_KEY_UNNEEDED_TC_LIST);
+        for (size_t i = 0; i < teep_update->unneeded_manifest_list.len; i++) {
             printf("%*s", indent_space + 3 * indent_delta, "");
-            result = teep_print_component_id(&teep_update->unneeded_tc_list.items[i]);
+            result = teep_print_component_id(&teep_update->unneeded_manifest_list.items[i]);
             if (result != TEEP_SUCCESS) {
                 return result;
             }
@@ -769,7 +771,7 @@ teep_err_t teep_print_update(const teep_update_t *teep_update,
         printed = true;
 
         printf("%*s/ err-msg / %d : ", indent_space + 2 * indent_delta, "", TEEP_OPTIONS_KEY_ERR_MSG);
-        result = teep_print_string(&teep_update->attestation_payload_format);
+        result = teep_print_string(&teep_update->err_msg);
         if (result != TEEP_SUCCESS) {
             return result;
         }
@@ -828,7 +830,6 @@ teep_err_t teep_print_error(const teep_error_t *teep_error,
         }
         printf("%*s]", indent_space + 2 * indent_delta, "");
     }
-    /*
     if (teep_error->contains & TEEP_MESSAGE_CONTAINS_SUPPORTED_SUIT_COSE_PROFILES) {
         if (printed) {
             printf(",\n");
@@ -836,17 +837,18 @@ teep_err_t teep_print_error(const teep_error_t *teep_error,
         printed = true;
 
         printf("%*s/ supported-suit-cose-profiles / %d : [\n", indent_space + 2 * indent_delta, "", TEEP_OPTIONS_KEY_SUPPORTED_SUIT_COSE_PROFILES);
-        for (size_t i = 0; i < teep_error->supported_teep_cipher_suites.len; i++) {
+        for (size_t i = 0; i < teep_error->supported_suit_cose_profiles.len; i++) {
             printf("%*s", indent_space + 3 * indent_delta, "");
-            result = teep_print_cipher_suite(&teep_error->supported_teep_cipher_suites.items[i]);
+            result = teep_print_suit_cose_profile(&teep_error->supported_suit_cose_profiles.items[i]);
             if (result != TEEP_SUCCESS) {
                 return result;
             }
-            printf(",\n");
+            if (i + 1 < teep_error->supported_suit_cose_profiles.len) {
+                printf(",\n");
+            }
         }
         printf("%*s]", indent_space + 2 * indent_delta, "");
     }
-    */
     if (teep_error->contains & TEEP_MESSAGE_CONTAINS_SUPPORTED_FRESHNESS_MECHANISMS) {
         if (printed) {
             printf(",\n");
@@ -1036,7 +1038,7 @@ char* teep_options_key_to_str(const int64_t label, const int64_t n)
     case TEEP_OPTIONS_KEY_ERR_MSG: return "err-msg";
     case TEEP_OPTIONS_KEY_ATTESTATION_PAYLOAD_FORMAT: return "attestation-payload-format";
     case TEEP_OPTIONS_KEY_REQUESTED_TC_LIST: return "requested-tc-list";
-    case TEEP_OPTIONS_KEY_UNNEEDED_TC_LIST: return "unneeded-tc-list";
+    case TEEP_OPTIONS_KEY_UNNEEDED_TC_LIST: return "unneeded-manifest-list";
     case TEEP_OPTIONS_KEY_COMPONENT_ID: return "component-id";
     case TEEP_OPTIONS_KEY_TC_MANIFEST_SEQUENCE_NUMBER: return "tc-manifest-sequence-number";
     case TEEP_OPTIONS_KEY_HAVE_BINARY: return "have-binary";

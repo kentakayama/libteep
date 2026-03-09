@@ -54,10 +54,20 @@ teep_err_t teep_encode_error(const teep_error_t *teep_error, QCBOREncodeContext 
     if (teep_error->contains & TEEP_MESSAGE_CONTAINS_ERR_MSG) {
         QCBOREncode_AddTextToMapN(context, TEEP_OPTIONS_KEY_ERR_MSG, (UsefulBufC){teep_error->err_msg.ptr, teep_error->err_msg.len});
     }
+    if (teep_error->contains & TEEP_MESSAGE_CONTAINS_ERR_LANG) {
+        QCBOREncode_AddTextToMapN(context, TEEP_OPTIONS_KEY_ERR_LANG, (UsefulBufC){teep_error->err_lang.ptr, teep_error->err_lang.len});
+    }
     if (teep_error->contains & TEEP_MESSAGE_CONTAINS_SUPPORTED_TEEP_CIPHER_SUITES) {
         QCBOREncode_OpenArrayInMapN(context, TEEP_OPTIONS_KEY_SUPPORTED_TEEP_CIPHER_SUITES);
         for (size_t i = 0; i < teep_error->supported_teep_cipher_suites.len; i++) {
             teep_encode_add_cipher_suite(context, teep_error->supported_teep_cipher_suites.items[i]);
+        }
+        QCBOREncode_CloseArray(context);
+    }
+    if (teep_error->contains & TEEP_MESSAGE_CONTAINS_SUPPORTED_SUIT_COSE_PROFILES) {
+        QCBOREncode_OpenArrayInMapN(context, TEEP_OPTIONS_KEY_SUPPORTED_SUIT_COSE_PROFILES);
+        for (size_t i = 0; i < teep_error->supported_suit_cose_profiles.len; i++) {
+            teep_encode_add_suit_cose_profile(context, teep_error->supported_suit_cose_profiles.items[i]);
         }
         QCBOREncode_CloseArray(context);
     }
@@ -118,8 +128,8 @@ teep_err_t teep_encode_update(const teep_update_t *teep_update, QCBOREncodeConte
     }
     if (teep_update->contains & TEEP_MESSAGE_CONTAINS_UNNEEDED_TC_LIST) {
         QCBOREncode_OpenArrayInMapN(context, TEEP_OPTIONS_KEY_UNNEEDED_TC_LIST);
-        for (size_t i = 0; i < teep_update->unneeded_tc_list.len; i++) {
-            teep_QCBOREncode_AddUsefulBufC(context, (UsefulBufC){teep_update->unneeded_tc_list.items[i].ptr, teep_update->unneeded_tc_list.items[i].len});
+        for (size_t i = 0; i < teep_update->unneeded_manifest_list.len; i++) {
+            teep_QCBOREncode_AddUsefulBufC(context, (UsefulBufC){teep_update->unneeded_manifest_list.items[i].ptr, teep_update->unneeded_manifest_list.items[i].len});
         }
         QCBOREncode_CloseArray(context);
     }
@@ -141,6 +151,9 @@ teep_err_t teep_encode_update(const teep_update_t *teep_update, QCBOREncodeConte
     }
     if (teep_update->contains & TEEP_MESSAGE_CONTAINS_ERR_MSG) {
         QCBOREncode_AddTextToMapN(context, TEEP_OPTIONS_KEY_ERR_MSG, (UsefulBufC){teep_update->err_msg.ptr, teep_update->err_msg.len});
+    }
+    if (teep_update->contains & TEEP_MESSAGE_CONTAINS_ERR_LANG) {
+        QCBOREncode_AddTextToMapN(context, TEEP_OPTIONS_KEY_ERR_LANG, (UsefulBufC){teep_update->err_lang.ptr, teep_update->err_lang.len});
     }
     QCBOREncode_CloseMap(context);
     return TEEP_SUCCESS;
@@ -193,8 +206,15 @@ teep_err_t teep_encode_query_response(const teep_query_response_t *query_respons
     }
     if (query_response->contains & TEEP_MESSAGE_CONTAINS_UNNEEDED_TC_LIST) {
         QCBOREncode_OpenArrayInMapN(context, TEEP_OPTIONS_KEY_UNNEEDED_TC_LIST);
-        for (size_t i = 0; i < query_response->unneeded_tc_list.len; i++) {
-            teep_QCBOREncode_AddUsefulBufC(context, (UsefulBufC){query_response->unneeded_tc_list.items[i].ptr, query_response->unneeded_tc_list.items[i].len});
+        for (size_t i = 0; i < query_response->unneeded_manifest_list.len; i++) {
+            teep_QCBOREncode_AddUsefulBufC(context, (UsefulBufC){query_response->unneeded_manifest_list.items[i].ptr, query_response->unneeded_manifest_list.items[i].len});
+        }
+        QCBOREncode_CloseArray(context);
+    }
+    if (query_response->contains & TEEP_MESSAGE_CONTAINS_EXT_LIST) {
+        QCBOREncode_OpenArrayInMapN(context, TEEP_OPTIONS_KEY_EXT_LIST);
+        for (size_t i = 0; i < query_response->ext_list.len; i++) {
+            QCBOREncode_AddUInt64(context, query_response->ext_list.items[i]);
         }
         QCBOREncode_CloseArray(context);
     }
@@ -346,6 +366,5 @@ teep_err_t teep_encode_message(const teep_message_t *message,
 {
     return teep_encode_signed_message(message, NULL, buf, len);
 }
-
 
 

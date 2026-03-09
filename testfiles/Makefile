@@ -19,17 +19,17 @@ SIGNED_TARGETS += teep_error.agent.cose
 .PHONY: all
 all: $(TARGETS)
 
-CODE_PAT	:= ^\~\~\~\~
+CODE_PAT := ^\~\~\~\~
 
 %.cbor: %.md
 	sed -n '/${CODE_PAT}cbor-diag/,/${CODE_PAT}/ p' < $^ | sed '/${CODE_PAT}.*/ d' | diag2cbor.rb > $@
 
 # TAM Sign1
-%.tam.cose: %.cbor ../bin/teep_cose_tam
+%.tam.cose: %.cbor
 	../bin/teep_cose_tam $< $@
 
 # Agent Sign1
-%.agent.cose: %.cbor ../bin/teep_cose_agent
+%.agent.cose: %.cbor
 	../bin/teep_cose_agent $< $@
 
 .PHONY: sign

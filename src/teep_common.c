@@ -8,7 +8,7 @@
 #include "teep/teep_message_data.h"
 
 bool teep_cipher_suite_is_same(teep_cipher_suite_t a, teep_cipher_suite_t b) {
-    return memcpy(&a, &b, sizeof(teep_cipher_suite_t)) ? false : true;
+    return memcmp(&a, &b, sizeof(teep_cipher_suite_t)) == 0;
 }
 
 uint32_t teep_array_to_int32(const uint8_t *array, int32_t byte_count) {

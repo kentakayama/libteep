@@ -24,18 +24,32 @@ const char DEFAULT_TAM_URL[] =          "http://localhost:8080/tam";
 #define MAX_FILE_BUFFER_SIZE            512
 
 #define SUPPORTED_VERSION               0
-#define SUPPORTED_CIPHER_SUITES_LEN     1
+#define SUPPORTED_CIPHER_SUITES_LEN     2
+#define SUPPORTED_SUIT_PROFILES_LEN     2
 #define ERR_MSG_BUF_LEN                 32
 const teep_cipher_suite_t supported_teep_cipher_suites[SUPPORTED_CIPHER_SUITES_LEN] = {
     {
         .mechanisms[0] = {
             .cose_tag = CBOR_TAG_COSE_SIGN1,
-            .algorithm_id = T_COSE_ALGORITHM_ES256,
+            .algorithm_id = TEEP_COSE_SIGN_ESP256,
+        },
+        .mechanisms[1] = {
+            0
+        }
+    },
+    {
+        .mechanisms[0] = {
+            .cose_tag = CBOR_TAG_COSE_SIGN1,
+            .algorithm_id = TEEP_COSE_SIGN_ED25519,
         },
         .mechanisms[1] = {
             0
         }
     }
+};
+const teep_suit_cose_profile_t supported_suit_cose_profiles[SUPPORTED_SUIT_PROFILES_LEN] = {
+    { TEEP_COSE_SHA256, TEEP_COSE_SIGN_ESP256, TEEP_COSE_ECDHES_A128KW, TEEP_COSE_ENCRYPT_A128CTR },
+    { TEEP_COSE_SHA256, TEEP_COSE_SIGN_ED25519, TEEP_COSE_ECDHES_A128KW, TEEP_COSE_ENCRYPT_A128CTR },
 };
 
 void useful_buf_strncpy(const char *err_msg,
@@ -74,17 +88,10 @@ teep_err_t create_error(teep_buf_t token,
         error->contains |= TEEP_MESSAGE_CONTAINS_ERR_MSG;
     }
 
-    if (err_code == TEEP_ERR_CODE_PERMANENT_ERROR) {
-        if (token.ptr == NULL || token.len < 8 || 64 < token.len) {
-            /* the token is incorrect */
-            error->err_code = TEEP_ERR_CODE_PERMANENT_ERROR;
-        }
-    }
-    else if (err_code == TEEP_ERR_CODE_UNSUPPORTED_MSG_VERSION) {
+    if (err_code == TEEP_ERR_CODE_UNSUPPORTED_MSG_VERSION) {
         error->versions.len = 1;
         error->versions.items[0] = SUPPORTED_VERSION;
-        error->contains = TEEP_MESSAGE_CONTAINS_VERSIONS;
-        error->err_code = TEEP_ERR_CODE_UNSUPPORTED_MSG_VERSION;
+        error->contains |= TEEP_MESSAGE_CONTAINS_VERSIONS;
     }
     else if (err_code == TEEP_ERR_CODE_UNSUPPORTED_CIPHER_SUITES) {
         error->supported_teep_cipher_suites.len = SUPPORTED_CIPHER_SUITES_LEN;
@@ -92,8 +99,15 @@ teep_err_t create_error(teep_buf_t token,
             error->supported_teep_cipher_suites.items[i] = supported_teep_cipher_suites[i];
         }
         error->contains |= TEEP_MESSAGE_CONTAINS_SUPPORTED_TEEP_CIPHER_SUITES;
-        error->err_code = TEEP_ERR_CODE_UNSUPPORTED_CIPHER_SUITES;
     }
+    else if (err_code == TEEP_ERR_CODE_UNSUPPORTED_SUIT_REPORT) {
+        error->supported_suit_cose_profiles.len = SUPPORTED_SUIT_PROFILES_LEN;
+        for (size_t i = 0; i < SUPPORTED_SUIT_PROFILES_LEN; i++) {
+            error->supported_suit_cose_profiles.items[i] = supported_suit_cose_profiles[i];
+        }
+        error->contains |= TEEP_MESSAGE_CONTAINS_SUPPORTED_SUIT_COSE_PROFILES;
+    }
+    error->err_code = err_code;
     return TEEP_SUCCESS;
 }
 
@@ -142,7 +156,6 @@ teep_err_t create_query_response_or_error(const teep_query_request_t *query_requ
                                           teep_message_t *message)
 {
     size_t i;
-    uint64_t err_code_contains = 0;
     int32_t version = -1;
     teep_cipher_suite_t cipher_suite = TEEP_CIPHER_SUITE_INVALID;
 
@@ -160,13 +173,12 @@ teep_err_t create_query_response_or_error(const teep_query_request_t *query_requ
         version = 0;
     }
     if (version != SUPPORTED_VERSION) {
-        err_code_contains |= TEEP_ERR_CODE_UNSUPPORTED_MSG_VERSION;
-        goto error;
+        return create_error(query_request->token, TEEP_ERR_CODE_UNSUPPORTED_MSG_VERSION, err_msg_buf, message);
     }
 
     if (!(query_request->contains & TEEP_MESSAGE_CONTAINS_SUPPORTED_TEEP_CIPHER_SUITES)) {
-        /* TODO */
-        cipher_suite = supported_teep_cipher_suites[0];
+        useful_buf_strncpy("NO CIPHER SUITE", ERR_MSG_BUF_LEN, &err_msg_buf);
+        return create_error(query_request->token, TEEP_ERR_CODE_UNSUPPORTED_CIPHER_SUITES, err_msg_buf, message);
     }
     for (i = 0; i < query_request->supported_teep_cipher_suites.len; i++) {
         for (size_t j = 0; j < SUPPORTED_CIPHER_SUITES_LEN; j++) {
@@ -180,33 +192,28 @@ teep_err_t create_query_response_or_error(const teep_query_request_t *query_requ
 out:
 
     if (teep_cipher_suite_is_same(cipher_suite, TEEP_CIPHER_SUITE_INVALID)) {
-        err_code_contains |= TEEP_ERR_CODE_UNSUPPORTED_CIPHER_SUITES;
-        goto error;
+        useful_buf_strncpy("NO SHARED CIPHER SUITE", ERR_MSG_BUF_LEN, &err_msg_buf);
+        return create_error(query_request->token, TEEP_ERR_CODE_UNSUPPORTED_CIPHER_SUITES, err_msg_buf, message);
     }
 
     if (query_request->data_item_requested.attestation) {
-        // TODO
-        err_code_contains |= TEEP_ERR_CODE_PERMANENT_ERROR;
-        useful_buf_strncpy("ATTESTATION IS NOT SUPPORTED", ERR_MSG_BUF_LEN, &err_msg_buf);
-        goto error;
+        useful_buf_strncpy("ATTESTATION REQUIRED", ERR_MSG_BUF_LEN, &err_msg_buf);
+        return create_error(query_request->token, TEEP_ERR_CODE_ATTESTATION_REQUIRED, err_msg_buf, message);
     }
-
-error: /* would be unneeded if the err-code becomes bit field */
-    if (err_code_contains != 0) {
-        return create_error(query_request->token, err_code_contains, err_msg_buf, message);
+    if (query_request->data_item_requested.suit_reports) {
+        useful_buf_strncpy("SUIT REPORTS UNSUPPORTED", ERR_MSG_BUF_LEN, &err_msg_buf);
+        return create_error(query_request->token, TEEP_ERR_CODE_UNSUPPORTED_SUIT_REPORT, err_msg_buf, message);
     }
 
     teep_query_response_t *query_response = (teep_query_response_t *)message;
     memset(query_response, 0, sizeof(teep_query_response_t));
     query_response->type = TEEP_TYPE_QUERY_RESPONSE;
-    query_response->contains = TEEP_MESSAGE_CONTAINS_VERSIONS |
-                               TEEP_MESSAGE_CONTAINS_SELECTED_TEEP_CIPHER_SUITE;
+    query_response->contains = TEEP_MESSAGE_CONTAINS_SELECTED_VERSION;
     if (query_request->contains & TEEP_MESSAGE_CONTAINS_TOKEN) {
         query_response->token = query_request->token;
         query_response->contains |= TEEP_MESSAGE_CONTAINS_TOKEN;
     }
     query_response->selected_version = version;
-    query_response->selected_teep_cipher_suite = cipher_suite;
 
     if (query_request->data_item_requested.trusted_components) {
         query_response->contains |= TEEP_MESSAGE_CONTAINS_TC_LIST;

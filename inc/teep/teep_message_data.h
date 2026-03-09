@@ -166,6 +166,7 @@ typedef enum teep_err_code {
     TEEP_ERR_CODE_UNSUPPORTED_CIPHER_SUITES = 5,
     TEEP_ERR_CODE_BAD_CERTIFICATE = 6,
     TEEP_ERR_CODE_ATTESTATION_REQUIRED = 7,
+    TEEP_ERR_CODE_UNSUPPORTED_SUIT_REPORT = 8,
     TEEP_ERR_CODE_CERTIFICATE_EXPIRED = 9,
     TEEP_ERR_CODE_TEMPORARY_ERROR = 10,
     TEEP_ERR_CODE_MANIFEST_PROCESSING_FAILED = 11
@@ -330,7 +331,6 @@ typedef struct teep_query_response {
 
     uint64_t                                contains;
     teep_buf_t                              token;
-    teep_cipher_suite_t                     selected_teep_cipher_suite;
     uint32_t                                selected_version;
     teep_buf_t                              attestation_payload_format;
     teep_buf_t                              attestation_payload;
@@ -338,10 +338,10 @@ typedef struct teep_query_response {
     //system_property_claims_array_t          tc_list;
     teep_buf_array_t                        tc_list;
     teep_requested_tc_info_array_t          requested_tc_list;
-    teep_buf_array_t                        unneeded_tc_list;
+    teep_buf_array_t                        unneeded_manifest_list;
     teep_uint64_array_t                     ext_list;
-    // TODO :                       query-response-extensions
-    // TODO :                       teep-option-extensions
+    // TODO :                               query-response-extensions
+    // TODO :                               teep-option-extensions
 } teep_query_response_t;
 
 /*
@@ -352,7 +352,7 @@ typedef struct teep_update {
 
     uint64_t                contains;
     teep_buf_t              token;
-    teep_buf_array_t        unneeded_tc_list; // [ + SUIT_Component_Identifier ]
+    teep_buf_array_t        unneeded_manifest_list; // [ + SUIT_Component_Identifier ]
     teep_buf_array_t        manifest_list;
     teep_buf_t              attestation_payload_format;
     teep_buf_t              attestation_payload;

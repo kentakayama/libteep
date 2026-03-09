@@ -18,14 +18,14 @@
     / versions / 3 : [ 0 ]  / 0 is current TEEP Protocol /
   },
   / supported-teep-cipher-suites: / [
-    [ [ 18, -9 ] ], / Sign1 using ES256 /
-    [ [ 18, -19 ] ]  / Sign1 using EdDSA /
+    [ [ 18, -9 ] ], / Sign1 using ESP256 /
+    [ [ 18, -19 ] ]  / Sign1 using Ed25519 /
   ],
   / supported-suit-cose-profiles: / [
     [ -16, -9, -29, -65534 ] / suit-sha256-es256-ecdh-a128ctr /,
     [ -16, -19, -29, -65534 ] / suit-sha256-eddsa-ecdh-a128ctr /
   ],
-  / data-item-requested: / 3 / attestation | trusted-components /
+  / data-item-requested: / 2 / trusted-components /
 ]
 ~~~~
 
@@ -61,5 +61,5 @@
          27         # negative(7)     / -8 = cose-alg-eddsa /
          38 1C      # negative(28)    / -29 = cose-alg-ecdhes-a128kw /
          39 FFFD    # negative(65533) / -65534 = A128CTR /
-   03               # unsigned(3)     / attestation | trusted-components /
+   02               # unsigned(2)     / trusted-components /
 ~~~~

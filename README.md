@@ -1,5 +1,5 @@
 # [libteep](https://github.com/kentakayama/libteep/)
-**libcteep** is a C library for encoding/decoding [IETF TEEP Protocol](https://tools.ietf.org/html/draft-ietf-teep-protocol) messages.
+**libcteep** is a C library for encoding/decoding [IETF TEEP Protocol](https://www.ietf.org/archive/id/draft-ietf-teep-protocol-26.html) messages.
 
 ## Overview
  - Implemented C-native data representation.
@@ -58,7 +58,7 @@ docker-compose up
 ```
 
 ## TEEP Protocol Message Examples
-The following description Markdown and CBOR files are compliant with [draft-ietf-teep-protocol-10](https://tools.ietf.org/html/draft-ietf-teep-protocol-10).
+The following description Markdown and CBOR files target [draft-ietf-teep-protocol-26](https://www.ietf.org/archive/id/draft-ietf-teep-protocol-26.html).
 - QueryRequest
   - [query_request.md](https://github.com/kentakayama/libteep/blob/master/testfiles/query_request.md)
   - [query_request.cbor](https://github.com/kentakayama/libteep/blob/master/testfiles/query_request.cbor)
