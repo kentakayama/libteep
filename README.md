@@ -14,16 +14,16 @@
 
 ### Example layout
 - `examples/common/` contains shared example helper code.
-- `examples/client/`, `examples/cose/`, `examples/parser/`, and `examples/sign/` contain example-specific sources.
+- `examples/teep_over_http_client/`, `examples/cose/`, `examples/parser/`, `examples/sign/`, and `examples/eat_tool/` contain example-specific sources.
 - `examples/inc/` contains shared example headers and key material.
 
 Common example build entrypoints from the repository root:
 ```
-make example-client
+make example-teep-over-http-client
 make example-cose
 make example-parser
 make example-sign
-make example-cwt
+make example-eat-tool
 ```
 
 ### Dockerfile policy

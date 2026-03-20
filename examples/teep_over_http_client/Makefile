@@ -11,14 +11,15 @@ CFLAGS = -Wall -g
 LDFLAGS = $(CMD_LD) -lt_cose -lqcbor -lcurl -lm
 INC = $(CMD_INC) -I $(ROOT_DIR)/inc -I $(ROOT_DIR)/examples/common -I $(ROOT_DIR)/examples/inc
 TARGET = $(ROOT_DIR)/bin/teep_http_client
-SRCS := $(ROOT_DIR)/examples/client/teep_http_client_main.c
+SRCS := $(ROOT_DIR)/examples/teep_over_http_client/teep_http_client_main.c
 SRCS += $(ROOT_DIR)/examples/common/teep_examples_common.c
 SRCS += $(ROOT_DIR)/src/teep_common.c
+SRCS += $(ROOT_DIR)/src/cose_print_common.c
 SRCS += $(ROOT_DIR)/src/teep_cose.c
 SRCS += $(ROOT_DIR)/src/teep_message_print.c
 SRCS += $(ROOT_DIR)/src/teep_message_decode.c
 SRCS += $(ROOT_DIR)/src/teep_message_encode.c
-SRCS += $(ROOT_DIR)/examples/client/teep_http_client.c
+SRCS += $(ROOT_DIR)/examples/teep_over_http_client/teep_http_client.c
 
 OBJDIR = $(THIS_DIR)/obj
 REL_SRCS = $(patsubst $(ROOT_DIR)/%,%,$(SRCS))

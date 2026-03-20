@@ -15,6 +15,7 @@ AGENT = $(ROOT_DIR)/bin/teep_cose_agent
 SRCS = \
 	$(ROOT_DIR)/examples/common/teep_examples_common.c \
 	$(ROOT_DIR)/src/teep_common.c \
+	$(ROOT_DIR)/src/cose_print_common.c \
 	$(ROOT_DIR)/src/teep_message_decode.c \
 	$(ROOT_DIR)/src/teep_message_print.c \
 	$(ROOT_DIR)/src/teep_cose.c

@@ -16,12 +16,8 @@ do
     esac
 done
 
-QUERY_REQUEST_ERR0_FILE="${DIR}/query_request.cbor"
-QUERY_REQUEST_ERR1_FILE="${DIR}/query_request_err1_cose.cbor"
-QUERY_REQUEST_ERR2_FILE="${DIR}/query_request_err2_cose.cbor"
-QUERY_REQUEST_ERR3_FILE="${DIR}/query_request_err3_cose.cbor"
-QUERY_REQUEST_FILE="${DIR}/query_request_cose.cbor"
-UPDATE_FILE="${DIR}/update_cose.cbor"
+QUERY_REQUEST_FILE="${DIR}/query_request.tam.cose"
+UPDATE_FILE="${DIR}/update.tam.cose"
 
 function send_teep_cbor {
     # send_teep_cbor PATH_TO_CBOR_FILE
@@ -48,15 +44,6 @@ function send_teep_cbor {
 
 echo -ne "\nSend TEEP/HTTP Update with illegal timing.\n"
 send_teep_cbor $UPDATE_FILE
-
-echo -ne "\nSend TEEP/HTTP QueryRequest without cose.\n"
-send_teep_cbor $QUERY_REQUEST_ERR0_FILE
-
-echo -ne "\nSend TEEP/HTTP QueryRequest with versions = [1].\n"
-send_teep_cbor $QUERY_REQUEST_ERR1_FILE
-
-echo -ne "\nSend TEEP/HTTP QueryRequest with ciphersuites = {enc: a256gcm}.\n"
-send_teep_cbor $QUERY_REQUEST_ERR2_FILE
 
 echo -ne "\nSend TEEP/HTTP QueryRequest.\n"
 send_teep_cbor $QUERY_REQUEST_FILE

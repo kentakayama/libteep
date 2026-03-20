@@ -8,6 +8,7 @@ NAME = libteep
 CFLAGS = -Wall -g -fPIC
 INC = $(CMD_INC) -I ./inc
 SRCS = \
+	src/cose_print_common.c \
 	src/teep_common.c \
 	src/teep_cose.c \
 	src/teep_message_decode.c \
@@ -35,7 +36,7 @@ ifdef suit
     INC += -I ../libcsuit/inc -I ../libcsuit/examples/inc
 endif
 
-.PHONY: all so install uninstall build_test test examples example-client example-cose example-parser example-sign example-cwt clean
+.PHONY: all so install uninstall build_test test examples example-teep-over-http-client example-cose example-parser example-sign example-eat-tool clean
 
 all: $(NAME).a
 
@@ -84,10 +85,10 @@ build_test:
 test: build_test
 	$(MAKE) -C test MBEDTLS=$(MBEDTLS) run
 
-examples: example-client example-cose example-parser example-sign example-cwt
+examples: example-teep-over-http-client example-cose example-parser example-sign example-eat-tool
 
-example-client:
-	$(MAKE) -f examples/client/Makefile MBEDTLS=$(MBEDTLS)
+example-teep-over-http-client:
+	$(MAKE) -f examples/teep_over_http_client/Makefile MBEDTLS=$(MBEDTLS)
 
 example-cose:
 	$(MAKE) -f examples/cose/Makefile MBEDTLS=$(MBEDTLS)
@@ -98,8 +99,8 @@ example-parser:
 example-sign:
 	$(MAKE) -f examples/sign/Makefile MBEDTLS=$(MBEDTLS)
 
-example-cwt:
-	$(MAKE) -f examples/parser/Makefile.cwt MBEDTLS=$(MBEDTLS)
+example-eat-tool:
+	$(MAKE) -f examples/eat_tool/Makefile
 
 generate:
 	$(MAKE) -C testfiles

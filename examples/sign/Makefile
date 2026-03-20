@@ -14,7 +14,7 @@ TARGET = $(ROOT_DIR)/bin/teep_sign_test
 SRCS = \
 	$(ROOT_DIR)/examples/sign/teep_sign_test_main.c \
 	$(ROOT_DIR)/examples/common/teep_examples_common.c \
-	$(ROOT_DIR)/src/teep_common.c $(ROOT_DIR)/src/teep_message_encode.c \
+	$(ROOT_DIR)/src/teep_common.c $(ROOT_DIR)/src/cose_print_common.c $(ROOT_DIR)/src/teep_message_encode.c \
 	$(ROOT_DIR)/src/teep_message_decode.c \
 	$(ROOT_DIR)/src/teep_message_print.c \
 	$(ROOT_DIR)/src/teep_cose.c
