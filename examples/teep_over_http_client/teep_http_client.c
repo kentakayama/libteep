@@ -24,11 +24,11 @@ static size_t write_callback(void *recv_buffer_ptr,
     return recv_size;
 }
 
-teep_err_t teep_send_http_post(const char *url,
-                               UsefulBufC send_buffer,
-                               UsefulBuf *recv_buffer)
+teep_http_post_result_t teep_send_http_post(const char *url,
+                                            UsefulBufC send_buffer,
+                                            UsefulBuf *recv_buffer)
 {
-    teep_err_t          result = TEEP_SUCCESS;
+    teep_http_post_result_t result = TEEP_HTTP_POST_OK;
     CURL                *curl = NULL;
     CURLcode            curl_result;
     struct curl_slist   *curl_slist = NULL;
@@ -38,7 +38,7 @@ teep_err_t teep_send_http_post(const char *url,
     curl = curl_easy_init();
     if (curl == NULL) {
         printf("teep_send_post_request : curl_easy_init : Fail.\n");
-        return TEEP_ERR_UNEXPECTED_ERROR;
+        return TEEP_HTTP_POST_TRANSPORT_ERROR;
     }
     curl_easy_setopt(curl, CURLOPT_URL, url);
     curl_slist = curl_slist_append(curl_slist, "Accept: application/teep+cbor");
@@ -62,15 +62,23 @@ teep_err_t teep_send_http_post(const char *url,
     curl_result = curl_easy_perform(curl);
     if (curl_result != CURLE_OK) {
         printf("teep_send_post_request : curl_easy_perform : Fail.\n");
-        result = TEEP_ERR_ON_HTTP_POST;
+        result = TEEP_HTTP_POST_TRANSPORT_ERROR;
         goto out;
     }
 
     // Get status code.
     int64_t response_code = -1;
     curl_result = curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
-    if (curl_result != CURLE_OK || response_code < 0 || response_code != 200) {
-        result = TEEP_ERR_ABORT;
+    if (curl_result != CURLE_OK || response_code < 0) {
+        result = TEEP_HTTP_POST_RESPONSE_ERROR;
+        goto out;
+    }
+    if (response_code == 204) {
+        result = TEEP_HTTP_POST_NO_CONTENT;
+        goto out;
+    }
+    if (response_code != 200) {
+        result = TEEP_HTTP_POST_RESPONSE_ERROR;
         goto out;
     }
 

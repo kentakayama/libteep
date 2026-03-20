@@ -234,23 +234,35 @@ out:
     \param[out] recv_buf        CBOR buffer to be used for received message.
     \param[out] message         Pointer of returned struct.
 
-    \return     This returns one of error codes defined by \ref teep_err_t;
+    \return     This returns an example-local status and writes protocol errors to `teep_result`.
  */
-teep_err_t get_teep_message(const char *tam_url,
-                            UsefulBufC send_buf,
-                            teep_mechanism_t *verifying_key,
-                            UsefulBuf recv_buf,
-                            teep_message_t *message)
+typedef enum teep_client_result {
+    TEEP_CLIENT_RESULT_OK = 0,
+    TEEP_CLIENT_RESULT_TAM_TERMINATED,
+    TEEP_CLIENT_RESULT_TRANSPORT_ERROR,
+    TEEP_CLIENT_RESULT_PROTOCOL_ERROR,
+} teep_client_result_t;
+
+teep_client_result_t get_teep_message(const char *tam_url,
+                                      UsefulBufC send_buf,
+                                      teep_mechanism_t *verifying_key,
+                                      UsefulBuf recv_buf,
+                                      teep_message_t *message,
+                                      teep_err_t *teep_result)
 {
     teep_err_t result;
+    teep_http_post_result_t http_result;
 
     // Send TEEP/HTTP POST request.
     printf("main : Send TEEP/HTTP POST request.\n");
     teep_print_hex(send_buf.ptr, send_buf.len);
     printf("\n");
-    result = teep_send_http_post(tam_url, send_buf, &recv_buf);
-    if (result != TEEP_SUCCESS) {
-        return result;
+    http_result = teep_send_http_post(tam_url, send_buf, &recv_buf);
+    if (http_result == TEEP_HTTP_POST_NO_CONTENT) {
+        return TEEP_CLIENT_RESULT_TAM_TERMINATED;
+    }
+    if (http_result != TEEP_HTTP_POST_OK) {
+        return TEEP_CLIENT_RESULT_TRANSPORT_ERROR;
     }
 
     // Verify and print QueryRequest cose.
@@ -262,16 +274,22 @@ teep_err_t get_teep_message(const char *tam_url,
         result = teep_verify_cose_sign(UsefulBuf_Const(recv_buf), verifying_key, 1, &payload);
     }
     if (result != TEEP_SUCCESS) {
-        printf("main : Failed to verify TEEP message. %s(%d)\n", teep_err_to_str(result), result);
-        return result;
+        *teep_result = result;
+        return TEEP_CLIENT_RESULT_PROTOCOL_ERROR;
     }
 
-    return teep_set_message_from_bytes(payload.ptr, payload.len, message);
+    result = teep_set_message_from_bytes(payload.ptr, payload.len, message);
+    if (result != TEEP_SUCCESS) {
+        *teep_result = result;
+        return TEEP_CLIENT_RESULT_PROTOCOL_ERROR;
+    }
+    return TEEP_CLIENT_RESULT_OK;
 }
 
 int main(int argc, const char * argv[])
 {
     teep_err_t          result;
+    teep_client_result_t client_result;
     typedef enum teep_agent_status {
         WAITING_QUERY_REQUEST,
         WAITING_UPDATE_OR_QUERY_REQUEST,
@@ -312,20 +330,23 @@ int main(int argc, const char * argv[])
     cose_send_buf.len = 0;
 
     while (1) {
-        result = get_teep_message(tam_url, UsefulBuf_Const(cose_send_buf), &mechanism_verify, cbor_recv_buf, &recv_message);
-        if (result != TEEP_SUCCESS) {
-            if (result == TEEP_ERR_ABORT) {
-                /* just the TAM terminated the connection */
-                result = TEEP_SUCCESS;
+        client_result = get_teep_message(tam_url, UsefulBuf_Const(cose_send_buf), &mechanism_verify, cbor_recv_buf, &recv_message, &result);
+        if (client_result != TEEP_CLIENT_RESULT_OK) {
+            if (client_result == TEEP_CLIENT_RESULT_TAM_TERMINATED) {
                 printf("main : The TAM terminated the connection.\n");
                 break;
             }
-            else if (result == TEEP_ERR_VERIFICATION_FAILED) {
-                /* could not authenticate the TAM's message, ignore */
+            if (client_result == TEEP_CLIENT_RESULT_PROTOCOL_ERROR &&
+                result == TEEP_ERR_VERIFICATION_FAILED) {
                 printf("main : Could not authenticate the TAM's message.\n");
                 goto interval;
             }
-            printf("main : Failed to parse received message. %s(%d)\n", teep_err_to_str(result), result);
+            if (client_result == TEEP_CLIENT_RESULT_PROTOCOL_ERROR) {
+                printf("main : Failed to parse received message. %s(%d)\n", teep_err_to_str(result), result);
+            }
+            else {
+                printf("main : Failed to exchange a TEEP/HTTP message.\n");
+            }
             return EXIT_FAILURE;
         }
         teep_print_message(&recv_message, 4, 2, NULL);

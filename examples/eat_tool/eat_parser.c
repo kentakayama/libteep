@@ -6,8 +6,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "teep/teep_message_print.h"
+#include "teep/teep_common.h"
 #include "teep_examples_common.h"
+#include "cose_print_common.h"
 
 int main(int argc, const char *argv[])
 {
@@ -19,7 +20,6 @@ int main(int argc, const char *argv[])
     }
     cose_file_name = argv[1];
 
-    // Read cose file.
     UsefulBuf_MAKE_STACK_UB(cose_buf, 1024);
 
     printf("main : Read CBOR file.\n");
@@ -31,9 +31,6 @@ int main(int argc, const char *argv[])
     teep_print_hex_within_max(cose_buf.ptr, cose_buf.len, 1024);
     printf("\n");
 
-    // Print cose file.
-    printf("main : Print COSE file.\n");
-    teep_print_cose_eat(UsefulBuf_Const(cose_buf), 4, 2);
-
-    return EXIT_SUCCESS;
+    printf("main : Print EAT-wrapped COSE file.\n");
+    return teep_print_cose_usefulbufc(UsefulBuf_Const(cose_buf), 4, 2, teep_eat_claim_label_to_str);
 }
