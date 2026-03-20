@@ -35,7 +35,7 @@ ifdef suit
     INC += -I ../libcsuit/inc -I ../libcsuit/examples/inc
 endif
 
-.PHONY: all so install uninstall build_test test clean
+.PHONY: all so install uninstall build_test test examples example-client example-cose example-parser example-sign example-cwt clean
 
 all: $(NAME).a
 
@@ -84,11 +84,26 @@ build_test:
 test: build_test
 	$(MAKE) -C test MBEDTLS=$(MBEDTLS) run
 
+examples: example-client example-cose example-parser example-sign example-cwt
+
+example-client:
+	$(MAKE) -f examples/client/Makefile MBEDTLS=$(MBEDTLS)
+
+example-cose:
+	$(MAKE) -f examples/cose/Makefile MBEDTLS=$(MBEDTLS)
+
+example-parser:
+	$(MAKE) -f examples/parser/Makefile MBEDTLS=$(MBEDTLS)
+
+example-sign:
+	$(MAKE) -f examples/sign/Makefile MBEDTLS=$(MBEDTLS)
+
+example-cwt:
+	$(MAKE) -f examples/parser/Makefile.cwt MBEDTLS=$(MBEDTLS)
+
 generate:
 	$(MAKE) -C testfiles
 
 clean:
 	$(RM) $(OBJS) $(NAME).a $(NAME).so
 	$(MAKE) -C test clean
-
-

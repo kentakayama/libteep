@@ -39,7 +39,7 @@ RUN git clone --depth 1 https://github.com/kentakayama/libteep.git /tmp/libteep 
     cd /tmp/libteep && \
     git fetch --depth 1 origin "${LIBTEEP_REF}" && \
     git checkout --detach "${LIBTEEP_REF}" && \
-    make -f Makefile.client
+    make -f examples/client/Makefile
 
 FROM debian:12-slim
 

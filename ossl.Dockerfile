@@ -33,11 +33,11 @@ WORKDIR /root
 COPY . ./libteep
 WORKDIR /root/libteep
 RUN make
-RUN make -f Makefile.cose
-RUN make -f Makefile.parser
-RUN make -f Makefile.sign
+RUN make -f examples/cose/Makefile
+RUN make -f examples/parser/Makefile
+RUN make -f examples/sign/Makefile
 
 CMD make test && \
-    make -f Makefile.cose run && \
-    make -f Makefile.parser run && \
-    make -f Makefile.sign run
+    make -f examples/cose/Makefile run && \
+    make -f examples/parser/Makefile run && \
+    make -f examples/sign/Makefile run

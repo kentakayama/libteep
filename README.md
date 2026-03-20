@@ -12,6 +12,20 @@
 
 ## Getting started
 
+### Example layout
+- `examples/common/` contains shared example helper code.
+- `examples/client/`, `examples/cose/`, `examples/parser/`, and `examples/sign/` contain example-specific sources.
+- `examples/inc/` contains shared example headers and key material.
+
+Common example build entrypoints from the repository root:
+```
+make example-client
+make example-cose
+make example-parser
+make example-sign
+make example-cwt
+```
+
 ### Dockerfile policy
 - `ossl.Dockerfile`, `ossl3.Dockerfile`, and `psa.Dockerfile` are for CI latest checks.
   They intentionally track latest upstream dependencies and are expected to fail fast when upstream changes break compatibility.
